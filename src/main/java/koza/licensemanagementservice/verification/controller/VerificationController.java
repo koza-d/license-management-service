@@ -39,4 +39,11 @@ public class VerificationController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "라이센스 연결 해제", description = "세션을 해제하는 기능이 있으며, 프로그램 종료 시 호출되는 API")
+    @PostMapping("/release")
+    public ResponseEntity<ApiResponse<?>> release(@RequestBody ReleaseRequest request) {
+        verificationService.release(request);
+        return ResponseEntity.ok(ApiResponse.success("success"));
+    }
+
 }

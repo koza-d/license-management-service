@@ -67,4 +67,10 @@ public class VerificationService {
         return new HeartbeatResponse(sessionValue.getExpiredAt(), remainMs);
     }
 
+    public void release(ReleaseRequest request) {
+        String sessionId = request.getSessionId();
+        sessionManager.releaseSession(sessionId);
+    }
+
+
 }
