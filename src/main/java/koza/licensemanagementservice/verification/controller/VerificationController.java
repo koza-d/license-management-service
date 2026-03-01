@@ -30,4 +30,13 @@ public class VerificationController {
         ApiResponse<VerifyResponse> response = ApiResponse.success(verifyResponse);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "라이센스 하트비트", description = "짧은 시간 내에 요청을 보내 세션이 살아있음을 알리는 API")
+    @PostMapping("/hb")
+    public ResponseEntity<ApiResponse<?>> heartBeat(@RequestBody HeartbeatRequest request) {
+        HeartbeatResponse heartbeatResponse = verificationService.heartbeat(request);
+        ApiResponse<HeartbeatResponse> response = ApiResponse.success(heartbeatResponse);
+        return ResponseEntity.ok(response);
+    }
+
 }

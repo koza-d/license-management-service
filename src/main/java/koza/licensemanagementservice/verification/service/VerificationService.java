@@ -55,5 +55,16 @@ public class VerificationService {
                 .build();
     }
 
+    public HeartbeatResponse heartbeat(HeartbeatRequest request) {
+        String sessionId = request.getSessionId();
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
+
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(now, sessionValue.getExpiredAt());
+        long remainMs = Math.max(0, duration.toMillis());
+
+        sessionManager.extendSession(sessionId);
+        return new HeartbeatResponse(sessionValue.getExpiredAt(), remainMs);
+    }
 
 }
