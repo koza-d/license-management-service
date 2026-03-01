@@ -70,4 +70,10 @@ public class License extends BaseEntity {
             expiredAt = now;
         expiredAt = expiredAt.plusDays(extendDays);
     }
+
+    public void verify(String sessionId) {
+        this.currentSessionId = sessionId;
+        this.latestHearBeatAt = LocalDateTime.now();
+    }
+
 }

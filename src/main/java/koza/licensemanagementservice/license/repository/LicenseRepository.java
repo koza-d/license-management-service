@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface LicenseRepository extends JpaRepository<License, Long>, LicenseRepositoryCustom {
+    Optional<License> findByLicenseKey(String licenseKey);
     Page<License> findBySoftwareId(Long softwareId, Pageable pageable);
     List<License> findByIdIn(List<Long> id);
     int countBySoftwareId(Long softwareId);
