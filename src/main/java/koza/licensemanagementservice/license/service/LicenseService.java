@@ -5,6 +5,7 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.license.dto.LicenseDTO;
 import koza.licensemanagementservice.license.entity.License;
+import koza.licensemanagementservice.license.entity.LicenseStatus;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.member.dto.CustomUser;
 import koza.licensemanagementservice.software.entity.Software;
@@ -44,6 +45,7 @@ public class LicenseService {
                 .licenseKey(licenseKey)
                 .expiredAt(expireAt)
                 .metadata(request.getMetadata())
+                .status(LicenseStatus.ACTIVE)
                 .build();
 
         licenseRepository.saveAndFlush(license);
@@ -58,7 +60,6 @@ public class LicenseService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         // 라이센스의 부모인 소프트웨어의 관리자가 아니면 접근불가
-        license.getSoftware().getMember().getEmail();
         if (!license.getSoftware().getMember().getId().equals(user.getId()))
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 

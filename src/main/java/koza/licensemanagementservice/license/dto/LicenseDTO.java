@@ -88,6 +88,7 @@ public class LicenseDTO {
         private LocalDateTime expireAt; // 만료일자
         private long remainingMs; // 연장하고 남은 ms
         private int extendDays; // 연장 일 수
+        private String status; // 라이센스 상태
 
         public static ExtendResponse of(License license, int extendDays) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
@@ -99,6 +100,7 @@ public class LicenseDTO {
                     .expireAt(license.getExpiredAt())
                     .remainingMs(remainingMs)
                     .extendDays(extendDays)
+                    .status(license.getStatus().name())
                     .build();
         }
     }
@@ -158,6 +160,7 @@ public class LicenseDTO {
         private LocalDateTime latestHeartbeatAt; // 마지막 하트비트 일시
         private LocalDateTime expiredAt;
         private long remainingMs; // 남은시간(ms)
+        private String status;
 
         public static DetailResponse from(License license) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
@@ -171,6 +174,7 @@ public class LicenseDTO {
                     .latestHeartbeatAt(license.getLatestHearBeatAt())
                     .expiredAt(license.getExpiredAt())
                     .remainingMs(remainingMs)
+                    .status(license.getStatus().name())
                     .build();
         }
 
@@ -186,6 +190,7 @@ public class LicenseDTO {
         private String memo; // 표로 보여줘야해서 10자 제한 출력
         private LocalDateTime expiredAt;
         private long remainingMs;
+        private String status;
 
         public static SummaryResponse from(License license) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
@@ -196,6 +201,7 @@ public class LicenseDTO {
                     .memo(license.getMemo())
                     .expiredAt(license.getExpiredAt())
                     .remainingMs(remainingMs)
+                    .status(license.getStatus().name())
                     .build();
         }
     }

@@ -48,6 +48,9 @@ public class License extends BaseEntity {
     @Column(name = "metadata", columnDefinition = "json")
     private Map<String, Object> metadata;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private LicenseStatus status;
     public void updateName(String name) {
         this.name = name;
     }
