@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.verification.dto.SessionValue;
+import koza.licensemanagementservice.verification.status.SessionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,10 @@ public class SessionManager {
     private final RedisTemplate<String, Object> redisTemplate;
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
     private final ObjectMapper objectMapper;
+
+    public SessionStatus getStatus(String sessionId) {
+        return isActive(sessionId) ? SessionStatus.CONNECTED : SessionStatus.DISCONNECTED;
+    }
 
     // Boolean.TRUE.equals -> hasKey null 반환 가능성 있음
     public boolean isActive(String sessionId) {
