@@ -57,6 +57,9 @@ public class VerificationService {
 
     public HeartbeatResponse heartbeat(HeartbeatRequest request) {
         String sessionId = request.getSessionId();
+        if (!sessionManager.isActive(sessionId))
+            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
+
         SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
 
         LocalDateTime now = LocalDateTime.now();
