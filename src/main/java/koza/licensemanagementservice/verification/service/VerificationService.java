@@ -38,7 +38,7 @@ public class VerificationService {
         if (currentSessionId != null && sessionManager.isActive(currentSessionId))
             throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
 
-        String sessionId = sessionManager.createSession(licenseKey, license.getExpiredAt());
+        String sessionId = sessionManager.createSession(license.getId(), license.getExpiredAt());
 
         license.verify(sessionId);
 
@@ -57,23 +57,18 @@ public class VerificationService {
 
     public HeartbeatResponse heartbeat(HeartbeatRequest request) {
         String sessionId = request.getSessionId();
-        if (!sessionManager.isActive(sessionId))
-            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-
+        sessionManager.extendSession(sessionId); // 선 연장, 후 시간계산 -> 시간 계산 후 만료되는 것 방지
         SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
 
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, sessionValue.getExpiredAt());
         long remainMs = Math.max(0, duration.toMillis());
-
-        sessionManager.extendSession(sessionId);
         return new HeartbeatResponse(sessionValue.getExpiredAt(), remainMs);
     }
 
+    @Transactional
     public void release(ReleaseRequest request) {
         String sessionId = request.getSessionId();
         sessionManager.releaseSession(sessionId);
     }
-
-
 }

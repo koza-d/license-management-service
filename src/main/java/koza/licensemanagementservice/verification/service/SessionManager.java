@@ -4,84 +4,101 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
+import koza.licensemanagementservice.license.entity.License;
+import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.verification.dto.SessionValue;
+import koza.licensemanagementservice.verification.entity.ReleaseType;
+import koza.licensemanagementservice.verification.entity.SessionLog;
+import koza.licensemanagementservice.verification.repository.SessionLogRepository;
+import koza.licensemanagementservice.verification.repository.SessionRepository;
 import koza.licensemanagementservice.verification.status.SessionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+/*
+ * 세션 관리 방식
+ * 준비) Trigger 키 (TTL 만료 이벤트 용), 세션 키 (실 데이터 저장 용)
+ * 1) 세션 등록 시 : Trigger 키(TTL 부여), 세션 키(영구 TTL) 저장
+ * 2) 세션 정상 /release 시 : Trigger 키, 세션 키 같이 제거
+ * 3) 세션 TTL 만료 시 : Trigger 키 만료 이벤트 수신 -> 세션 키 제거
+ */
 @Component
 @RequiredArgsConstructor
 public class SessionManager {
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final SessionRepository sessionRepository;
+    private final SessionLogRepository sessionLogRepository;
+    private final LicenseRepository licenseRepository;
+
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
-    private final ObjectMapper objectMapper;
+
+    public String createSession(Long licenseId, LocalDateTime expiredAt) {
+        String sessionId = createNewSessionId();
+        SessionValue sessionValue = SessionValue.builder()
+                .licenseId(licenseId)
+                .expiredAt(expiredAt)
+                .verifyAt(LocalDateTime.now())
+                .build();
+        sessionRepository.save(sessionId, sessionValue, SESSION_TTL);
+        return sessionId;
+    }
+
+    public SessionValue getSessionValue(String sessionId) {
+        return sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+    }
+
+    public void extendSession(String sessionId) {
+        boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
+        if (!suc)
+            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
+    }
+
 
     public SessionStatus getStatus(String sessionId) {
         return isActive(sessionId) ? SessionStatus.CONNECTED : SessionStatus.DISCONNECTED;
     }
 
-    // Boolean.TRUE.equals -> hasKey null 반환 가능성 있음
     public boolean isActive(String sessionId) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(sessionId));
+        return sessionRepository.hasSession(sessionId);
     }
 
-    public SessionValue getSessionValue(String sessionId) {
-        Object data = redisTemplate.opsForValue().get(sessionId);
-        return fromJson(Optional.ofNullable(redisTemplate.opsForValue().get(sessionId))
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION)).toString());
-    }
-
-    public String createSession(String licenseKey, LocalDateTime expiredAt) {
-        String sessionId = createNewSessionId();
-        SessionValue sessionValue = SessionValue.builder()
-                .licenseKey(licenseKey)
-                .expiredAt(expiredAt)
-                .verifyAt(LocalDateTime.now())
-                .build();
-        String value = toJson(sessionValue);
-        redisTemplate.opsForValue().set(sessionId, value, SESSION_TTL);
-        return sessionId;
-    }
-
-    public void extendSession(String sessionId) {
-        // TTL 연장 실패(키가 사라진 경우) 시 false, 성공 시 true
-        if (Boolean.FALSE.equals(redisTemplate.expire(sessionId, SESSION_TTL)))
-            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-    }
-
-    public String releaseSession(String sessionId) {
+    public void releaseSession(String sessionId) {
+        // 정상적으로 release 요청이 온 경우
         SessionValue sessionValue = getSessionValue(sessionId);
-        redisTemplate.expire(sessionId, Duration.of(0, ChronoUnit.MILLIS));
-        return sessionValue.getLicenseKey();
+        if (!isActive(sessionId))
+            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
+
+        sessionRepository.delete(sessionId);
+        saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
     }
 
+    public void revokeExpiredSession(String sessionId) {
+        // hb 요청이 없어 세션이 만료된 경우
+        SessionValue sessionValue = getSessionValue(sessionId);
+        sessionRepository.delete(sessionId);
+        saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
+    }
+
+    private void saveLog(String sessionId, SessionValue sessionValue, ReleaseType releaseType) {
+        License proxyLicense = licenseRepository.getReferenceById(sessionValue.getLicenseId()); // id 제외한 거 불러오면 X
+        SessionLog log = SessionLog.builder()
+                .license(proxyLicense)
+                .sessionId(sessionId)
+                .verifyAt(sessionValue.getVerifyAt())
+                .releaseAt(LocalDateTime.now())
+                .releaseType(releaseType)
+                .build();
+        sessionLogRepository.save(log);
+    }
     private String createNewSessionId() {
         return UUID.randomUUID().toString();
-    }
-
-    private String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private SessionValue fromJson(String json) {
-        try {
-            return objectMapper.readValue(json, SessionValue.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
     }
 }
