@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -37,5 +38,14 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
+    }
+
+    // 이벤트 리스너 설정 (라이센스 세션 만료 시)
+    // redis 에서 redis-cli config set notify-keyspace-events Ex 설정 필요 (K: 키이벤트, x: 만료 expired)
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        return container;
     }
 }
