@@ -44,7 +44,7 @@ public class LicenseService {
                 .memo(request.getMemo())
                 .licenseKey(licenseKey)
                 .expiredAt(expireAt)
-                .metadata(request.getMetadata())
+                .localVariables(request.getLocalVariables())
                 .status(LicenseStatus.ACTIVE)
                 .build();
 
@@ -125,7 +125,7 @@ public class LicenseService {
 
         license.updateName(request.getName());
         license.updateMemo(request.getMemo());
-        license.updateMetadata(request.getMetadata());
+        license.updateLocalVariables(request.getLocalVariables());
     }
 
     private Software checkAccessAuthorizedForSoftware(CustomUser requestUser, Long targetSoftwareId) {

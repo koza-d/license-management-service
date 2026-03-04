@@ -45,8 +45,8 @@ public class License extends BaseEntity {
     private LocalDateTime latestHearBeatAt;
 
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
-    @Column(name = "metadata", columnDefinition = "json")
-    private Map<String, Object> metadata;
+    @Column(name = "local_variables", columnDefinition = "json")
+    private Map<String, Object> localVariables = new HashMap<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
@@ -59,12 +59,10 @@ public class License extends BaseEntity {
         this.memo = memo;
     }
 
-    public void updateMetadata(Map<String, Object> metadata) {
-        if (metadata == null) {
-            metadata = new HashMap<>();
-        } else {
-            this.metadata = metadata;
-        }
+    public void updateLocalVariables(Map<String, Object> localVariables) {
+        this.localVariables.clear();
+        if (localVariables != null)
+            this.localVariables.putAll(localVariables);
     }
 
     public void extendPeriod(int extendDays) {

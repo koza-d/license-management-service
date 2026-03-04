@@ -13,5 +13,5 @@ public class VerifyResponse {
     private LocalDateTime exp;
     private LocalDateTime serverTime;
     private Long remainMs;
-    private Map<String, Object> metadata;
+    private Map<String, Object> localVariables;
 }

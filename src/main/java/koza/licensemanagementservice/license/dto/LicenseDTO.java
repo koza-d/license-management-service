@@ -56,9 +56,9 @@ public class LicenseDTO {
         @Schema(description = "유효기간(일)", example = "30")
         private int periodDays;
 
-        @JsonSize(max = 5000, message = "메타 데이터 크기가 5000byte를 넘을 수 없습니다.")
-        @Schema(description = "메타데이터", example = "{\"meta-data\": \"example\"}")
-        private Map<String, Object> metadata;
+        @JsonSize(max = 5000, message = "지역변수 크기가 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "지역변수", example = "{\"meta-data\": \"example\"}")
+        private Map<String, Object> localVariables;
     }
 
 
@@ -116,13 +116,13 @@ public class LicenseDTO {
         @Schema(description = "비고", example = "비고")
         private String memo;
 
-        @JsonSize(max = 5000, message = "메타 데이터 크기가 5000byte를 넘을 수 없습니다.")
-        @Schema(description = "메타데이터", example = "{\n" +
+        @JsonSize(max = 5000, message = "지역변수 크기가 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "지역변수", example = "{\n" +
                 "\n" +
                 "  \"meta-data\": \"example\"\n" +
                 "\n" +
                 "}")
-        private Map<String, Object> metadata;
+        private Map<String, Object> localVariables;
     }
 
     // 발급 시 발급 확인용으로 출력될 데이터
