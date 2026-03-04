@@ -5,11 +5,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import koza.licensemanagementservice.global.validation.JsonSize;
 import koza.licensemanagementservice.software.entity.Software;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public class SoftwareDTO {
 
@@ -28,6 +30,14 @@ public class SoftwareDTO {
         )
         @Schema(description = "소프트웨어 버전(ex. 1.0.0)", example = "1.0.0")
         private String version;
+
+        @JsonSize(max = 5000, message = "전역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "소프트웨어 전역변수, 소속 라이센스마다 동일한 값을 가짐", example = "{}")
+        private Map<String, Object> globalVariables;
+
+        @JsonSize(max = 5000, message = "지역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "소프트웨어 지역변수, value는 기본값", example = "{}")
+        private Map<String, Object> localVariables;
     }
 
     // 등록 후 반환 데이터
@@ -38,12 +48,16 @@ public class SoftwareDTO {
         private String version;
         private String apiKey;
         private int limitLicense;
+        private Map<String, Object> globalVariables;
+        private Map<String, Object> localVariables;
         public static CreateResponse from(Software software) {
             return CreateResponse.builder()
                     .name(software.getName())
                     .version(software.getVersion())
                     .apiKey(software.getApiKey())
                     .limitLicense(software.getLimitLicense())
+                    .globalVariables(software.getGlobalVariables())
+                    .localVariables(software.getLocalVariables())
                     .build();
         }
     }
@@ -63,6 +77,14 @@ public class SoftwareDTO {
         )
         @Schema(description = "소프트웨어 버전(ex. 1.0.0)", example = "1.0.0")
         private String version;
+
+        @JsonSize(max = 5000, message = "전역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "소프트웨어 전역변수, 소속 라이센스마다 동일한 값을 가짐", example = "{}")
+        private Map<String, Object> globalVariables;
+
+        @JsonSize(max = 5000, message = "지역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+        @Schema(description = "소프트웨어 지역변수, value는 기본값", example = "{}")
+        private Map<String, Object> localVariables;
     }
 
 
@@ -77,6 +99,8 @@ public class SoftwareDTO {
         private int licenseCount;
         private int limitLicense;
         private int remainLicense;
+        private Map<String, Object> globalVariables;
+        private Map<String, Object> localVariables;
         private LocalDateTime createAt;
 
         public static DetailResponse of(Software software, int licenseCount) {
@@ -88,6 +112,8 @@ public class SoftwareDTO {
                     .licenseCount(licenseCount)
                     .limitLicense(software.getLimitLicense())
                     .remainLicense(software.getLimitLicense() - licenseCount)
+                    .globalVariables(software.getGlobalVariables())
+                    .localVariables(software.getLocalVariables())
                     .createAt(software.getCreateAt())
                     .build();
         }

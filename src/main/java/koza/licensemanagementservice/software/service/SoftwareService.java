@@ -34,6 +34,8 @@ public class SoftwareService {
                 .version(createRequest.getVersion())
                 .member(member)
                 .apiKey(apiKey)
+                .globalVariables(createRequest.getGlobalVariables())
+                .localVariables(createRequest.getLocalVariables())
                 .limitLicense(limitLicense)
                 .build();
         Software save = softwareRepository.save(software);
@@ -70,6 +72,8 @@ public class SoftwareService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         software.updateInfo(updateRequest.getName(), updateRequest.getVersion());
+        software.updateGlobalVariables(updateRequest.getGlobalVariables());
+        software.updateLocalVariables(updateRequest.getLocalVariables());
         return softwareId;
     }
 }
