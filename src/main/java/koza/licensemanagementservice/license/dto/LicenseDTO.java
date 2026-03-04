@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import koza.licensemanagementservice.global.validation.JsonSize;
 import koza.licensemanagementservice.license.entity.License;
+import koza.licensemanagementservice.software.entity.Software;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -160,14 +161,18 @@ public class LicenseDTO {
         private LocalDateTime latestHeartbeatAt; // 마지막 하트비트 일시
         private LocalDateTime expiredAt;
         private long remainingMs; // 남은시간(ms)
+        private Map<String, Object> defaultVariables; // 소프트웨어에 설정된 기본 지역변수
+        private Map<String, Object> modifiedVariables; // 라이센스 층에서 수정된 지역변수
+        private Map<String, Object> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
         private String status;
 
-        public static DetailResponse from(License license) {
+        public static DetailResponse of(License license, Map<String, Object> finalVariables) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
 
+            Software software = license.getSoftware();
             return DetailResponse.builder()
-                    .softwareName(license.getSoftware().getName())
-                    .softwareVersion(license.getSoftware().getVersion())
+                    .softwareName(software.getName())
+                    .softwareVersion(software.getVersion())
                     .licenseName(license.getName())
                     .memo(license.getMemo())
                     .licenseKey(license.getLicenseKey())
@@ -175,6 +180,9 @@ public class LicenseDTO {
                     .expiredAt(license.getExpiredAt())
                     .remainingMs(remainingMs)
                     .status(license.getStatus().name())
+                    .defaultVariables(software.getLocalVariables())
+                    .modifiedVariables(license.getLocalVariables())
+                    .finalVariables(finalVariables)
                     .build();
         }
 

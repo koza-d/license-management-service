@@ -46,7 +46,7 @@ public class License extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json")
-    private Map<String, Object> localVariables = new HashMap<>();
+    private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)

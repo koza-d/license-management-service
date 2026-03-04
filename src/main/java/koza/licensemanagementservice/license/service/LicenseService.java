@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,7 +65,14 @@ public class LicenseService {
         if (!license.getSoftware().getMember().getId().equals(user.getId()))
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
-        return LicenseDTO.DetailResponse.from(license);
+        // 지역변수 템플릿 + 실제 값 병합 로직
+        Map<String, Object> defaultVars = license.getSoftware().getLocalVariables();
+        Map<String, Object> modifiedVars = license.getLocalVariables();
+
+        HashMap<String, Object> finalVars = new HashMap<>(defaultVars);
+        finalVars.putAll(modifiedVars);
+
+        return LicenseDTO.DetailResponse.of(license, finalVars);
     }
 
     @Transactional(readOnly = true)
