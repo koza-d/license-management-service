@@ -37,7 +37,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .select(new QSoftwareDTO_SummaryResponse(
                         software.id,
                         software.name,
-                        software.version,
+                        software.latestVersion,
                         license.count().intValue(),
                         software.createAt
                 ))

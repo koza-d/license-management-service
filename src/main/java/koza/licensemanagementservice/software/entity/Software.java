@@ -11,6 +11,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -27,10 +28,15 @@ public class Software extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @OneToMany(mappedBy = "software", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SoftwareVersion> versions;
+
     @Column(name = "name", length = 30, nullable = false)
     private String name;
-    @Column(name = "version", length = 20, nullable = false)
-    private String version;
+
+    @Column(name = "latest_version", length = 50, nullable = false)
+    private String latestVersion;
+
     @Column(name = "api_key", length = 128, nullable = false)
     private String apiKey;
 
@@ -57,8 +63,8 @@ public class Software extends BaseEntity {
             this.localVariables.putAll(localVariables);
     }
 
-    public void updateInfo(String name, String version) {
+    public void updateInfo(String name, String latestVersion) {
         if (name != null) this.name = name;
-        if (version != null) this.version = version;
+        if (latestVersion != null) this.latestVersion = latestVersion;
     }
 }

@@ -154,7 +154,7 @@ public class LicenseDTO {
     @Builder
     public static class DetailResponse {
         private String softwareName;
-        private String softwareVersion;
+        private String softwareLatestVersion;
         private String licenseName;
         private String memo;
         private String licenseKey;
@@ -172,7 +172,7 @@ public class LicenseDTO {
             Software software = license.getSoftware();
             return DetailResponse.builder()
                     .softwareName(software.getName())
-                    .softwareVersion(software.getVersion())
+                    .softwareLatestVersion(software.getLatestVersion())
                     .licenseName(license.getName())
                     .memo(license.getMemo())
                     .licenseKey(license.getLicenseKey())

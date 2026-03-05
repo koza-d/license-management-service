@@ -28,8 +28,8 @@ public class SoftwareDTO {
                 regexp = "^[0-9]+\\.[0-9]+\\.[0-9]+$",
                 message = "버전 형식은 1.0.0과 같아야 합니다."
         )
-        @Schema(description = "소프트웨어 버전(ex. 1.0.0)", example = "1.0.0")
-        private String version;
+        @Schema(description = "소프트웨어 최신 버전(ex. 1.0.0)", example = "1.0.0")
+        private String latestVersion;
 
         @JsonSize(max = 5000, message = "전역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
         @Schema(description = "소프트웨어 전역변수, 소속 라이센스마다 동일한 값을 가짐", example = "{}")
@@ -45,7 +45,7 @@ public class SoftwareDTO {
     @Builder
     public static class CreateResponse {
         private String name;
-        private String version;
+        private String latestVersion;
         private String apiKey;
         private int limitLicense;
         private Map<String, Object> globalVariables;
@@ -53,7 +53,7 @@ public class SoftwareDTO {
         public static CreateResponse from(Software software) {
             return CreateResponse.builder()
                     .name(software.getName())
-                    .version(software.getVersion())
+                    .latestVersion(software.getLatestVersion())
                     .apiKey(software.getApiKey())
                     .limitLicense(software.getLimitLicense())
                     .globalVariables(software.getGlobalVariables())
@@ -94,7 +94,7 @@ public class SoftwareDTO {
     public static class DetailResponse {
         private Long id;
         private String name;
-        private String version;
+        private String latestVersion;
         private String apiKey;
         private int licenseCount;
         private int limitLicense;
@@ -107,7 +107,7 @@ public class SoftwareDTO {
             return DetailResponse.builder()
                     .id(software.getId())
                     .name(software.getName())
-                    .version(software.getVersion())
+                    .latestVersion(software.getLatestVersion())
                     .apiKey(software.getApiKey())
                     .licenseCount(licenseCount)
                     .limitLicense(software.getLimitLicense())

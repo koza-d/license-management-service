@@ -31,7 +31,7 @@ public class SoftwareService {
 
         Software software = Software.builder()
                 .name(createRequest.getName())
-                .version(createRequest.getVersion())
+                .latestVersion(createRequest.getLatestVersion())
                 .member(member)
                 .apiKey(apiKey)
                 .globalVariables(createRequest.getGlobalVariables())
