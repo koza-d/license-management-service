@@ -32,7 +32,7 @@ public class VerificationService {
     @Transactional
     public VerifyResponse verify(VerifyRequest request) {
         String licenseKey = request.getLicenseKey();
-        License license = licenseRepository.findByLicenseKey(licenseKey)
+        License license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
 
         // 라이센스 만료 시
@@ -59,6 +59,7 @@ public class VerificationService {
                 .serverTime(LocalDateTime.now())
                 .remainMs(remainMs)
                 .localVariables(license.getMergeLocalVariables())
+                .globalVariables(license.getSoftware().getGlobalVariables())
                 .build();
     }
 

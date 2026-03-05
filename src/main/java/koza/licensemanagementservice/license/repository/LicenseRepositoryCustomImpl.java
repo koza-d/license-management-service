@@ -31,6 +31,16 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     @Override
+    public Optional<License> findByLicenseKeyWithSoftware(String licenseKey) {
+        return Optional.ofNullable(
+                jpaQueryFactory
+                        .selectFrom(license)
+                        .where(license.licenseKey.eq(licenseKey))
+                        .leftJoin(license.software, software).fetchJoin()
+                        .fetchOne());
+    }
+
+    @Override
     public List<License> findByIdInWithSoftwareWithMember(List<Long> ids) {
         return jpaQueryFactory
                 .selectFrom(license)

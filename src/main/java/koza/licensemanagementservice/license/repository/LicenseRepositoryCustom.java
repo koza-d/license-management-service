@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface LicenseRepositoryCustom {
     Optional<License> findByIdWithSoftwareAndMember(Long licenseId);
+    Optional<License> findByLicenseKeyWithSoftware(String licenseKey);
     List<License> findByIdInWithSoftwareWithMember(List<Long> ids);
 }
