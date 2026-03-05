@@ -41,6 +41,7 @@ public class License extends BaseEntity {
     @Column(name = "latest_active_at")
     private LocalDateTime latestActiveAt;
 
+    @Builder.Default
     @Getter(AccessLevel.NONE)
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json")

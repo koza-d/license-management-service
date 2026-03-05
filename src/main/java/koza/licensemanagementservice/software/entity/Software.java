@@ -40,10 +40,12 @@ public class Software extends BaseEntity {
     @Column(name = "api_key", length = 128, nullable = false)
     private String apiKey;
 
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "global_variables", columnDefinition = "json")
     private Map<String, Object> globalVariables = new HashMap<>(); // 라이센스마다 똑같이 적용될 전역 변수
 
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "local_variables", columnDefinition = "json")
     private Map<String, Object> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
