@@ -24,33 +24,41 @@ public class SessionRepositoryImpl implements SessionRepository {
 
     public void save(String sessionId, SessionValue sessionValue, Duration ttl) {
         String value = toJson(sessionValue);
-        String sessionKey = String.format("%s:%s", SESSION_KEY_PREFIX, sessionId);
-        String triggerKey = String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+        String sessionKey = getSessionKeyFormat(sessionId);
+        String triggerKey = getTriggerKeyFormat(sessionId);
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.opsForValue().set(triggerKey, "", ttl);
     }
 
     public Optional<SessionValue> findById(String sessionId) {
-        String sessionKey = String.format("%s:%s", SESSION_KEY_PREFIX, sessionId);
+        String sessionKey = getSessionKeyFormat(sessionId);
         String json = redisTemplate.opsForValue().get(sessionKey);
         return Optional.ofNullable(json).map(this::fromJson);
     }
 
     public boolean hasSession(String sessionId) {
-        String triggerKey = String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+        String triggerKey = getTriggerKeyFormat(sessionId);
         return Boolean.TRUE.equals(redisTemplate.hasKey(triggerKey));
     }
 
     public boolean extendTTL(String sessionId, Duration ttl) {
-        String triggerKey = String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+        String triggerKey = getTriggerKeyFormat(sessionId);
         Boolean expire = redisTemplate.expire(triggerKey, ttl);
         return Boolean.TRUE.equals(expire);
     }
 
     public void delete(String sessionId) {
-        String sessionKey = String.format("%s:%s", SESSION_KEY_PREFIX, sessionId);
-        String triggerKey = String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+        String sessionKey = getSessionKeyFormat(sessionId);
+        String triggerKey = getTriggerKeyFormat(sessionId);
         redisTemplate.delete(List.of(sessionKey, triggerKey));
+    }
+
+    private String getSessionKeyFormat(String sessionId) {
+        return String.format("%s:%s", SESSION_KEY_PREFIX, sessionId);
+    }
+
+    private String getTriggerKeyFormat(String sessionId) {
+        return String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
     }
 
     private String toJson(Object obj) {
