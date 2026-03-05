@@ -17,6 +17,9 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(409, "MEMBER_001", "이미 가입된 이메일입니다."),
     INCORRECT_EMAIL_OR_PASSWORD(401, "MEMBER_002", "이메일 또는 비밀번호가 유효하지 않습니다."),
 
+    // 소프트웨어 버전 관련 예외
+    DUPLICATE_VERSION(409, "VERSION_001", "이미 등록돼있는 버전입니다."),
+
     // 라이센스 인증 로직 예외
     NOT_FOUND_LICENSE(404, "VERIFICATION_001", "존재하지 않는 라이센스 입니다."),
     EXPIRED_LICENSE(403, "VERIFICATION_002", "만료된 라이센스 입니다."),

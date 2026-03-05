@@ -1,10 +1,17 @@
 package koza.licensemanagementservice.software.entity;
 
 import jakarta.persistence.*;
+import koza.licensemanagementservice.global.common.BaseEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name="software_version")
-public class SoftwareVersion {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SoftwareVersion extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -20,7 +27,7 @@ public class SoftwareVersion {
     @Column(name = "is_available")
     private boolean isAvailable;
 
-    @Column(name = "download_url", length = 500)
+    @Column(name = "download_url", length = 2048)
     private String downloadURL;
 
     @Column(name = "memo", length = 200)
