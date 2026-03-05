@@ -10,7 +10,11 @@ import koza.licensemanagementservice.verification.dto.request.ReleaseRequest;
 import koza.licensemanagementservice.verification.dto.request.VerifyRequest;
 import koza.licensemanagementservice.verification.dto.resposne.HeartbeatResponse;
 import koza.licensemanagementservice.verification.dto.resposne.VerifyResponse;
+import koza.licensemanagementservice.verification.entity.ReleaseType;
+import koza.licensemanagementservice.verification.entity.SessionLog;
+import koza.licensemanagementservice.verification.repository.SessionLogRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +23,12 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VerificationService {
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
+    private final SessionLogRepository sessionLogRepository;
+
     @Transactional
     public VerifyResponse verify(VerifyRequest request) {
         String licenseKey = request.getLicenseKey();
@@ -69,6 +76,32 @@ public class VerificationService {
     @Transactional
     public void release(ReleaseRequest request) {
         String sessionId = request.getSessionId();
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
+        processRelease(sessionId);
+        saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
+    }
+
+
+    @Transactional
+    public void revokeExpire(String sessionId) { // 만료된 세션 처리
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
+        processRelease(sessionId);
+        saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
+    }
+
+    private void processRelease(String sessionId) {
         sessionManager.releaseSession(sessionId);
+    }
+
+    private void saveLog(String sessionId, SessionValue sessionValue, ReleaseType releaseType) {
+        License proxyLicense = licenseRepository.getReferenceById(sessionValue.getLicenseId()); // id 제외한 거 불러오면 X
+        SessionLog log = SessionLog.builder()
+                .license(proxyLicense)
+                .sessionId(sessionId)
+                .verifyAt(sessionValue.getVerifyAt())
+                .releaseAt(LocalDateTime.now())
+                .releaseType(releaseType)
+                .build();
+        sessionLogRepository.save(log);
     }
 }

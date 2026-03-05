@@ -34,8 +34,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SessionManager {
     private final SessionRepository sessionRepository;
-    private final SessionLogRepository sessionLogRepository;
-    private final LicenseRepository licenseRepository;
 
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
@@ -71,33 +69,9 @@ public class SessionManager {
     }
 
     public void releaseSession(String sessionId) {
-        // 정상적으로 release 요청이 온 경우
-        SessionValue sessionValue = getSessionValue(sessionId);
-        if (!isActive(sessionId))
-            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-
         sessionRepository.delete(sessionId);
-        saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
     }
 
-    public void revokeExpiredSession(String sessionId) {
-        // hb 요청이 없어 세션이 만료된 경우
-        SessionValue sessionValue = getSessionValue(sessionId);
-        sessionRepository.delete(sessionId);
-        saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
-    }
-
-    private void saveLog(String sessionId, SessionValue sessionValue, ReleaseType releaseType) {
-        License proxyLicense = licenseRepository.getReferenceById(sessionValue.getLicenseId()); // id 제외한 거 불러오면 X
-        SessionLog log = SessionLog.builder()
-                .license(proxyLicense)
-                .sessionId(sessionId)
-                .verifyAt(sessionValue.getVerifyAt())
-                .releaseAt(LocalDateTime.now())
-                .releaseType(releaseType)
-                .build();
-        sessionLogRepository.save(log);
-    }
     private String createNewSessionId() {
         return UUID.randomUUID().toString();
     }
