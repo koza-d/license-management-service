@@ -90,6 +90,14 @@ public class VerificationService {
     }
 
     private void processRelease(String sessionId) {
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
+        License license = licenseRepository.findById(sessionValue.getLicenseId()).orElseGet(() -> {
+            log.warn("세션에 저장된 라이센스 ID가 잘못됐습니다. SessionId: {}", sessionId);
+            return null;
+        });
+        if (license == null) return;
+
+        license.release();
         sessionManager.releaseSession(sessionId);
     }
 

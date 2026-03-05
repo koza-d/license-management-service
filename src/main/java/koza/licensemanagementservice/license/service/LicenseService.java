@@ -10,6 +10,7 @@ import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.member.dto.CustomUser;
 import koza.licensemanagementservice.software.entity.Software;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.verification.service.SessionManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class LicenseService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
+    private final SessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -72,7 +74,10 @@ public class LicenseService {
         HashMap<String, Object> finalVars = new HashMap<>(defaultVars);
         finalVars.putAll(modifiedVars);
 
-        return LicenseDTO.DetailResponse.of(license, finalVars);
+        LocalDateTime latestActiveAt = sessionManager.getLatestActiveAt(license.getCurrentSessionId())
+                .orElseGet(license::getLatestActiveAt);
+
+        return LicenseDTO.DetailResponse.of(license, latestActiveAt, finalVars);
     }
 
     @Transactional(readOnly = true)

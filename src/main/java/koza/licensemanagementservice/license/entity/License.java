@@ -77,4 +77,8 @@ public class License extends BaseEntity {
         this.latestActiveAt = LocalDateTime.now();
     }
 
+    public void release() {
+        this.latestActiveAt = LocalDateTime.now();
+    }
+
 }

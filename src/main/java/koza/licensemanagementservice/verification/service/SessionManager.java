@@ -53,6 +53,10 @@ public class SessionManager {
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
     }
 
+    public Optional<LocalDateTime> getLatestActiveAt(String sessionId) {
+        return sessionRepository.findLatestActiveAtByIdAndTTL(sessionId, SESSION_TTL);
+    }
+
     public void extendSession(String sessionId) {
         boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
         if (!suc)
