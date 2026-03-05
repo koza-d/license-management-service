@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,12 +66,7 @@ public class LicenseService {
         if (!license.getSoftware().getMember().getId().equals(user.getId()))
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
-        // 지역변수 템플릿 + 실제 값 병합 로직
-        Map<String, Object> defaultVars = license.getSoftware().getLocalVariables();
-        Map<String, Object> modifiedVars = license.getLocalVariables();
-
-        HashMap<String, Object> finalVars = new HashMap<>(defaultVars);
-        finalVars.putAll(modifiedVars);
+        Map<String, Object> finalVars = license.getMergeLocalVariables();
 
         LocalDateTime latestActiveAt = sessionManager.getLatestActiveAt(license.getCurrentSessionId())
                 .orElseGet(license::getLatestActiveAt);

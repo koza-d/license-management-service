@@ -3,10 +3,7 @@ package koza.licensemanagementservice.license.entity;
 import jakarta.persistence.*;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.software.entity.Software;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -44,6 +41,7 @@ public class License extends BaseEntity {
     @Column(name = "latest_active_at")
     private LocalDateTime latestActiveAt;
 
+    @Getter(AccessLevel.NONE)
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json")
     private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
@@ -59,6 +57,26 @@ public class License extends BaseEntity {
         this.memo = memo;
     }
 
+    /**
+     * 소프트웨어의 default value인 localVariables와 라이센스의 localVariables를 합친 결과물을 반환합니다.
+     */
+    public Map<String, Object> getMergeLocalVariables() {
+        // 지역변수 템플릿 + 실제 값 병합 로직
+        Map<String, Object> defaultVars = software.getLocalVariables();
+        Map<String, Object> modifiedVars = localVariables;
+
+        Map<String, Object> finalVars = new HashMap<>(defaultVars);
+        finalVars.putAll(modifiedVars);
+        return finalVars;
+    }
+
+    /**
+     * 정제되지 않은 localVariables를 반환합니다.
+     * @see License#getMergeLocalVariables() (병합된 최종 localVariables)
+     */
+    public Map<String, Object> getRawLocalVariables() {
+        return this.localVariables;
+    }
     public void updateLocalVariables(Map<String, Object> localVariables) {
         this.localVariables.clear();
         if (localVariables != null)

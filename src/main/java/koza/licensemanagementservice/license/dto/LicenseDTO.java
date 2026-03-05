@@ -181,7 +181,7 @@ public class LicenseDTO {
                     .remainingMs(remainingMs)
                     .status(license.getStatus().name())
                     .defaultVariables(software.getLocalVariables())
-                    .modifiedVariables(license.getLocalVariables())
+                    .modifiedVariables(license.getRawLocalVariables())
                     .finalVariables(finalVariables)
                     .build();
         }

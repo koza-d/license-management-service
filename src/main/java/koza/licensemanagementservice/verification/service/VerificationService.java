@@ -58,7 +58,7 @@ public class VerificationService {
                 .exp(license.getExpiredAt())
                 .serverTime(LocalDateTime.now())
                 .remainMs(remainMs)
-                .localVariables(license.getLocalVariables())
+                .localVariables(license.getMergeLocalVariables())
                 .build();
     }
 
