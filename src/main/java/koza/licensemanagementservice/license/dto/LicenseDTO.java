@@ -158,7 +158,7 @@ public class LicenseDTO {
         private String licenseName;
         private String memo;
         private String licenseKey;
-        private LocalDateTime latestHeartbeatAt; // 마지막 하트비트 일시
+        private LocalDateTime latestActiveAt; // 마지막 라이센스 활성 시간
         private LocalDateTime expiredAt;
         private long remainingMs; // 남은시간(ms)
         private Map<String, Object> defaultVariables; // 소프트웨어에 설정된 기본 지역변수
@@ -166,7 +166,7 @@ public class LicenseDTO {
         private Map<String, Object> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
         private String status;
 
-        public static DetailResponse of(License license, Map<String, Object> finalVariables) {
+        public static DetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, Object> finalVariables) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
 
             Software software = license.getSoftware();
@@ -176,7 +176,7 @@ public class LicenseDTO {
                     .licenseName(license.getName())
                     .memo(license.getMemo())
                     .licenseKey(license.getLicenseKey())
-                    .latestHeartbeatAt(license.getLatestHearBeatAt())
+                    .latestActiveAt(latestActiveAt)
                     .expiredAt(license.getExpiredAt())
                     .remainingMs(remainingMs)
                     .status(license.getStatus().name())

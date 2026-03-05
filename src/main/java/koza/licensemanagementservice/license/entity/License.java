@@ -41,8 +41,8 @@ public class License extends BaseEntity {
     private String currentSessionId;
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
-    @Column(name = "latest_heartbeat_at")
-    private LocalDateTime latestHearBeatAt;
+    @Column(name = "latest_active_at")
+    private LocalDateTime latestActiveAt;
 
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json")
@@ -74,7 +74,7 @@ public class License extends BaseEntity {
 
     public void verify(String sessionId) {
         this.currentSessionId = sessionId;
-        this.latestHearBeatAt = LocalDateTime.now();
+        this.latestActiveAt = LocalDateTime.now();
     }
 
 }
