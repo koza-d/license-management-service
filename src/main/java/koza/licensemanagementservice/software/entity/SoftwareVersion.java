@@ -3,10 +3,7 @@ package koza.licensemanagementservice.software.entity;
 import jakarta.persistence.*;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.software.dto.SoftwareVersionDTO;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
@@ -17,6 +14,8 @@ import lombok.NoArgsConstructor;
 public class SoftwareVersion extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "software_id", nullable = false)
     private Software software;

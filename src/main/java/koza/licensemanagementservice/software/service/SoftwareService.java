@@ -8,7 +8,9 @@ import koza.licensemanagementservice.member.entity.Member;
 import koza.licensemanagementservice.member.repository.MemberRepository;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
 import koza.licensemanagementservice.software.entity.Software;
+import koza.licensemanagementservice.software.entity.SoftwareVersion;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.software.repository.SoftwareVersionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +40,13 @@ public class SoftwareService {
                 .localVariables(createRequest.getLocalVariables())
                 .limitLicense(limitLicense)
                 .build();
+
+        SoftwareVersion version = SoftwareVersion.builder()
+                .version(createRequest.getLatestVersion())
+                .isAvailable(true)
+                .build();
+
+        software.addVersion(version);
         Software save = softwareRepository.save(software);
         return SoftwareDTO.CreateResponse.from(save);
     }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,13 @@ public class Software extends BaseEntity {
 
     @Column(name = "limit_license")
     private int limitLicense;
+
+    public void addVersion(SoftwareVersion version) {
+        if (this.versions == null)
+            this.versions = new ArrayList<>();
+        this.versions.add(version);
+        version.setSoftware(this);
+    }
 
     public void updateGlobalVariables(Map<String, Object> globalVariables) {
         this.globalVariables.clear();
