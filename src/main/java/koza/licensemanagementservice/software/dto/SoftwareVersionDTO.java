@@ -40,10 +40,6 @@ public class SoftwareVersionDTO {
 
     @Getter
     public static class UpdateRequest {
-        @NotNull(message = "소프트웨어 정보가 없습니다.")
-        @Schema(description = "소프트웨어 고유 ID", example = "1")
-        private Long softwareId;
-
         @NotBlank
         @Pattern(
                 regexp = "^[0-9]+\\.[0-9]+\\.[0-9]+$",
@@ -56,8 +52,7 @@ public class SoftwareVersionDTO {
         @Pattern(regexp = "^[a-fA-F0-9]{64}$", message = "올바른 SHA-256 해시 형식이 아닙니다.")
         private String fileHash;
 
-        @NotNull(message = "사용가능 여부는 필수입니다.")
-        private boolean isAvailable;
+        private Boolean available;
 
         @Size(max = 2048, message = "다운로드 URL의 최대 길이는 2048자 입니다.")
         @Pattern(regexp = "^$|^(https?|ftp)://.*$", message = "올바른 URL 형식이 아닙니다.")

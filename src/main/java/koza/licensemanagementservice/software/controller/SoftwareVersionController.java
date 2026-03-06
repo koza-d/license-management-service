@@ -30,4 +30,13 @@ public class SoftwareVersionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("create!!"));
     }
 
+    @Operation(summary = "소프트웨어 버전 등록")
+    @PatchMapping("/{versionId}")
+    public ResponseEntity<ApiResponse<?>> updateVersion(@AuthenticationPrincipal CustomUser user,
+                                                        @PathVariable("versionId") Long versionId,
+                                                        @RequestBody @Valid SoftwareVersionDTO.UpdateRequest request) {
+        versionService.updateVersion(user, versionId, request);
+        return ResponseEntity.ok(ApiResponse.success("update!!"));
+    }
+
 }

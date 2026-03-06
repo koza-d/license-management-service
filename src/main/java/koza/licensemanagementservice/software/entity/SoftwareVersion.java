@@ -2,11 +2,14 @@ package koza.licensemanagementservice.software.entity;
 
 import jakarta.persistence.*;
 import koza.licensemanagementservice.global.common.BaseEntity;
+import koza.licensemanagementservice.software.dto.SoftwareVersionDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @Table(name="software_version")
 @Builder
 @NoArgsConstructor
@@ -33,4 +36,11 @@ public class SoftwareVersion extends BaseEntity {
     @Column(name = "memo", length = 200)
     private String memo;
 
+    public void updateVersionInfo(SoftwareVersionDTO.UpdateRequest request) {
+        if (request.getVersion() != null) this.version = request.getVersion();
+        if (request.getFileHash() != null) this.fileHash = request.getFileHash();
+        if (request.getAvailable() != null) this.isAvailable = request.getAvailable();
+        if (request.getDownloadURL() != null) this.downloadURL = request.getDownloadURL();
+        if (request.getMemo() != null) this.memo = request.getMemo();
+    }
 }
