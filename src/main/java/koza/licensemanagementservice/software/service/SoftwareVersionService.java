@@ -44,6 +44,19 @@ public class SoftwareVersionService {
         versionRepository.save(version);
     }
 
+    @Transactional(readOnly = true)
+    public SoftwareVersionDTO.DetailResponse getVersion(CustomUser user, Long versionId) {
+        SoftwareVersion version = versionRepository.findById(versionId) // 추후 WithSoftware 로 변경
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        Software software = version.getSoftware();
+        Member owner = software.getMember();
+        if (!user.getId().equals(owner.getId()))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+
+        return SoftwareVersionDTO.DetailResponse.from(version);
+    }
+
     @Transactional
     public void updateVersion(CustomUser user, Long versionId, SoftwareVersionDTO.UpdateRequest request) {
         SoftwareVersion version = versionRepository.findById(versionId) // 추후 WithSoftware 로 변경

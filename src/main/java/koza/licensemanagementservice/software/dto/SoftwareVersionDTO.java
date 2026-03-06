@@ -78,5 +78,15 @@ public class SoftwareVersionDTO {
         private boolean isAvailable;
         private String downloadURL;
         private String memo;
+
+        public static DetailResponse from(SoftwareVersion version) {
+            return DetailResponse.builder()
+                    .version(version.getVersion())
+                    .fileHash(version.getFileHash())
+                    .isAvailable(version.isAvailable())
+                    .downloadURL(version.getDownloadURL())
+                    .memo(version.getMemo())
+                    .build();
+        }
     }
 }
