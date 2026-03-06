@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class MemberController {
     private final MemberService memberService;
 
-    @PostMapping("/")
+    @PostMapping("")
     @Operation(summary = "회원가입", description = "유저의 회원가입 API")
     public ResponseEntity<ApiResponse<?>> join(@RequestBody @Valid MemberDTO.JoinRequest request) {
         Long memberId = memberService.join(request);
