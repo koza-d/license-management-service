@@ -44,6 +44,7 @@ public class SoftwareDTO {
     @Getter
     @Builder
     public static class CreateResponse {
+        private Long id;
         private String name;
         private String latestVersion;
         private String apiKey;
@@ -52,6 +53,7 @@ public class SoftwareDTO {
         private Map<String, Object> localVariables;
         public static CreateResponse from(Software software) {
             return CreateResponse.builder()
+                    .id(software.getId())
                     .name(software.getName())
                     .latestVersion(software.getLatestVersion())
                     .apiKey(software.getApiKey())
