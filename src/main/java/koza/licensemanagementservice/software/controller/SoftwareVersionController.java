@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/software-versions")
@@ -36,6 +38,15 @@ public class SoftwareVersionController {
                                                         @PathVariable("versionId") Long versionId) {
         SoftwareVersionDTO.DetailResponse detailResponse = versionService.getVersion(user, versionId);
         ApiResponse<SoftwareVersionDTO.DetailResponse> response = ApiResponse.success(detailResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "소프트웨어 버전 목록조회")
+    @GetMapping("/software/{softwareId}")
+    public ResponseEntity<ApiResponse<?>> getVersionsBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                                @PathVariable("softwareId") Long softwareId) {
+        List<SoftwareVersionDTO.SummaryResponse> versions = versionService.getVersions(user, softwareId);
+        ApiResponse<List<SoftwareVersionDTO.SummaryResponse>> response = ApiResponse.success(versions);
         return ResponseEntity.ok(response);
     }
 

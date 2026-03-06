@@ -5,8 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import koza.licensemanagementservice.software.entity.SoftwareVersion;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.lang3.math.NumberUtils;
+
+import java.time.LocalDateTime;
 
 public class SoftwareVersionDTO {
     @Getter
@@ -64,28 +68,65 @@ public class SoftwareVersionDTO {
 
     @Getter
     @Builder
-    public static class SummaryResponse {
+    public static class SummaryResponse implements Comparable<SummaryResponse> {
+        private Long versionId;
         private String version;
         private boolean isAvailable;
         private String memo;
+        private LocalDateTime createAt;
+        private LocalDateTime updateAt;
+
+        public static SummaryResponse from(SoftwareVersion version) {
+            return SummaryResponse.builder()
+                    .versionId(version.getId())
+                    .version(version.getVersion())
+                    .isAvailable(version.isAvailable())
+                    .memo(version.getMemo())
+                    .createAt(version.getCreateAt())
+                    .updateAt(version.getUpdateAt())
+                    .build();
+        }
+
+        @Override
+        public int compareTo(SummaryResponse o) {
+            String[] vs1 = version.split("\\.");
+            String[] vs2 = o.getVersion().split("\\.");
+            int i = 0;
+
+            while (i < vs1.length || i < vs2.length) {
+                int n1 = i < vs1.length ? NumberUtils.toInt(vs1[i]) : 0;
+                int n2 = i < vs2.length ? NumberUtils.toInt(vs2[i]) : 0;
+                if (n1 != n2) {
+                    return Integer.compare(n1, n2);
+                }
+                i++;
+            }
+            return 0;
+        }
     }
 
     @Getter
     @Builder
     public static class DetailResponse {
+        private Long versionId;
         private String version;
         private String fileHash;
         private boolean isAvailable;
         private String downloadURL;
         private String memo;
+        private LocalDateTime createAt;
+        private LocalDateTime updateAt;
 
         public static DetailResponse from(SoftwareVersion version) {
             return DetailResponse.builder()
+                    .versionId(version.getId())
                     .version(version.getVersion())
                     .fileHash(version.getFileHash())
                     .isAvailable(version.isAvailable())
                     .downloadURL(version.getDownloadURL())
                     .memo(version.getMemo())
+                    .createAt(version.getCreateAt())
+                    .updateAt(version.getUpdateAt())
                     .build();
         }
     }

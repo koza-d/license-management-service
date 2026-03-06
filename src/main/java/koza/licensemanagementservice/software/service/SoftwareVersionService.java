@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class SoftwareVersionService {
@@ -55,6 +58,21 @@ public class SoftwareVersionService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         return SoftwareVersionDTO.DetailResponse.from(version);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SoftwareVersionDTO.SummaryResponse> getVersions(CustomUser user, Long softwareId) {
+        Software software = softwareRepository.findByIdWithMember(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        Member owner = software.getMember();
+        if (!user.getId().equals(owner.getId()))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+
+        return versionRepository.findBySoftwareId(softwareId).stream()
+                .map(SoftwareVersionDTO.SummaryResponse::from)
+                .sorted(Comparator.reverseOrder()).toList();
+
     }
 
     @Transactional
