@@ -16,7 +16,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -68,8 +70,11 @@ public class LicenseController {
     @Operation(summary = "라이센스 연장 전 확인용", description = "선택한 연장할 라이센스 확인용 API")
     @GetMapping("/bulk-extend/preview")
     public ResponseEntity<ApiResponse<?>> getPreviewExtendLicense(@AuthenticationPrincipal CustomUser user,
-                                                                        @RequestParam List<Long> request) {
-        List<LicenseDTO.SummaryResponse> summaryLicenses = licenseService.getPreviewExtendLicense(user, request);
+                                                                        @RequestParam(name = "request") String request) {
+        List<Long> ids = Arrays.stream(request.split(","))
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+        List<LicenseDTO.SummaryResponse> summaryLicenses = licenseService.getPreviewExtendLicense(user, ids);
         ApiResponse<?> response = ApiResponse.success(summaryLicenses);
         return ResponseEntity.ok(response);
 
