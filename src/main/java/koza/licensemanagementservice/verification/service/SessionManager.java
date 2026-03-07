@@ -37,10 +37,12 @@ public class SessionManager {
 
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
-    public String createSession(Long licenseId, LocalDateTime expiredAt) {
+    public String createSession(Long licenseId, String ipAddress, String userAgent, LocalDateTime expiredAt) {
         String sessionId = createNewSessionId();
         SessionValue sessionValue = SessionValue.builder()
                 .licenseId(licenseId)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
                 .expiredAt(expiredAt)
                 .verifyAt(LocalDateTime.now())
                 .build();

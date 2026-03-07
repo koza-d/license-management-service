@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.verification.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.license.entity.License;
@@ -30,7 +31,7 @@ public class VerificationService {
     private final SessionLogRepository sessionLogRepository;
 
     @Transactional
-    public VerifyResponse verify(VerifyRequest request) {
+    public VerifyResponse verify(VerifyRequest request, HttpServletRequest servletRequest) {
         String licenseKey = request.getLicenseKey();
         License license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
@@ -45,7 +46,9 @@ public class VerificationService {
         if (currentSessionId != null && sessionManager.isActive(currentSessionId))
             throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
 
-        String sessionId = sessionManager.createSession(license.getId(), license.getExpiredAt());
+        String ipAddress = parseIpAddress(servletRequest);
+        String userAgent = servletRequest.getHeader("User-Agent");
+        String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt());
 
         license.verify(sessionId);
 
@@ -112,5 +115,20 @@ public class VerificationService {
                 .releaseType(releaseType)
                 .build();
         sessionLogRepository.save(log);
+    }
+
+    private String parseIpAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr(); // 기본 IP 가져오기
+        }
+        return ip;
     }
 }

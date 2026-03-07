@@ -2,6 +2,7 @@ package koza.licensemanagementservice.verification.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.verification.dto.request.HeartbeatRequest;
 import koza.licensemanagementservice.verification.dto.request.ReleaseRequest;
@@ -25,8 +26,9 @@ public class VerificationController {
 
     @Operation(summary = "라이센스 인증", description = "세션이 생성되는 기능이 있으며, 프로그램 최초 실행 시 호출하는 라이센스 인증 API")
     @PostMapping("/verify")
-    public ResponseEntity<ApiResponse<?>> verify(@RequestBody VerifyRequest request) {
-        VerifyResponse verifyResponse = verificationService.verify(request);
+    public ResponseEntity<ApiResponse<?>> verify(@RequestBody VerifyRequest request,
+                                                 HttpServletRequest servletRequest) {
+        VerifyResponse verifyResponse = verificationService.verify(request, servletRequest);
         ApiResponse<VerifyResponse> response = ApiResponse.success(verifyResponse);
         return ResponseEntity.ok(response);
     }

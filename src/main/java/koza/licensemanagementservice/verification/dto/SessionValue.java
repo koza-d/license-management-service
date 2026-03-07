@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @Builder
 public class SessionValue {
     private Long licenseId;
+    private String ipAddress;
+    private String userAgent;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime expiredAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
