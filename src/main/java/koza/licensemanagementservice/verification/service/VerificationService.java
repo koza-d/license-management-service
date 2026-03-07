@@ -40,7 +40,7 @@ public class VerificationService {
         if (license.getExpiredAt().isBefore(LocalDateTime.now()))
             throw new BusinessException(ErrorCode.EXPIRED_LICENSE);
 
-        String currentSessionId = license.getCurrentSessionId();
+        String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
 
         // 사용중인 라이센스인 경우 연결 거부
         if (currentSessionId != null && sessionManager.isActive(currentSessionId))

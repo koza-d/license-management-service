@@ -34,8 +34,6 @@ public class License extends BaseEntity {
     private String memo;
     @Column(name = "license_key", length = 128, nullable = false)
     private String licenseKey;
-    @Column(name = "current_session_id", length = 32)
-    private String currentSessionId;
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
     @Column(name = "latest_active_at")
@@ -92,7 +90,6 @@ public class License extends BaseEntity {
     }
 
     public void verify(String sessionId) {
-        this.currentSessionId = sessionId;
         this.latestActiveAt = LocalDateTime.now();
     }
 

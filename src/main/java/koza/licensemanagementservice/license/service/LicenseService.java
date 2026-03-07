@@ -66,8 +66,8 @@ public class LicenseService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         Map<String, Object> finalVars = license.getMergeLocalVariables();
-
-        LocalDateTime latestActiveAt = sessionManager.getLatestActiveAt(license.getCurrentSessionId())
+        String sessionId = sessionManager.getSessionIdByLicenseId(licenseId);
+        LocalDateTime latestActiveAt = sessionManager.getLatestActiveAt(sessionId)
                 .orElseGet(license::getLatestActiveAt);
 
         return LicenseDTO.DetailResponse.of(license, latestActiveAt, finalVars);
