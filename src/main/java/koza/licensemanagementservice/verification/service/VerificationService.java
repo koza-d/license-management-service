@@ -69,7 +69,8 @@ public class VerificationService {
     public HeartbeatResponse heartbeat(HeartbeatRequest request) {
         String sessionId = request.getSessionId();
         sessionManager.extendSession(sessionId); // 선 연장, 후 시간계산 -> 시간 계산 후 만료되는 것 방지
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
 
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, sessionValue.getExpiredAt());
@@ -80,22 +81,23 @@ public class VerificationService {
     @Transactional
     public void release(ReleaseRequest request) {
         String sessionId = request.getSessionId();
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
-        processRelease(sessionId);
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+        processRelease(sessionId, sessionValue.getLicenseId());
         saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
     }
 
 
     @Transactional
     public void revokeExpire(String sessionId) { // 만료된 세션 처리
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
-        processRelease(sessionId);
+        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+        processRelease(sessionId, sessionValue.getLicenseId());
         saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
     }
 
-    private void processRelease(String sessionId) {
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId);
-        License license = licenseRepository.findById(sessionValue.getLicenseId()).orElseGet(() -> {
+    private void processRelease(String sessionId, Long licenseId) {
+        License license = licenseRepository.findById(licenseId).orElseGet(() -> {
             log.warn("세션에 저장된 라이센스 ID가 잘못됐습니다. SessionId: {}", sessionId);
             return null;
         });

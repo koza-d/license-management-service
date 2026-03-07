@@ -50,9 +50,8 @@ public class SessionManager {
         return sessionId;
     }
 
-    public SessionValue getSessionValue(String sessionId) {
-        return sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+    public Optional<SessionValue> getSessionValue(String sessionId) {
+        return sessionRepository.findById(sessionId);
     }
 
     public String getSessionIdByLicenseId(Long licenseId) {
