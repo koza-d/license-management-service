@@ -10,11 +10,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -46,19 +43,6 @@ public class SessionRepositoryImpl implements SessionRepository {
     public String findSessionIdByLicenseId(Long licenseId) {
         String licenseKey = getLicenseKeyFormat(licenseId);
         return redisTemplate.opsForValue().get(licenseKey);
-    }
-
-    public Optional<LocalDateTime> findLatestActiveAtByIdAndTTL(String sessionId, Duration ttl) {
-        if (sessionId == null || sessionId.isEmpty())
-            return Optional.empty();
-
-        Long remainExpire = redisTemplate.getExpire(getTriggerKeyFormat(sessionId), TimeUnit.MILLISECONDS);
-        if (remainExpire == null || remainExpire == -2) // Redis의 예상치못한 오류거나 키가 없는경우
-            return Optional.empty();
-
-        long activeDurationMillis = ttl.toMillis() - remainExpire; // 마지막 활성화에서 경과된 ms
-        LocalDateTime latestActiveAt = LocalDateTime.now().minus(activeDurationMillis, ChronoUnit.MILLIS);
-        return Optional.of(latestActiveAt);
     }
 
     public boolean hasSession(String sessionId) {

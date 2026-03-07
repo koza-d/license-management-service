@@ -31,17 +31,27 @@ public class SessionManager {
     public String createSession(Long licenseId, String ipAddress, String userAgent, LocalDateTime expiredAt) {
         String sessionId = createNewSessionId();
         SessionValue sessionValue = SessionValue.builder()
+                .sessionId(sessionId)
                 .licenseId(licenseId)
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .expiredAt(expiredAt)
                 .verifyAt(LocalDateTime.now())
+                .latestActiveAt(LocalDateTime.now())
                 .build();
         sessionRepository.save(sessionId, sessionValue, SESSION_TTL);
         return sessionId;
     }
 
-    public Optional<SessionValue> getSessionValue(String sessionId) {
+    public Optional<SessionValue> getSessionByLicenseId(Long licenseId) {
+        String sessionId = sessionRepository.findSessionIdByLicenseId(licenseId);
+        if (sessionId == null)
+            return Optional.empty();
+
+        return sessionRepository.findById(sessionId);
+    }
+
+    public Optional<SessionValue> getSession(String sessionId) {
         return sessionRepository.findById(sessionId);
     }
 
@@ -49,20 +59,16 @@ public class SessionManager {
         return sessionRepository.findSessionIdByLicenseId(licenseId);
     }
 
-
-    public Optional<LocalDateTime> getLatestActiveAt(String sessionId) {
-        return sessionRepository.findLatestActiveAtByIdAndTTL(sessionId, SESSION_TTL);
-    }
-
     public void extendSession(String sessionId) {
         boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
         if (!suc)
             throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-    }
-
-
-    public SessionStatus getStatus(String sessionId) {
-        return isActive(sessionId) ? SessionStatus.CONNECTED : SessionStatus.DISCONNECTED;
+        else {
+            SessionValue session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+            session.setLatestActiveAt(LocalDateTime.now());
+            sessionRepository.save(sessionId, session, SESSION_TTL);
+        }
     }
 
     public boolean isActive(String sessionId) {

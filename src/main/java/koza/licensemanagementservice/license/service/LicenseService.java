@@ -8,6 +8,7 @@ import koza.licensemanagementservice.license.entity.License;
 import koza.licensemanagementservice.license.entity.LicenseStatus;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.session.dto.SessionValue;
 import koza.licensemanagementservice.software.entity.Software;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.session.service.SessionManager;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,9 +68,11 @@ public class LicenseService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         Map<String, Object> finalVars = license.getMergeLocalVariables();
-        String sessionId = sessionManager.getSessionIdByLicenseId(licenseId);
-        LocalDateTime latestActiveAt = sessionManager.getLatestActiveAt(sessionId)
-                .orElseGet(license::getLatestActiveAt);
+
+        Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(licenseId);
+        LocalDateTime latestActiveAt = license.getLatestActiveAt();
+        if (sessionOptional.isPresent())
+            latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
         return LicenseDTO.DetailResponse.of(license, latestActiveAt, finalVars);
     }

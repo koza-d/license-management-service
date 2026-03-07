@@ -51,7 +51,7 @@ public class VerificationService {
         String userAgent = servletRequest.getHeader("User-Agent");
         String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt());
 
-        license.verify(sessionId);
+        license.verify();
 
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, license.getExpiredAt());
@@ -70,7 +70,7 @@ public class VerificationService {
     public HeartbeatResponse heartbeat(HeartbeatRequest request) {
         String sessionId = request.getSessionId();
         sessionManager.extendSession(sessionId); // 선 연장, 후 시간계산 -> 시간 계산 후 만료되는 것 방지
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+        SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
 
         LocalDateTime now = LocalDateTime.now();
@@ -82,7 +82,7 @@ public class VerificationService {
     @Transactional
     public void release(ReleaseRequest request) {
         String sessionId = request.getSessionId();
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+        SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
         processRelease(sessionId, sessionValue.getLicenseId());
         saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
@@ -91,7 +91,7 @@ public class VerificationService {
 
     @Transactional
     public void revokeExpire(String sessionId) { // 만료된 세션 처리
-        SessionValue sessionValue = sessionManager.getSessionValue(sessionId)
+        SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
         processRelease(sessionId, sessionValue.getLicenseId());
         saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
