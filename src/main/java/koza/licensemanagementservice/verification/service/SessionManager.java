@@ -55,6 +55,11 @@ public class SessionManager {
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
     }
 
+    public String getSessionIdByLicenseId(Long licenseId) {
+        return sessionRepository.findSessionIdByLicenseId(licenseId);
+    }
+
+
     public Optional<LocalDateTime> getLatestActiveAt(String sessionId) {
         return sessionRepository.findLatestActiveAtByIdAndTTL(sessionId, SESSION_TTL);
     }

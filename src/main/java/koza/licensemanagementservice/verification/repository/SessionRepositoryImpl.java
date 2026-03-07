@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class SessionRepositoryImpl implements SessionRepository {
     public static final String SESSION_KEY_PREFIX = "session";
+    public static final String SESSION_LICENSE_PREFIX = "license";
     public static final String SESSION_TRIGGER_PREFIX = "trigger";
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -30,8 +31,10 @@ public class SessionRepositoryImpl implements SessionRepository {
     public void save(String sessionId, SessionValue sessionValue, Duration ttl) {
         String value = toJson(sessionValue);
         String sessionKey = getSessionKeyFormat(sessionId);
+        String licenseKey = getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
         redisTemplate.opsForValue().set(sessionKey, value);
+        redisTemplate.opsForValue().set(licenseKey, sessionId);
         redisTemplate.opsForValue().set(triggerKey, "", ttl);
     }
 
@@ -39,6 +42,12 @@ public class SessionRepositoryImpl implements SessionRepository {
         String sessionKey = getSessionKeyFormat(sessionId);
         String json = redisTemplate.opsForValue().get(sessionKey);
         return Optional.ofNullable(json).map(this::fromJson);
+    }
+
+    @Override
+    public String findSessionIdByLicenseId(Long licenseId) {
+        String licenseKey = getLicenseKeyFormat(licenseId);
+        return redisTemplate.opsForValue().get(licenseKey);
     }
 
     public Optional<LocalDateTime> findLatestActiveAtByIdAndTTL(String sessionId, Duration ttl) {
@@ -66,13 +75,19 @@ public class SessionRepositoryImpl implements SessionRepository {
     }
 
     public void delete(String sessionId) {
+        SessionValue sessionValue = findById(sessionId).get();
         String sessionKey = getSessionKeyFormat(sessionId);
+        String licenseKey = sessionValue == null ? "" : getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
-        redisTemplate.delete(List.of(sessionKey, triggerKey));
+        redisTemplate.delete(List.of(sessionKey, licenseKey, triggerKey));
     }
 
     private String getSessionKeyFormat(String sessionId) {
         return String.format("%s:%s", SESSION_KEY_PREFIX, sessionId);
+    }
+
+    private String getLicenseKeyFormat(Long licenseId) {
+        return String.format("%s:%s", SESSION_LICENSE_PREFIX, licenseId);
     }
 
     private String getTriggerKeyFormat(String sessionId) {

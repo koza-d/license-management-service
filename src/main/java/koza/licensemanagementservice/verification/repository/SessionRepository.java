@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface SessionRepository {
     void save(String sessionId, SessionValue sessionValue, Duration ttl);
     Optional<SessionValue> findById(String sessionId);
+    String findSessionIdByLicenseId(Long licenseId);
     Optional<LocalDateTime> findLatestActiveAtByIdAndTTL(String sessionId, Duration ttl);
     boolean hasSession(String sessionId);
     boolean extendTTL(String sessionId, Duration ttl);
