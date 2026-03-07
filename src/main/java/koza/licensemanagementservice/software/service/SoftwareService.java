@@ -64,12 +64,12 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SoftwareDTO.SummaryResponse> getSoftwareSummaryByMe(CustomUser user, String search, Pageable pageable) {
+    public Page<SoftwareDTO.SummaryResponse> getSoftwareSummaryByMe(CustomUser user, String search, boolean activeOnly, Pageable pageable) {
         // 로그인한 유저가 보유한 소프트웨어 목록
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        return softwareRepository.findSummaryByMemberId(member.getId(), search,pageable);
+        return softwareRepository.findSummaryByMemberId(member.getId(), search, activeOnly,pageable);
     }
 
     @Transactional

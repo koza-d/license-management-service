@@ -43,8 +43,9 @@ public class SoftwareController {
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getSoftwareByMe(@AuthenticationPrincipal CustomUser user,
                                                           @RequestParam(required = false) String search,
+                                                          @RequestParam(required = false, name = "activeOnly") boolean activeOnly,
                                                           Pageable pageable) {
-        Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, pageable);
+        Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, activeOnly, pageable);
         ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }

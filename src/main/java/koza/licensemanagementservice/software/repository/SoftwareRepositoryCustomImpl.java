@@ -4,6 +4,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.software.dto.QSoftwareDTO_SummaryResponse;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
@@ -36,13 +37,14 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
-    public Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, Pageable pageable) {
+    public Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable) {
         // 추후 Repository가 복잡해지면 조회용 SoftwareQueryRepository로 분리
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(software.member.id.eq(memberId));
         if (search != null)
             builder.and(software.name.contains(search));
-        List<SoftwareDTO.SummaryResponse> content = queryFactory
+
+        JPAQuery<SoftwareDTO.SummaryResponse> query = queryFactory
                 .select(new QSoftwareDTO_SummaryResponse(
                         software.id,
                         software.name,
@@ -54,7 +56,12 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .from(software)
                 .leftJoin(license).on(license.software.eq(software))
                 .where(builder)
-                .groupBy(software.id)
+                .groupBy(software.id);
+
+        if (activeOnly)
+            query.having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
+
+        List<SoftwareDTO.SummaryResponse> content = query
                 .orderBy(getOrderSpecifier(pageable.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

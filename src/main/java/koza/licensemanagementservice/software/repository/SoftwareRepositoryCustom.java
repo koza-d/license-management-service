@@ -10,5 +10,5 @@ import java.util.Optional;
 
 public interface SoftwareRepositoryCustom {
     Optional<Software> findByIdWithMember(Long softwareId);
-    Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, Pageable pageable);
+    Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable);
 }
