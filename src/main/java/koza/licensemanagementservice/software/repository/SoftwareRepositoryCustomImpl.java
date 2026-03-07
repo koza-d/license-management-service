@@ -48,6 +48,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         software.name,
                         software.latestVersion,
                         license.count().intValue(),
+                        license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().intValue(),
                         software.createAt
                 ))
                 .from(software)

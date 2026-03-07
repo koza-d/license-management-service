@@ -129,14 +129,16 @@ public class SoftwareDTO {
         private String name;
         private String version;
         private int licenseCount;
+        private int activeSessionCount;
         private LocalDateTime createAt;
 
         @QueryProjection
-        public SummaryResponse(Long id, String name, String version, int licenseCount, LocalDateTime createAt) {
+        public SummaryResponse(Long id, String name, String version, int licenseCount, int activeSessionCount, LocalDateTime createAt) {
             this.id = id;
             this.name = name;
             this.version = version;
             this.licenseCount = licenseCount;
+            this.activeSessionCount = activeSessionCount;
             this.createAt = createAt;
         }
 
