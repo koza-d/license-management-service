@@ -49,4 +49,17 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .leftJoin(software.member, member)
                 .fetch();
     }
+
+    @Override
+    public List<License> findByMemberId(Long memberId) {
+        return jpaQueryFactory
+                .selectFrom(license)
+                .where(member.id.eq(memberId))
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .fetch()
+                ;
+    }
+
+
 }
