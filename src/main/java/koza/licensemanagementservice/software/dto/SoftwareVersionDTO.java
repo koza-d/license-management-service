@@ -71,7 +71,9 @@ public class SoftwareVersionDTO {
     public static class SummaryResponse implements Comparable<SummaryResponse> {
         private Long versionId;
         private String version;
+        private String fileHash;
         private boolean isAvailable;
+        private String downloadURL;
         private String memo;
         private LocalDateTime createAt;
         private LocalDateTime updateAt;
@@ -80,7 +82,9 @@ public class SoftwareVersionDTO {
             return SummaryResponse.builder()
                     .versionId(version.getId())
                     .version(version.getVersion())
+                    .fileHash(version.getFileHash())
                     .isAvailable(version.isAvailable())
+                    .downloadURL(version.getDownloadURL())
                     .memo(version.getMemo())
                     .createAt(version.getCreateAt())
                     .updateAt(version.getUpdateAt())
