@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface LicenseRepository extends JpaRepository<License, Long>, LicenseRepositoryCustom {
     Optional<License> findByLicenseKey(String licenseKey);
     Page<License> findBySoftwareId(Long softwareId, Pageable pageable);
+    Page<License> findBySoftwareIdAndHasActiveSessionIsTrue(Long softwareId, Pageable pageable);
+    Page<License> findBySoftware_MemberIdAndHasActiveSessionIsTrue(Long memberId, Pageable pageable);
     List<License> findByIdIn(List<Long> id);
     int countBySoftwareId(Long softwareId);
     boolean existsByLicenseKey(String licenseKey);
