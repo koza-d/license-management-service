@@ -51,9 +51,8 @@ public class LicenseService {
                 .status(LicenseStatus.ACTIVE)
                 .build();
 
-        licenseRepository.saveAndFlush(license);
-
-        return LicenseDTO.IssueResponse.from(license);
+        License save = licenseRepository.saveAndFlush(license);
+        return LicenseDTO.IssueResponse.from(save);
     }
 
     @Transactional(readOnly = true)

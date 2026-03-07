@@ -130,6 +130,7 @@ public class LicenseDTO {
     @Getter
     @Builder
     public static class IssueResponse {
+        private Long id;
         private String softwareName;
         private String licenseName;
         private String memo;
@@ -139,6 +140,7 @@ public class LicenseDTO {
 
         public static IssueResponse from(License license) {
             return IssueResponse.builder()
+                    .id(license.getId())
                     .softwareName(license.getSoftware().getName())
                     .licenseName(license.getName())
                     .memo(license.getMemo())
@@ -153,6 +155,7 @@ public class LicenseDTO {
     @Getter
     @Builder
     public static class DetailResponse {
+        private Long id;
         private String softwareName;
         private String softwareLatestVersion;
         private String licenseName;
@@ -165,12 +168,14 @@ public class LicenseDTO {
         private Map<String, Object> modifiedVariables; // 라이센스 층에서 수정된 지역변수
         private Map<String, Object> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
         private String status;
+        private LocalDateTime createAt;
 
         public static DetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, Object> finalVariables) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
 
             Software software = license.getSoftware();
             return DetailResponse.builder()
+                    .id(license.getId())
                     .softwareName(software.getName())
                     .softwareLatestVersion(software.getLatestVersion())
                     .licenseName(license.getName())
@@ -183,6 +188,7 @@ public class LicenseDTO {
                     .defaultVariables(software.getLocalVariables())
                     .modifiedVariables(license.getRawLocalVariables())
                     .finalVariables(finalVariables)
+                    .createAt(license.getCreateAt())
                     .build();
         }
 
