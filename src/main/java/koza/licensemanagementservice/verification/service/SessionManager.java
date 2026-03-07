@@ -25,10 +25,10 @@ import java.util.UUID;
 
 /*
  * 세션 관리 방식
- * 준비) Trigger 키 (TTL 만료 이벤트 용), 세션 키 (실 데이터 저장 용)
- * 1) 세션 등록 시 : Trigger 키(TTL 부여), 세션 키(영구 TTL) 저장
- * 2) 세션 정상 /release 시 : Trigger 키, 세션 키 같이 제거
- * 3) 세션 TTL 만료 시 : Trigger 키 만료 이벤트 수신 -> 세션 키 제거
+ * 준비) Trigger 키 (TTL 만료 이벤트 용), 세션 키 (실 데이터 저장 용), License 키(sessionId 역참조용)
+ * 1) 세션 등록 시 : Trigger 키(TTL 부여), 세션 키, License 키(영구 TTL) 저장
+ * 2) 세션 정상 /release 시 : Trigger 키, 세션 키, License 키 같이 제거
+ * 3) 세션 TTL 만료 시 : Trigger 키 만료 이벤트 수신 -> 세션 키, License 키 제거
  */
 @Component
 @RequiredArgsConstructor
