@@ -26,7 +26,7 @@ public enum ErrorCode {
     ALREADY_USE_LICENSE(409, "VERIFICATION_003", "이미 사용 중인 라이센스 입니다."),
 
     // 세션 로직 예외
-    EXPIRED_SESSION(401, "SESSION_001", "만료된 세션입니다."),
+    EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
 
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다.");
