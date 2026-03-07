@@ -1,5 +1,9 @@
 package koza.licensemanagementservice.software.repository;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.software.dto.QSoftwareDTO_SummaryResponse;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
@@ -8,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,9 +36,12 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
-    public Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, Pageable pageable) {
+    public Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, Pageable pageable) {
         // 추후 Repository가 복잡해지면 조회용 SoftwareQueryRepository로 분리
-        //
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(software.member.id.eq(memberId));
+        if (search != null)
+            builder.and(software.name.contains(search));
         List<SoftwareDTO.SummaryResponse> content = queryFactory
                 .select(new QSoftwareDTO_SummaryResponse(
                         software.id,
@@ -43,8 +52,9 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 ))
                 .from(software)
                 .leftJoin(license).on(license.software.eq(software))
-                .where(software.member.id.eq(memberId))
+                .where(builder)
                 .groupBy(software.id)
+                .orderBy(getOrderSpecifier(pageable.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -52,8 +62,21 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
         Long total = queryFactory
                 .select(software.count())
                 .from(software)
-                .where(software.member.id.eq(memberId))
+                .where(builder)
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
+        List<OrderSpecifier> orders = new ArrayList<>();
+        PathBuilder<Software> entityPath = new PathBuilder<>(Software.class, "software");
+
+        for (Sort.Order order : sort) {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            String prop = order.getProperty();
+            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
+        }
+
+        return orders.toArray(OrderSpecifier[]::new);
     }
 }

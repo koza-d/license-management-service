@@ -41,8 +41,10 @@ public class SoftwareController {
 
     @Operation(summary = "소프트웨어 목록 조회", description = "로그인 유저의 소프트웨어 목록 조회")
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getSoftwareByMe(@AuthenticationPrincipal CustomUser user, Pageable pageable) {
-        Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, pageable);
+    public ResponseEntity<ApiResponse<?>> getSoftwareByMe(@AuthenticationPrincipal CustomUser user,
+                                                          @RequestParam(required = false) String search,
+                                                          Pageable pageable) {
+        Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, pageable);
         ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }
