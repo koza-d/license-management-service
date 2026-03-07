@@ -10,7 +10,7 @@ import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.member.dto.CustomUser;
 import koza.licensemanagementservice.software.entity.Software;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
-import koza.licensemanagementservice.verification.service.SessionManager;
+import koza.licensemanagementservice.session.service.SessionManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

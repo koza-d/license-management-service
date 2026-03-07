@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.verification.status;
+package koza.licensemanagementservice.session.status;
 
 public enum SessionStatus {
     CONNECTED,

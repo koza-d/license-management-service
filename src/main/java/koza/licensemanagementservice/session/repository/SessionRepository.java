@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.verification.repository;
+package koza.licensemanagementservice.session.repository;
 
-import koza.licensemanagementservice.verification.dto.SessionValue;
+import koza.licensemanagementservice.session.dto.SessionValue;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;

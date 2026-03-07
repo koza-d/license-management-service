@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.global.redis;
 
-import koza.licensemanagementservice.verification.repository.SessionRepositoryImpl;
+import koza.licensemanagementservice.session.repository.SessionRepositoryImpl;
 import koza.licensemanagementservice.verification.service.VerificationService;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;

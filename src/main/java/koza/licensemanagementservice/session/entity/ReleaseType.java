@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.verification.entity;
+package koza.licensemanagementservice.session.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

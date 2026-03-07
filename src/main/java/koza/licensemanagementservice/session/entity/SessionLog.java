@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.verification.entity;
+package koza.licensemanagementservice.session.entity;
 
 import jakarta.persistence.*;
 import koza.licensemanagementservice.license.entity.License;

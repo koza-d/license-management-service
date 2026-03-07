@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.verification.dto;
+package koza.licensemanagementservice.session.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;

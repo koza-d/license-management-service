@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.verification.repository;
+package koza.licensemanagementservice.session.repository;
 
-import koza.licensemanagementservice.verification.entity.SessionLog;
+import koza.licensemanagementservice.session.entity.SessionLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

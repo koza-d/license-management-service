@@ -1,21 +1,12 @@
-package koza.licensemanagementservice.verification.service;
+package koza.licensemanagementservice.session.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.license.entity.License;
-import koza.licensemanagementservice.license.repository.LicenseRepository;
-import koza.licensemanagementservice.verification.dto.SessionValue;
-import koza.licensemanagementservice.verification.entity.ReleaseType;
-import koza.licensemanagementservice.verification.entity.SessionLog;
-import koza.licensemanagementservice.verification.repository.SessionLogRepository;
-import koza.licensemanagementservice.verification.repository.SessionRepository;
-import koza.licensemanagementservice.verification.status.SessionStatus;
+import koza.licensemanagementservice.session.dto.SessionValue;
+import koza.licensemanagementservice.session.repository.SessionRepository;
+import koza.licensemanagementservice.session.status.SessionStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
