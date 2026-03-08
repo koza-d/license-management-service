@@ -29,7 +29,6 @@ public class SessionService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
-    private final SessionLogRepository logRepository;
 
     @Transactional(readOnly = true)
     public Page<SessionResponse> getAllByMember(CustomUser user, Pageable pageable) {
@@ -55,7 +54,7 @@ public class SessionService {
                     licenseRepository.findByIdWithSoftwareAndMember(session.getLicenseId()).ifPresent(license -> {
                         if (!user.getId().equals(license.getSoftware().getMember().getId()))
                             throw new BusinessException(ErrorCode.ACCESS_DENIED);
-                        terminateProcess(session, license);
+                        terminateProcess(session.getSessionId(), license);
                     });
                 }
         );
@@ -64,11 +63,11 @@ public class SessionService {
     @Transactional
     public void terminateBulk(CustomUser user, TerminateBulkRequest request) {
         List<String> sessionIds = request.getIds();
-        Map<Long, SessionValue> sessions = new HashMap<>();
+        Map<Long, String> sessions = new HashMap<>();
 
         sessionIds.forEach(sessionId -> {
                     sessionManager.getSession(sessionId).ifPresent(
-                            session -> sessions.put(session.getLicenseId(), session)
+                            session -> sessions.put(session.getLicenseId(), session.getSessionId())
                     );
                 }
         );
@@ -77,29 +76,19 @@ public class SessionService {
                             if (!user.getId().equals(license.getSoftware().getMember().getId()))
                                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
-                            SessionValue session = sessions.get(license.getId());
-                            terminateProcess(session, license);
+                            terminateProcess(sessions.get(license.getId()), license);
                         }
                 );
     }
 
 
     @Transactional
-    protected void terminateProcess(SessionValue session, License license) {
-        if (license == null || session == null)
+    protected void terminateProcess(String sessionId, License license) {
+        if (license == null)
             return;
 
-        sessionManager.releaseSession(session.getSessionId());
         license.release();
-
-        SessionLog log = SessionLog.builder()
-                .sessionId(session.getSessionId())
-                .license(license)
-                .verifyAt(session.getVerifyAt())
-                .releaseAt(LocalDateTime.now())
-                .releaseType(ReleaseType.FORCE_CLOSE)
-                .build();
-        logRepository.save(log);
+        sessionManager.releaseSession(sessionId, license, ReleaseType.FORCE_CLOSE);
     }
 
     private Page<SessionResponse> getSessionResponses(Pageable pageable, Page<License> licenses) {

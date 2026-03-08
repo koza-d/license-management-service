@@ -84,8 +84,7 @@ public class VerificationService {
         String sessionId = request.getSessionId();
         SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
-        processRelease(sessionId, sessionValue.getLicenseId());
-        saveLog(sessionId, sessionValue, ReleaseType.NORMAL);
+        processRelease(sessionId, sessionValue.getLicenseId(), ReleaseType.NORMAL);
     }
 
 
@@ -93,11 +92,10 @@ public class VerificationService {
     public void revokeExpire(String sessionId) { // 만료된 세션 처리
         SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
-        processRelease(sessionId, sessionValue.getLicenseId());
-        saveLog(sessionId, sessionValue, ReleaseType.TIMEOUT);
+        processRelease(sessionId, sessionValue.getLicenseId(), ReleaseType.TIMEOUT);
     }
 
-    private void processRelease(String sessionId, Long licenseId) {
+    private void processRelease(String sessionId, Long licenseId, ReleaseType releaseType) {
         License license = licenseRepository.findById(licenseId).orElseGet(() -> {
             log.warn("세션에 저장된 라이센스 ID가 잘못됐습니다. SessionId: {}", sessionId);
             return null;
@@ -105,19 +103,7 @@ public class VerificationService {
         if (license == null) return;
 
         license.release();
-        sessionManager.releaseSession(sessionId);
-    }
-
-    private void saveLog(String sessionId, SessionValue sessionValue, ReleaseType releaseType) {
-        License proxyLicense = licenseRepository.getReferenceById(sessionValue.getLicenseId()); // id 제외한 거 불러오면 X
-        SessionLog log = SessionLog.builder()
-                .license(proxyLicense)
-                .sessionId(sessionId)
-                .verifyAt(sessionValue.getVerifyAt())
-                .releaseAt(LocalDateTime.now())
-                .releaseType(releaseType)
-                .build();
-        sessionLogRepository.save(log);
+        sessionManager.releaseSession(sessionId, license, releaseType);
     }
 
     private String parseIpAddress(HttpServletRequest request) {

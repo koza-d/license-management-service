@@ -2,9 +2,14 @@ package koza.licensemanagementservice.session.service;
 
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
+import koza.licensemanagementservice.license.entity.License;
 import koza.licensemanagementservice.session.dto.SessionValue;
+import koza.licensemanagementservice.session.entity.ReleaseType;
+import koza.licensemanagementservice.session.entity.SessionLog;
+import koza.licensemanagementservice.session.repository.SessionLogRepository;
 import koza.licensemanagementservice.session.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -22,8 +27,10 @@ import java.util.UUID;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SessionManager {
     private final SessionRepository sessionRepository;
+    private final SessionLogRepository logRepository;
 
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
@@ -74,8 +81,22 @@ public class SessionManager {
         return sessionRepository.hasSession(sessionId);
     }
 
-    public void releaseSession(String sessionId) {
-        sessionRepository.delete(sessionId);
+    public void releaseSession(String sessionId, License license, ReleaseType releaseType) {
+        SessionValue session = getSession(sessionId).orElse(null);
+        if (session == null) {
+            log.warn("세션 해제 중 세션을 찾을 수 없습니다. sessionId = {} ", sessionId);
+            return;
+        }
+
+        sessionRepository.delete(session.getSessionId());
+        SessionLog log = SessionLog.builder()
+                .sessionId(session.getSessionId())
+                .license(license)
+                .verifyAt(session.getVerifyAt())
+                .releaseAt(LocalDateTime.now())
+                .releaseType(releaseType)
+                .build();
+        logRepository.save(log);
     }
 
     private String createNewSessionId() {
