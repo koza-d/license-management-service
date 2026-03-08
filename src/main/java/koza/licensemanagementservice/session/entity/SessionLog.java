@@ -27,6 +27,12 @@ public class SessionLog {
     private License license;
 
     @Column(nullable = false)
+    private String ipAddress;
+
+    @Column(nullable = false)
+    private String userAgent;
+
+    @Column(nullable = false)
     private LocalDateTime verifyAt;
 
     @Column(nullable = false)

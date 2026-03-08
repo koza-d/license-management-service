@@ -92,6 +92,8 @@ public class SessionManager {
         SessionLog log = SessionLog.builder()
                 .sessionId(session.getSessionId())
                 .license(license)
+                .ipAddress(session.getIpAddress())
+                .userAgent(session.getUserAgent())
                 .verifyAt(session.getVerifyAt())
                 .releaseAt(LocalDateTime.now())
                 .releaseType(releaseType)
