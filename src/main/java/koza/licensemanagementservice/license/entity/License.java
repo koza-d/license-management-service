@@ -59,6 +59,10 @@ public class License extends BaseEntity {
         this.memo = memo;
     }
 
+    public void changeStatus(LicenseStatus status) {
+        this.status = status;
+    }
+
     /**
      * 소프트웨어의 default value인 localVariables와 라이센스의 localVariables를 합친 결과물을 반환합니다.
      */

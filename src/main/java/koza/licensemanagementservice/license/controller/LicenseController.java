@@ -104,5 +104,15 @@ public class LicenseController {
 
     }
 
+    @Operation(summary = "라이센스 상태 변경", description = "라이센스 상태 변경 API")
+    @PatchMapping("/{licenseId}/status")
+    public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
+                                                       @PathVariable("licenseId") Long licenseId,
+                                                       @RequestBody LicenseDTO.ChangeStatusRequest request) {
+
+        licenseService.changeStatus(user, licenseId, request);
+        ApiResponse<?> response = ApiResponse.success("success");
+        return ResponseEntity.ok(response);
+    }
 
 }

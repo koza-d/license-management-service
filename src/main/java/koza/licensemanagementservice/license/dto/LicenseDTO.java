@@ -126,6 +126,11 @@ public class LicenseDTO {
         private Map<String, Object> localVariables;
     }
 
+    @Getter
+    public static class ChangeStatusRequest {
+        private String status;
+    }
+
     // 발급 시 발급 확인용으로 출력될 데이터
     @Getter
     @Builder

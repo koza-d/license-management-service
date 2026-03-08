@@ -166,6 +166,24 @@ public class LicenseService {
         license.updateLocalVariables(request.getLocalVariables());
     }
 
+    @Transactional
+    public void changeStatus(CustomUser user, Long licenseId, LicenseDTO.ChangeStatusRequest request) {
+        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 요청자가 소프트웨어의 주인이 아니면 접근불가
+        if (!license.getSoftware().getMember().getId().equals(user.getId()))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+
+        String statusString = request.getStatus();
+        try {
+            LicenseStatus status = LicenseStatus.valueOf(statusString);
+            license.changeStatus(status);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
     private Software checkAccessAuthorizedForSoftware(CustomUser requestUser, Long targetSoftwareId) {
         // 요청자에게 소프트웨어 접근 권한 있는지 확인용
         Software software = softwareRepository.findByIdWithMember(targetSoftwareId)
