@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface SessionLogRepository extends JpaRepository<SessionLog, Long> {
+public interface SessionLogRepository extends JpaRepository<SessionLog, Long>, SessionLogRepositoryCustom {
     @Query(value = """
                 SELECT 
                     DATE(s.verify_at) AS date,

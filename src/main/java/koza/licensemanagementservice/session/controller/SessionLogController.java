@@ -5,8 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.member.dto.CustomUser;
 import koza.licensemanagementservice.session.dto.DailyUsageResponse;
+import koza.licensemanagementservice.session.dto.SessionHistoryResponse;
 import koza.licensemanagementservice.session.service.SessionLogService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -31,6 +34,16 @@ public class SessionLogController {
                                                              @RequestParam(name = "range") int range) {
         List<DailyUsageResponse> responses = logService.getDailyUsageTime(user, licenseId, range);
         ApiResponse<List<DailyUsageResponse>> response = ApiResponse.success(responses);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(description = "특정 라이센스 사용 기록")
+    @GetMapping("/licenses/{licenseId}")
+    public ResponseEntity<ApiResponse<?>> getLicenseUsageHistory(@AuthenticationPrincipal CustomUser user,
+                                                                 @PathVariable(name = "licenseId") Long licenseId,
+                                                                 Pageable pageable) {
+        Page<SessionHistoryResponse> responses = logService.getLicenseUsageHistory(user, licenseId, pageable);
+        ApiResponse<?> response = ApiResponse.success(responses);
         return ResponseEntity.ok(response);
     }
 }
