@@ -1,11 +1,14 @@
 package koza.licensemanagementservice.license.repository;
 
+import koza.licensemanagementservice.license.dto.LicenseDTO;
 import koza.licensemanagementservice.license.entity.License;
+import koza.licensemanagementservice.license.entity.LicenseStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -18,5 +21,10 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     Page<License> findBySoftware_MemberIdAndHasActiveSessionIsTrue(Long memberId, Pageable pageable);
     List<License> findByIdIn(List<Long> id);
     int countBySoftwareId(Long softwareId);
+    Long countBySoftware_MemberId(Long memberId);
+    Long countBySoftware_MemberIdAndStatusEquals(Long memberId, LicenseStatus status);
+    Long countBySoftware_MemberIdAndStatusAndExpiredAtBefore(Long memberId, LicenseStatus status, LocalDateTime at);
+    Long countBySoftware_MemberIdAndHasActiveSessionTrue(Long memberId);
+
     boolean existsByLicenseKey(String licenseKey);
 }
