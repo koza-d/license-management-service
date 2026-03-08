@@ -71,6 +71,35 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     @Override
+    public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(license.software.member.id.eq(memberId));
+
+        if (search != null)
+            builder.and(license.name.containsIgnoreCase(search).or(license.memo.containsIgnoreCase(search)));
+
+        if (hasActiveSession != null)
+            builder.and(license.hasActiveSession.eq(hasActiveSession));
+
+        List<License> content = jpaQueryFactory
+                .selectFrom(license)
+                .where(builder)
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(license.count())
+                .from(license)
+                .where(builder)
+                .fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
     public Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(license.software.id.eq(softwareId));

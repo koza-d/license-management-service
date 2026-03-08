@@ -78,6 +78,20 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
+    public Page<LicenseDTO.SummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Pageable pageable) {
+        // 소프트웨어 별 라이센스 목록
+        return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, pageable)
+                .map(license -> {
+                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
+                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
+                    if (sessionOptional.isPresent())
+                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
+
+                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                });
+    }
+
+    @Transactional(readOnly = true)
      public Page<LicenseDTO.SummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
         checkAccessAuthorizedForSoftware(user, softwareId);

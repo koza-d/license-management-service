@@ -13,5 +13,6 @@ public interface LicenseRepositoryCustom {
     Optional<License> findByLicenseKeyWithSoftware(String licenseKey);
     List<License> findByIdInWithSoftwareWithMember(List<Long> ids);
     List<License> findByMemberId(Long memberId);
+    Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Pageable pageable);
     Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable);
 }

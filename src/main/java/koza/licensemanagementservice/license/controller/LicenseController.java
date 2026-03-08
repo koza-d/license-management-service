@@ -46,6 +46,17 @@ public class LicenseController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "전체 라이센스 목록 조회")
+    @GetMapping("")
+    public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
+                                                               @RequestParam(required = false, name = "search") String search,
+                                                               @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
+                                                               Pageable pageable) {
+        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, pageable);
+        ApiResponse<?> response= ApiResponse.success(summaryResponses);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "소프트웨어 별 라이센스 목록 조회")
     @GetMapping("/software/{softwareId}")
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryBySoftware(@AuthenticationPrincipal CustomUser user,
