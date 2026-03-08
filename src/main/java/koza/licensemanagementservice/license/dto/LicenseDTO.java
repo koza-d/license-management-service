@@ -161,6 +161,7 @@ public class LicenseDTO {
     @Builder
     public static class DetailResponse {
         private Long id;
+        private Long softwareId;
         private String softwareName;
         private String softwareLatestVersion;
         private String licenseName;
@@ -181,6 +182,7 @@ public class LicenseDTO {
             Software software = license.getSoftware();
             return DetailResponse.builder()
                     .id(license.getId())
+                    .softwareId(software.getId())
                     .softwareName(software.getName())
                     .softwareLatestVersion(software.getLatestVersion())
                     .licenseName(license.getName())
