@@ -25,7 +25,7 @@ public class SessionLogController {
     private final SessionLogService logService;
 
     @Operation(description = "특정 라이센스 일일 사용시간 로그 API")
-    @GetMapping("/licenses/{licenseId}")
+    @GetMapping("/licenses/{licenseId}/stats")
     public ResponseEntity<ApiResponse<?>> getDailyUsageTime(@AuthenticationPrincipal CustomUser user,
                                                              @PathVariable(name = "licenseId") Long licenseId,
                                                              @RequestParam(name = "range") int range) {
