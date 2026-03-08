@@ -22,7 +22,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api/sessions-log")
+@RequestMapping("/api/sessions-logs")
 @Tag(name = "세션 로그 API", description = "세션 로그 통계 관련 API")
 public class SessionLogController {
     private final SessionLogService logService;

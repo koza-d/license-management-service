@@ -94,9 +94,9 @@ public class LicenseController {
     }
 
     @Operation(summary = "라이센스 수정", description = "라이센스 이름, 비고, 메타데이터 등 수정 API")
-    @PostMapping("/{license_id}")
+    @PostMapping("/{licenseId}")
     public ResponseEntity<ApiResponse<?>> updateLicense(@AuthenticationPrincipal CustomUser user,
-                                                        @PathVariable("license_id") Long licenseId,
+                                                        @PathVariable("licenseId") Long licenseId,
                                                         @RequestBody @Valid LicenseDTO.UpdateRequest request) {
         licenseService.updateLicense(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
