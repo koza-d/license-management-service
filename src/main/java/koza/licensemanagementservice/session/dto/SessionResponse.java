@@ -1,6 +1,5 @@
 package koza.licensemanagementservice.session.dto;
 
-import koza.licensemanagementservice.session.status.SessionStatus;
 import lombok.Builder;
 import lombok.Getter;
 

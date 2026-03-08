@@ -4,7 +4,6 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.session.dto.SessionValue;
 import koza.licensemanagementservice.session.repository.SessionRepository;
-import koza.licensemanagementservice.session.status.SessionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
