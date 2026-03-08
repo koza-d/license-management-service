@@ -1,12 +1,21 @@
 package koza.licensemanagementservice.license.repository;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.license.entity.License;
 import koza.licensemanagementservice.license.entity.QLicense;
 import koza.licensemanagementservice.member.entity.QMember;
 import koza.licensemanagementservice.software.entity.QSoftware;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,5 +70,44 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 ;
     }
 
+    @Override
+    public Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(license.software.id.eq(softwareId));
+
+        if (search != null)
+            builder.and(license.name.containsIgnoreCase(search).or(license.memo.containsIgnoreCase(search)));
+
+        if (hasActiveSession != null)
+            builder.and(license.hasActiveSession.eq(hasActiveSession));
+
+        List<License> content = jpaQueryFactory
+                .selectFrom(license)
+                .where(builder)
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(license.count())
+                .from(license)
+                .where(builder)
+                .fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
+        List<OrderSpecifier> orders = new ArrayList<>();
+        PathBuilder<License> entityPath = new PathBuilder<>(License.class, "license");
+
+        for (Sort.Order order : sort) {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            String prop = order.getProperty();
+            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
+        }
+
+        return orders.toArray(OrderSpecifier[]::new);
+    }
 
 }

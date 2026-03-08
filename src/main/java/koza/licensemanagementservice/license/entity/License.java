@@ -45,6 +45,7 @@ public class License extends BaseEntity {
     @Column(name = "local_variables", columnDefinition = "json")
     private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
 
+    @Getter(AccessLevel.NONE)
     private boolean hasActiveSession;
 
     @Enumerated(EnumType.STRING)
@@ -82,6 +83,10 @@ public class License extends BaseEntity {
         this.localVariables.clear();
         if (localVariables != null)
             this.localVariables.putAll(localVariables);
+    }
+
+    public boolean hasActiveSession() {
+        return this.hasActiveSession;
     }
 
     public void extendPeriod(int extendDays) {

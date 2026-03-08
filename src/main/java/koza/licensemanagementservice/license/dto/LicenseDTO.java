@@ -202,19 +202,23 @@ public class LicenseDTO {
         private String name;
         private String licenseKey;
         private String memo; // 표로 보여줘야해서 10자 제한 출력
+        private LocalDateTime createAt;
         private LocalDateTime expiredAt;
-        private long remainingMs;
+        private boolean hasActiveSession;
+        private LocalDateTime latestActiveAt;
         private String status;
 
-        public static SummaryResponse from(License license) {
+        public static SummaryResponse of(License license, LocalDateTime latestActiveAt) {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
             return SummaryResponse.builder()
                     .licenseId(license.getId())
                     .name(license.getName())
                     .licenseKey(maskLicenseKey(license.getLicenseKey())) // 첫 4자리 제외 마스킹(-제외)
                     .memo(license.getMemo())
+                    .createAt(license.getCreateAt())
                     .expiredAt(license.getExpiredAt())
-                    .remainingMs(remainingMs)
+                    .hasActiveSession(license.hasActiveSession())
+                    .latestActiveAt(latestActiveAt)
                     .status(license.getStatus().name())
                     .build();
         }

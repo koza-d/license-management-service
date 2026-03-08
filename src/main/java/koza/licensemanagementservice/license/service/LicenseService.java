@@ -78,12 +78,18 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseDTO.SummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, Pageable pageable) {
+     public Page<LicenseDTO.SummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
         checkAccessAuthorizedForSoftware(user, softwareId);
+        return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
+                .map(license -> {
+                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
+                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
+                    if (sessionOptional.isPresent())
+                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
-        return licenseRepository.findBySoftwareId(softwareId, pageable)
-                .map(LicenseDTO.SummaryResponse::from);
+                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                });
     }
 
     @Transactional
@@ -121,7 +127,14 @@ public class LicenseService {
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
         });
-        return targetLicenses.stream().map(LicenseDTO.SummaryResponse::from)
+        return targetLicenses.stream().map(license -> {
+                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
+                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
+                    if (sessionOptional.isPresent())
+                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
+
+                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                })
                 .collect(Collectors.toList());
     }
 

@@ -50,8 +50,10 @@ public class LicenseController {
     @GetMapping("/software/{softwareId}")
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                       @PathVariable("softwareId") Long softwareId,
+                                                                      @RequestParam(required = false, name = "search") String search,
+                                                                      @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
                                                                       Pageable pageable) {
-        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, pageable);
+        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, search, hasActiveSession, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
 
