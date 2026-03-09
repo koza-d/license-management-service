@@ -78,9 +78,9 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseDTO.SummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Pageable pageable) {
+    public Page<LicenseDTO.SummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
-        return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, pageable)
+        return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, expireWithin, pageable)
                 .map(license -> {
                     Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
                     LocalDateTime latestActiveAt = license.getLatestActiveAt();

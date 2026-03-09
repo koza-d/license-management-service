@@ -51,8 +51,9 @@ public class LicenseController {
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
                                                                @RequestParam(required = false, name = "search") String search,
                                                                @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
+                                                               @RequestParam(required = false, name = "expireWithin") Integer expireWithin,
                                                                Pageable pageable) {
-        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, pageable);
+        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, expireWithin, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }

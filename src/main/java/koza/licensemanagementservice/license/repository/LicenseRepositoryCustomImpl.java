@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +72,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Pageable pageable) {
+    public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(license.software.member.id.eq(memberId));
 
@@ -80,6 +81,9 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
 
         if (hasActiveSession != null)
             builder.and(license.hasActiveSession.eq(hasActiveSession));
+
+        if (expireWithin != null)
+            builder.and(license.expiredAt.before(LocalDateTime.now().plusDays(expireWithin)));
 
         List<License> content = jpaQueryFactory
                 .selectFrom(license)
