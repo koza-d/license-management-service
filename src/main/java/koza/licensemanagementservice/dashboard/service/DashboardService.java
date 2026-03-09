@@ -1,15 +1,22 @@
 package koza.licensemanagementservice.dashboard.service;
 
 import koza.licensemanagementservice.dashboard.dto.DashboardStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.license.entity.LicenseStatus;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
 import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.session.dto.DailyUsageResponse;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +35,28 @@ public class DashboardService {
         Long activeSessions = licenseRepository.countBySoftware_MemberIdAndHasActiveSessionTrue(memberId);
 
         return new DashboardStatsResponse(total, active, banned, expired, activeSessions);
+    }
+
+    public List<SoftwareStatsResponse> getSoftwareStats(CustomUser user) {
+        Long memberId = user.getId();
+        LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+        Map<Long, List<DailyUsageResponse>> dailyUsageMap = new HashMap<>();
+
+        softwareRepository.findDailyUsageByMemberId(memberId, startDate) // 소프트웨어별 일일 사용량
+                .forEach(softwareDailyUsage -> {
+                    Long softwareId = softwareDailyUsage.getSoftwareId();
+                    DailyUsageResponse dailyUsageResponse = new DailyUsageResponse(softwareDailyUsage.getDate(), softwareDailyUsage.getMinutes());
+                    dailyUsageMap.computeIfAbsent(softwareId, k -> new ArrayList<>())
+                            .add(dailyUsageResponse);
+                });
+
+        return softwareRepository.findSoftwareStatsByMemberId(memberId).stream() // 소프트웨어별 주요 지표 + 소프트웨어별 일일 사용량 merge
+                .map(stat -> {
+                    stat.getDailyStats().addAll(
+                            dailyUsageMap.getOrDefault(stat.getSoftwareId(), List.of())
+                    );
+                    return stat;
+                }).toList();
     }
 
 }
