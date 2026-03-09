@@ -206,7 +206,7 @@ public class LicenseDTO {
     @Builder
     public static class SummaryResponse {
         private Long licenseId;
-        private String name;
+        private String licenseName;
         private String licenseKey;
         private String memo; // 표로 보여줘야해서 10자 제한 출력
         private LocalDateTime createAt;
@@ -219,7 +219,7 @@ public class LicenseDTO {
             long remainingMs = calcRemainingMs(license.getExpiredAt());
             return SummaryResponse.builder()
                     .licenseId(license.getId())
-                    .name(license.getName())
+                    .licenseName(license.getName())
                     .licenseKey(maskLicenseKey(license.getLicenseKey())) // 첫 4자리 제외 마스킹(-제외)
                     .memo(license.getMemo())
                     .createAt(license.getCreateAt())
