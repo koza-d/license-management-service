@@ -84,7 +84,7 @@ public class LicenseController {
     @Operation(summary = "라이센스 연장 전 확인용", description = "선택한 연장할 라이센스 확인용 API")
     @GetMapping("/bulk-extend/preview")
     public ResponseEntity<ApiResponse<?>> getPreviewExtendLicense(@AuthenticationPrincipal CustomUser user,
-                                                                        @RequestParam(name = "request") String request) {
+                                                                        @RequestParam(name = "ids") String request) {
         List<Long> ids = Arrays.stream(request.split(","))
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
