@@ -17,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class SoftwareService {
@@ -70,6 +72,17 @@ public class SoftwareService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         return softwareRepository.findSummaryByMemberId(member.getId(), search, activeOnly,pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SoftwareDTO.SimpleResponse> getSimpleList(CustomUser user) {
+        // 로그인한 유저가 보유한 소프트웨어 목록
+        Member member = memberRepository.findById(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        return softwareRepository.findByMemberId(user.getId())
+                .stream().map(SoftwareDTO.SimpleResponse::of)
+                .toList();
     }
 
     @Transactional

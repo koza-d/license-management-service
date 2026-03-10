@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/software")
@@ -47,6 +49,14 @@ public class SoftwareController {
                                                           Pageable pageable) {
         Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, activeOnly, pageable);
         ApiResponse<?> response = ApiResponse.success(summaryResponses);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(description = "접속한 회원의 보유 소프트웨어 리스트")
+    @GetMapping("/simple-list")
+    public ResponseEntity<ApiResponse<?>> getSimpleList(@AuthenticationPrincipal CustomUser user) {
+        List<SoftwareDTO.SimpleResponse> simpleList = softwareService.getSimpleList(user);
+        ApiResponse<?> response = ApiResponse.success(simpleList);
         return ResponseEntity.ok(response);
     }
 

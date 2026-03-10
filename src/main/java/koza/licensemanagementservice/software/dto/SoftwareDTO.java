@@ -121,6 +121,20 @@ public class SoftwareDTO {
         }
     }
 
+    @Getter
+    @Builder
+    public static class SimpleResponse {
+        private Long softwareId;
+        private String softwareName;
+
+        public static SimpleResponse of(Software software) {
+            return SimpleResponse.builder()
+                    .softwareId(software.getId())
+                    .softwareName(software.getName())
+                    .build();
+        }
+    }
+
     // 목록 조회
     @Getter
     @Builder
