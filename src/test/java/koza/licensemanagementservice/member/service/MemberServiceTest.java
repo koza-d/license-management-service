@@ -1,10 +1,10 @@
 package koza.licensemanagementservice.member.service;
 
-import koza.licensemanagementservice.auth.dto.LoginRequest;
+import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.member.dto.MemberDTO;
+import koza.licensemanagementservice.member.dto.MemberJoinRequest;
 import koza.licensemanagementservice.member.entity.Member;
 import koza.licensemanagementservice.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +45,7 @@ class MemberServiceTest {
     @DisplayName("회원가입 성공 - 새로운 이메일인 경우")
     void join_success() {
         // given (준비)
-        MemberDTO.JoinRequest request = new MemberDTO.JoinRequest("test@test.com", "닉네임", "password123");
+        MemberJoinRequest request = new MemberJoinRequest("test@test.com", "닉네임", "password123");
 
         // 가짜 객체들의 행동 정의 (Stubbing)
         given(memberRepository.findByEmail(anyString())).willReturn(Optional.empty()); // 무조건 중복 아니라고 반환
@@ -67,7 +67,7 @@ class MemberServiceTest {
     @DisplayName("회원가입 실패 - 이미 존재하는 이메일")
     void join_fail_duplicate_email() {
         // given
-        MemberDTO.JoinRequest request = new MemberDTO.JoinRequest("test@test.com", "닉네임", "password123");
+        MemberJoinRequest request = new MemberJoinRequest("test@test.com", "닉네임", "password123");
         Member existingMember = Member.builder().email(request.getEmail()).build();
 
         given(memberRepository.findByEmail(request.getEmail())).willReturn(Optional.of(existingMember));
@@ -83,7 +83,7 @@ class MemberServiceTest {
     @DisplayName("로그인 성공 - 올바른 정보 입력")
     void login_success() {
         // given
-        LoginRequest request = new LoginRequest("test@test.com", "password123");
+        MemberLoginRequest request = new MemberLoginRequest("test@test.com", "password123");
         String encodePassword = "encodedPassword";
         String createToken = "access-token";
 

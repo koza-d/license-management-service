@@ -3,10 +3,10 @@ package koza.licensemanagementservice.member.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.LoginRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.member.dto.CustomUser;
-import koza.licensemanagementservice.member.dto.MemberDTO;
+import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.member.dto.MemberInfoResponse;
+import koza.licensemanagementservice.member.dto.MemberJoinRequest;
 import koza.licensemanagementservice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,7 @@ public class MemberController {
 
     @PostMapping("")
     @Operation(summary = "회원가입", description = "유저의 회원가입 API")
-    public ResponseEntity<ApiResponse<?>> join(@RequestBody @Valid MemberDTO.JoinRequest request) {
+    public ResponseEntity<ApiResponse<?>> join(@RequestBody @Valid MemberJoinRequest request) {
         Long memberId = memberService.join(request);
         ApiResponse<Long> response = ApiResponse.success(memberId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -36,8 +36,8 @@ public class MemberController {
     @GetMapping("/me")
     @Operation(summary = "로그인 정보", description = "로그인 된 정보 확인용 API")
     public ResponseEntity<ApiResponse<?>> info(@AuthenticationPrincipal CustomUser user) {
-        MemberDTO.InfoResponse infoResponse = memberService.userInfo(user);
-        ApiResponse<MemberDTO.InfoResponse> response = ApiResponse.success(infoResponse);
+        MemberInfoResponse infoResponse = memberService.userInfo(user);
+        ApiResponse<MemberInfoResponse> response = ApiResponse.success(infoResponse);
         return ResponseEntity.ok(response);
     }
 }

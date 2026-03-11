@@ -4,8 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
+import koza.licensemanagementservice.software.dto.request.SoftwareCreateRequest;
+import koza.licensemanagementservice.software.dto.request.SoftwareUpdateRequest;
+import koza.licensemanagementservice.software.dto.response.SoftwareCreateResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareDetailResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareSimpleResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.software.service.SoftwareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,8 +33,8 @@ public class SoftwareController {
     @Operation(summary = "소프트웨어 등록")
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createSoftware(@AuthenticationPrincipal CustomUser user,
-                                                         @RequestBody @Valid SoftwareDTO.CreateRequest request) {
-        SoftwareDTO.CreateResponse createResponse = softwareService.createSoftware(user, request);
+                                                         @RequestBody @Valid SoftwareCreateRequest request) {
+        SoftwareCreateResponse createResponse = softwareService.createSoftware(user, request);
         ApiResponse<?> response = ApiResponse.success(createResponse);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -36,7 +42,7 @@ public class SoftwareController {
     @Operation(summary = "소프트웨어 상세조회")
     @GetMapping("/{softwareId}")
     public ResponseEntity<ApiResponse<?>> getSoftware(@AuthenticationPrincipal CustomUser user, @PathVariable("softwareId") Long id) {
-        SoftwareDTO.DetailResponse detailResponse = softwareService.getSoftwareDetail(user, id);
+        SoftwareDetailResponse detailResponse = softwareService.getSoftwareDetail(user, id);
         ApiResponse<?> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }
@@ -47,7 +53,7 @@ public class SoftwareController {
                                                           @RequestParam(required = false) String search,
                                                           @RequestParam(required = false, name = "activeOnly") boolean activeOnly,
                                                           Pageable pageable) {
-        Page<SoftwareDTO.SummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, activeOnly, pageable);
+        Page<SoftwareSummaryResponse> summaryResponses = softwareService.getSoftwareSummaryByMe(user, search, activeOnly, pageable);
         ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }
@@ -55,7 +61,7 @@ public class SoftwareController {
     @Operation(description = "접속한 회원의 보유 소프트웨어 리스트")
     @GetMapping("/simple-list")
     public ResponseEntity<ApiResponse<?>> getSimpleList(@AuthenticationPrincipal CustomUser user) {
-        List<SoftwareDTO.SimpleResponse> simpleList = softwareService.getSimpleList(user);
+        List<SoftwareSimpleResponse> simpleList = softwareService.getSimpleList(user);
         ApiResponse<?> response = ApiResponse.success(simpleList);
         return ResponseEntity.ok(response);
     }
@@ -64,7 +70,7 @@ public class SoftwareController {
     @PatchMapping("/{softwareId}")
     public ResponseEntity<ApiResponse<?>> updateSoftware(@AuthenticationPrincipal CustomUser user,
                                                          @PathVariable("softwareId") Long id,
-                                                         @RequestBody @Valid SoftwareDTO.UpdateRequest request) {
+                                                         @RequestBody @Valid SoftwareUpdateRequest request) {
         Long softwareId = softwareService.updateSoftware(user, id, request);
         ApiResponse<Long> response = ApiResponse.success(softwareId);
         return ResponseEntity.ok(response);

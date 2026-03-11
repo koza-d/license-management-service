@@ -3,9 +3,9 @@ package koza.licensemanagementservice.session.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.member.dto.CustomUser;
-import koza.licensemanagementservice.session.dto.SessionResponse;
-import koza.licensemanagementservice.session.dto.TerminateBulkRequest;
+import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.session.dto.response.SessionResponse;
+import koza.licensemanagementservice.session.dto.request.TerminateBulkRequest;
 import koza.licensemanagementservice.session.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,8 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor

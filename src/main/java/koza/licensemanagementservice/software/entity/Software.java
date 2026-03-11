@@ -3,6 +3,7 @@ package koza.licensemanagementservice.software.entity;
 import jakarta.persistence.*;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.member.entity.Member;
+import koza.licensemanagementservice.software.version.entity.SoftwareVersion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

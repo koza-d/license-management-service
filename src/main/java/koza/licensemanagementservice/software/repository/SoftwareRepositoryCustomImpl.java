@@ -12,6 +12,8 @@ import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareDailyUsage;
 import koza.licensemanagementservice.software.dto.QSoftwareDTO_SummaryResponse;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
+import koza.licensemanagementservice.software.dto.response.QSoftwareSummaryResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,7 +24,7 @@ import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static koza.licensemanagementservice.session.entity.QSessionLog.sessionLog;
+import static koza.licensemanagementservice.sessionLog.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.license.entity.QLicense.license;
 import static koza.licensemanagementservice.member.entity.QMember.member;
@@ -125,15 +127,15 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
-    public Page<SoftwareDTO.SummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable) {
+    public Page<SoftwareSummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable) {
         // 추후 Repository가 복잡해지면 조회용 SoftwareQueryRepository로 분리
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(software.member.id.eq(memberId));
         if (search != null)
             builder.and(software.name.contains(search));
 
-        JPAQuery<SoftwareDTO.SummaryResponse> query = queryFactory
-                .select(new QSoftwareDTO_SummaryResponse(
+        JPAQuery<SoftwareSummaryResponse> query = queryFactory
+                .select(new QSoftwareSummaryResponse(
                         software.id,
                         software.name,
                         software.latestVersion,
@@ -149,7 +151,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
         if (activeOnly)
             query.having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
 
-        List<SoftwareDTO.SummaryResponse> content = query
+        List<SoftwareSummaryResponse> content = query
                 .orderBy(getOrderSpecifier(pageable.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

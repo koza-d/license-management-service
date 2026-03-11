@@ -6,7 +6,7 @@ import koza.licensemanagementservice.dashboard.dto.DashboardStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardService;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

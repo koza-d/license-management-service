@@ -3,14 +3,19 @@ package koza.licensemanagementservice.software.service;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.member.entity.Member;
 import koza.licensemanagementservice.member.repository.MemberRepository;
 import koza.licensemanagementservice.software.dto.SoftwareDTO;
+import koza.licensemanagementservice.software.dto.request.SoftwareCreateRequest;
+import koza.licensemanagementservice.software.dto.request.SoftwareUpdateRequest;
+import koza.licensemanagementservice.software.dto.response.SoftwareCreateResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareDetailResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareSimpleResponse;
+import koza.licensemanagementservice.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.software.entity.Software;
-import koza.licensemanagementservice.software.entity.SoftwareVersion;
+import koza.licensemanagementservice.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
-import koza.licensemanagementservice.software.repository.SoftwareVersionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +32,7 @@ public class SoftwareService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public SoftwareDTO.CreateResponse createSoftware(CustomUser user, SoftwareDTO.CreateRequest createRequest) {
+    public SoftwareCreateResponse createSoftware(CustomUser user, SoftwareCreateRequest createRequest) {
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         String apiKey = SoftwareKeyGenerator.generateApiKey();
@@ -50,11 +55,11 @@ public class SoftwareService {
 
         software.addVersion(version);
         Software save = softwareRepository.save(software);
-        return SoftwareDTO.CreateResponse.from(save);
+        return SoftwareCreateResponse.from(save);
     }
 
     @Transactional(readOnly = true)
-    public SoftwareDTO.DetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
+    public SoftwareDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
         Software software = softwareRepository.findByIdWithMember(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         if (!software.getMember().getId().equals(user.getId()))
@@ -62,11 +67,11 @@ public class SoftwareService {
 
         int licenseCount = licenseRepository.countBySoftwareId(softwareId);
 
-        return SoftwareDTO.DetailResponse.of(software, licenseCount);
+        return SoftwareDetailResponse.of(software, licenseCount);
     }
 
     @Transactional(readOnly = true)
-    public Page<SoftwareDTO.SummaryResponse> getSoftwareSummaryByMe(CustomUser user, String search, boolean activeOnly, Pageable pageable) {
+    public Page<SoftwareSummaryResponse> getSoftwareSummaryByMe(CustomUser user, String search, boolean activeOnly, Pageable pageable) {
         // 로그인한 유저가 보유한 소프트웨어 목록
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -75,18 +80,18 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public List<SoftwareDTO.SimpleResponse> getSimpleList(CustomUser user) {
+    public List<SoftwareSimpleResponse> getSimpleList(CustomUser user) {
         // 로그인한 유저가 보유한 소프트웨어 목록
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         return softwareRepository.findByMemberId(user.getId())
-                .stream().map(SoftwareDTO.SimpleResponse::of)
+                .stream().map(SoftwareSimpleResponse::of)
                 .toList();
     }
 
     @Transactional
-    public Long updateSoftware(CustomUser user, Long softwareId, SoftwareDTO.UpdateRequest updateRequest) {
+    public Long updateSoftware(CustomUser user, Long softwareId, SoftwareUpdateRequest updateRequest) {
         Software software = softwareRepository.findByIdWithMember(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 

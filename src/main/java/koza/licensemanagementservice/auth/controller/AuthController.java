@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.LoginRequest;
+import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저 로그인 API")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid LoginRequest request) {
+    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request) {
         String token = memberService.login(request);
         ResponseCookie cookie = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)

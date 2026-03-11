@@ -4,11 +4,10 @@ import koza.licensemanagementservice.dashboard.dto.DashboardStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.license.entity.LicenseStatus;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
-import koza.licensemanagementservice.member.dto.CustomUser;
-import koza.licensemanagementservice.session.dto.DailyUsageResponse;
+import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.sessionLog.dto.DailyUsageResponse;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -4,7 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import koza.licensemanagementservice.member.entity.Member;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

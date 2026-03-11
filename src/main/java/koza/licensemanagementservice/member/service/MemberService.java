@@ -1,11 +1,12 @@
 package koza.licensemanagementservice.member.service;
 
-import koza.licensemanagementservice.auth.dto.LoginRequest;
+import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
+import koza.licensemanagementservice.member.dto.MemberInfoResponse;
+import koza.licensemanagementservice.member.dto.MemberJoinRequest;
 import koza.licensemanagementservice.member.entity.Member;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.member.dto.CustomUser;
-import koza.licensemanagementservice.member.dto.MemberDTO;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.member.repository.MemberRepository;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
-    public Long join(MemberDTO.JoinRequest joinRequest) {
+    public Long join(MemberJoinRequest joinRequest) {
         memberRepository.findByEmail(joinRequest.getEmail())
                 .ifPresent(m -> {
                     throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
@@ -45,11 +46,11 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public String login(LoginRequest loginRequest) {
-        Member member = memberRepository.findByEmail(loginRequest.getEmail())
+    public String login(MemberLoginRequest memberLoginRequest) {
+        Member member = memberRepository.findByEmail(memberLoginRequest.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD));
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), member.getPassword()))
+        if (!passwordEncoder.matches(memberLoginRequest.getPassword(), member.getPassword()))
             throw new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD);
 
         return jwtTokenProvider.createToken(member);
@@ -57,8 +58,8 @@ public class MemberService {
 
 
     @Transactional(readOnly = true)
-    public MemberDTO.InfoResponse userInfo(CustomUser user) {
-        return MemberDTO.InfoResponse.builder()
+    public MemberInfoResponse userInfo(CustomUser user) {
+        return MemberInfoResponse.builder()
                 .email(user.getUsername())
                 .nickname(user.getNickname())
                 .roles(user.getAuthorities().stream()

@@ -4,9 +4,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.license.dto.LicenseDTO;
+import koza.licensemanagementservice.license.dto.request.LicenseExtendRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseIssueRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseUpdateRequest;
+import koza.licensemanagementservice.license.dto.response.LicenseDetailResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseExtendResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseIssueResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.license.service.LicenseService;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +38,9 @@ public class LicenseController {
     @Operation(summary = "라이센스 발급", description = "라이센스 발급 API")
     @PostMapping
     public ResponseEntity<ApiResponse<?>> issueLicense(@AuthenticationPrincipal CustomUser user
-            , @RequestBody @Valid LicenseDTO.IssueRequest request) {
-        LicenseDTO.IssueResponse issueResponse = licenseService.issueLicense(user, request);
-        ApiResponse<LicenseDTO.IssueResponse> response = ApiResponse.success(issueResponse);
+            , @RequestBody @Valid LicenseIssueRequest request) {
+        LicenseIssueResponse issueResponse = licenseService.issueLicense(user, request);
+        ApiResponse<LicenseIssueResponse> response = ApiResponse.success(issueResponse);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -41,8 +48,8 @@ public class LicenseController {
     @GetMapping("/{licenseId}")
     public ResponseEntity<ApiResponse<?>> getLicenseDetail(@AuthenticationPrincipal CustomUser user,
                                                            @PathVariable("licenseId") Long licenseId) {
-        LicenseDTO.DetailResponse detailResponse = licenseService.getLicenseDetail(user, licenseId);
-        ApiResponse<LicenseDTO.DetailResponse> response = ApiResponse.success(detailResponse);
+        LicenseDetailResponse detailResponse = licenseService.getLicenseDetail(user, licenseId);
+        ApiResponse<LicenseDetailResponse> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }
 
@@ -53,7 +60,7 @@ public class LicenseController {
                                                                @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
                                                                @RequestParam(required = false, name = "expireWithin") Integer expireWithin,
                                                                Pageable pageable) {
-        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, expireWithin, pageable);
+        Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, expireWithin, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }
@@ -65,7 +72,7 @@ public class LicenseController {
                                                                       @RequestParam(required = false, name = "search") String search,
                                                                       @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
                                                                       Pageable pageable) {
-        Page<LicenseDTO.SummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, search, hasActiveSession, pageable);
+        Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, search, hasActiveSession, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
 
@@ -74,8 +81,8 @@ public class LicenseController {
     @Operation(summary = "라이센스 연장", description = "라이센스 여러 개를 한 번에 연장하는 API")
     @PostMapping("/bulk-extend")
     public ResponseEntity<ApiResponse<?>> extendLicense(@AuthenticationPrincipal CustomUser user,
-                                                        @RequestBody @Valid LicenseDTO.ExtendRequest request) {
-        List<LicenseDTO.ExtendResponse> extendResponses = licenseService.extendLicense(user, request.getSoftwareId(), request);
+                                                        @RequestBody @Valid LicenseExtendRequest request) {
+        List<LicenseExtendResponse> extendResponses = licenseService.extendLicense(user, request.getSoftwareId(), request);
         ApiResponse<?> response = ApiResponse.success(extendResponses);
         return ResponseEntity.ok(response);
 
@@ -88,7 +95,7 @@ public class LicenseController {
         List<Long> ids = Arrays.stream(request.split(","))
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
-        List<LicenseDTO.SummaryResponse> summaryLicenses = licenseService.getPreviewExtendLicense(user, ids);
+        List<LicenseSummaryResponse> summaryLicenses = licenseService.getPreviewExtendLicense(user, ids);
         ApiResponse<?> response = ApiResponse.success(summaryLicenses);
         return ResponseEntity.ok(response);
 
@@ -98,7 +105,7 @@ public class LicenseController {
     @PostMapping("/{licenseId}")
     public ResponseEntity<ApiResponse<?>> updateLicense(@AuthenticationPrincipal CustomUser user,
                                                         @PathVariable("licenseId") Long licenseId,
-                                                        @RequestBody @Valid LicenseDTO.UpdateRequest request) {
+                                                        @RequestBody @Valid LicenseUpdateRequest request) {
         licenseService.updateLicense(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
         return ResponseEntity.ok(response);
@@ -109,7 +116,7 @@ public class LicenseController {
     @PatchMapping("/{licenseId}/status")
     public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseDTO.ChangeStatusRequest request) {
+                                                       @RequestBody LicenseStatusUpdateRequest request) {
 
         licenseService.changeStatus(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");

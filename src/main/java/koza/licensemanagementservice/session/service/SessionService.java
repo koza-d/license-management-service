@@ -4,12 +4,10 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.license.entity.License;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
-import koza.licensemanagementservice.member.dto.CustomUser;
-import koza.licensemanagementservice.session.dto.SessionResponse;
-import koza.licensemanagementservice.session.dto.TerminateBulkRequest;
-import koza.licensemanagementservice.session.entity.ReleaseType;
-import koza.licensemanagementservice.session.entity.SessionLog;
-import koza.licensemanagementservice.session.repository.SessionLogRepository;
+import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.session.dto.response.SessionResponse;
+import koza.licensemanagementservice.session.dto.request.TerminateBulkRequest;
+import koza.licensemanagementservice.sessionLog.entity.ReleaseType;
 import koza.licensemanagementservice.software.entity.Software;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.session.dto.SessionValue;
@@ -20,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service

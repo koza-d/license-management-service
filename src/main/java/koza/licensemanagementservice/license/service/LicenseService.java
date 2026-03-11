@@ -3,11 +3,18 @@ package koza.licensemanagementservice.license.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.license.dto.LicenseDTO;
+import koza.licensemanagementservice.license.dto.request.LicenseExtendRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseIssueRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.license.dto.request.LicenseUpdateRequest;
+import koza.licensemanagementservice.license.dto.response.LicenseDetailResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseExtendResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseIssueResponse;
+import koza.licensemanagementservice.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.license.entity.License;
 import koza.licensemanagementservice.license.entity.LicenseStatus;
 import koza.licensemanagementservice.license.repository.LicenseRepository;
-import koza.licensemanagementservice.member.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.session.dto.SessionValue;
 import koza.licensemanagementservice.software.entity.Software;
 import koza.licensemanagementservice.software.repository.SoftwareRepository;
@@ -33,7 +40,7 @@ public class LicenseService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public LicenseDTO.IssueResponse issueLicense(CustomUser user, LicenseDTO.IssueRequest request) {
+    public LicenseIssueResponse issueLicense(CustomUser user, LicenseIssueRequest request) {
         // 라이센스 발급
         Long softwareId = request.getSoftwareId();
         Software software = checkAccessAuthorizedForSoftware(user, softwareId);
@@ -54,11 +61,11 @@ public class LicenseService {
                 .build();
 
         License save = licenseRepository.saveAndFlush(license);
-        return LicenseDTO.IssueResponse.from(save);
+        return LicenseIssueResponse.from(save);
     }
 
     @Transactional(readOnly = true)
-    public LicenseDTO.DetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
+    public LicenseDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
         // 라이센스 상세조회
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -74,11 +81,11 @@ public class LicenseService {
         if (sessionOptional.isPresent())
             latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
-        return LicenseDTO.DetailResponse.of(license, latestActiveAt, finalVars);
+        return LicenseDetailResponse.of(license, latestActiveAt, finalVars);
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseDTO.SummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
+    public Page<LicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
         return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, expireWithin, pageable)
                 .map(license -> {
@@ -87,12 +94,12 @@ public class LicenseService {
                     if (sessionOptional.isPresent())
                         latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
-                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                    return LicenseSummaryResponse.of(license, latestActiveAt);
                 });
     }
 
     @Transactional(readOnly = true)
-     public Page<LicenseDTO.SummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
+     public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
         checkAccessAuthorizedForSoftware(user, softwareId);
         return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
@@ -102,12 +109,12 @@ public class LicenseService {
                     if (sessionOptional.isPresent())
                         latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
-                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                    return LicenseSummaryResponse.of(license, latestActiveAt);
                 });
     }
 
     @Transactional
-    public List<LicenseDTO.ExtendResponse> extendLicense(CustomUser user, Long softwareId, LicenseDTO.ExtendRequest request) {
+    public List<LicenseExtendResponse> extendLicense(CustomUser user, Long softwareId, LicenseExtendRequest request) {
         // 라이센스 연장
         List<License> targetLicenses = licenseRepository.findByIdInWithSoftwareWithMember(request.getIds());
 
@@ -124,12 +131,12 @@ public class LicenseService {
         });
 
         return targetLicenses.stream()
-                .map(license -> LicenseDTO.ExtendResponse.of(license, request.getDays()))
+                .map(license -> LicenseExtendResponse.of(license, request.getDays()))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<LicenseDTO.SummaryResponse> getPreviewExtendLicense(CustomUser user, List<Long> ids) {
+    public List<LicenseSummaryResponse> getPreviewExtendLicense(CustomUser user, List<Long> ids) {
         // 연장 시 선택된 라이센스 확인용
         List<License> targetLicenses = licenseRepository.findByIdInWithSoftwareWithMember(ids);
 
@@ -147,13 +154,13 @@ public class LicenseService {
                     if (sessionOptional.isPresent())
                         latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
-                    return LicenseDTO.SummaryResponse.of(license, latestActiveAt);
+                    return LicenseSummaryResponse.of(license, latestActiveAt);
                 })
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void updateLicense(CustomUser user, Long licenseId, LicenseDTO.UpdateRequest request) {
+    public void updateLicense(CustomUser user, Long licenseId, LicenseUpdateRequest request) {
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
@@ -167,7 +174,7 @@ public class LicenseService {
     }
 
     @Transactional
-    public void changeStatus(CustomUser user, Long licenseId, LicenseDTO.ChangeStatusRequest request) {
+    public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
