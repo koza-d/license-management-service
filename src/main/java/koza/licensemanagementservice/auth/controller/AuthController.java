@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.member.service.MemberService;
+import koza.licensemanagementservice.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;

@@ -2,11 +2,12 @@ package koza.licensemanagementservice.member.service;
 
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
+import koza.licensemanagementservice.domain.member.service.MemberService;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.member.dto.MemberJoinRequest;
-import koza.licensemanagementservice.member.entity.Member;
-import koza.licensemanagementservice.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
+import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
