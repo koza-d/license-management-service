@@ -26,11 +26,7 @@ public class SoftwareVersionService {
 
     @Transactional
     public void createVersion(CustomUser user, SoftwareVersionCreateRequest request) {
-        Software software = softwareRepository.findByIdWithMember(request.getSoftwareId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        if (!user.getId().equals(software.getMember().getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        Software software = getSoftwareOrThrow(request.getSoftwareId(), user.getId());
 
         versionRepository.findBySoftwareIdAndVersion(request.getSoftwareId(), request.getVersion())
                 .ifPresent(version -> { throw new BusinessException(ErrorCode.DUPLICATE_VERSION); });
@@ -52,9 +48,7 @@ public class SoftwareVersionService {
         SoftwareVersion version = versionRepository.findById(versionId) // 추후 WithSoftware 로 변경
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        Software software = version.getSoftware();
-        Member owner = software.getMember();
-        if (!user.getId().equals(owner.getId()))
+        if (!user.getId().equals(version.getSoftware().getMember().getId()))
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         return SoftwareVersionDetailResponse.from(version);
@@ -62,12 +56,7 @@ public class SoftwareVersionService {
 
     @Transactional(readOnly = true)
     public List<SoftwareVersionSummaryResponse> getVersions(CustomUser user, Long softwareId) {
-        Software software = softwareRepository.findByIdWithMember(softwareId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        Member owner = software.getMember();
-        if (!user.getId().equals(owner.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        getSoftwareOrThrow(softwareId, user.getId());
 
         return versionRepository.findBySoftwareId(softwareId).stream()
                 .map(SoftwareVersionSummaryResponse::from)
@@ -92,5 +81,14 @@ public class SoftwareVersionService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
         version.updateVersionInfo(request);
+    }
+
+    private Software getSoftwareOrThrow(Long softwareId, Long memberId) {
+        Software software = softwareRepository.findByIdWithMember(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (!software.getMember().getId().equals(memberId))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        return software;
     }
 }

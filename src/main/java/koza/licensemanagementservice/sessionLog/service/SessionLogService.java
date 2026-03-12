@@ -26,24 +26,24 @@ public class SessionLogService {
     private final SessionLogRepository logRepository;
 
     public List<DailyUsageResponse> getDailyUsageTime(CustomUser user, Long licenseId, int range) {
-        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        if (!user.getId().equals(license.getSoftware().getMember().getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        getLicenseOrThrow(user, licenseId);
         LocalDateTime startDate = LocalDateTime.now().minusDays(range);
         return logRepository.findDailyUsage(licenseId, startDate)
                 .stream().map(DailyUsageResponse::from).collect(Collectors.toList());
    }
 
    public Page<SessionHistoryResponse> getLicenseUsageHistory(CustomUser user, Long licenseId, Pageable pageable) {
-       License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-               .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-       if (!user.getId().equals(license.getSoftware().getMember().getId()))
-           throw new BusinessException(ErrorCode.ACCESS_DENIED);
+       getLicenseOrThrow(user, licenseId);
 
        return logRepository.findByLicenseId(licenseId, pageable)
                .map(SessionHistoryResponse::from);
    }
+
+    private void getLicenseOrThrow(CustomUser user, Long licenseId) {
+        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (!user.getId().equals(license.getSoftware().getMember().getId()))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 }

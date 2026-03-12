@@ -43,7 +43,7 @@ public class LicenseService {
     public LicenseIssueResponse issueLicense(CustomUser user, LicenseIssueRequest request) {
         // 라이센스 발급
         Long softwareId = request.getSoftwareId();
-        Software software = checkAccessAuthorizedForSoftware(user, softwareId);
+        Software software = getSoftwareOrThrow(user, softwareId);
 
         String licenseKey = LicenseKeyGenerator.generateKey();
         while (licenseRepository.existsByLicenseKey(licenseKey))
@@ -67,12 +67,7 @@ public class LicenseService {
     @Transactional(readOnly = true)
     public LicenseDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
         // 라이센스 상세조회
-        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        // 라이센스의 부모인 소프트웨어의 관리자가 아니면 접근불가
-        if (!license.getSoftware().getMember().getId().equals(user.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        License license = getLicenseOrThrow(user, licenseId);
 
         Map<String, Object> finalVars = license.getMergeLocalVariables();
 
@@ -101,7 +96,7 @@ public class LicenseService {
     @Transactional(readOnly = true)
      public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
-        checkAccessAuthorizedForSoftware(user, softwareId);
+        getSoftwareOrThrow(user, softwareId);
         return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
                 .map(license -> {
                     Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
@@ -161,12 +156,7 @@ public class LicenseService {
 
     @Transactional
     public void updateLicense(CustomUser user, Long licenseId, LicenseUpdateRequest request) {
-        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        // 요청자가 소프트웨어의 주인이 아니면 접근불가
-        if (!license.getSoftware().getMember().getId().equals(user.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        License license = getLicenseOrThrow(user, licenseId);
 
         license.updateName(request.getName());
         license.updateMemo(request.getMemo());
@@ -175,12 +165,7 @@ public class LicenseService {
 
     @Transactional
     public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
-        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        // 요청자가 소프트웨어의 주인이 아니면 접근불가
-        if (!license.getSoftware().getMember().getId().equals(user.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        License license = getLicenseOrThrow(user, licenseId);
 
         String statusString = request.getStatus();
         try {
@@ -191,8 +176,19 @@ public class LicenseService {
         }
     }
 
-    private Software checkAccessAuthorizedForSoftware(CustomUser requestUser, Long targetSoftwareId) {
-        // 요청자에게 소프트웨어 접근 권한 있는지 확인용
+    private License getLicenseOrThrow(CustomUser user, Long licenseId) {
+        // 요청자에게 라이센스 접근 권한 확인용
+        License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 요청자가 라이센스 상위 소프트웨어 주인이 아니면 접근불가
+        if (!license.getSoftware().getMember().getId().equals(user.getId()))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        return license;
+    }
+
+    private Software getSoftwareOrThrow(CustomUser requestUser, Long targetSoftwareId) {
+        // 요청자에게 소프트웨어 접근 권한 확인용
         Software software = softwareRepository.findByIdWithMember(targetSoftwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 

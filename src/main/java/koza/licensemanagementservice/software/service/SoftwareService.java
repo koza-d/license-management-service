@@ -60,10 +60,7 @@ public class SoftwareService {
 
     @Transactional(readOnly = true)
     public SoftwareDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
-        Software software = softwareRepository.findByIdWithMember(softwareId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        if (!software.getMember().getId().equals(user.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        Software software = getSoftwareOrElse(user.getId(), softwareId);
 
         int licenseCount = licenseRepository.countBySoftwareId(softwareId);
 
@@ -92,15 +89,20 @@ public class SoftwareService {
 
     @Transactional
     public Long updateSoftware(CustomUser user, Long softwareId, SoftwareUpdateRequest updateRequest) {
-        Software software = softwareRepository.findByIdWithMember(softwareId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        if (!software.getMember().getId().equals(user.getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        Software software = getSoftwareOrElse(user.getId(), softwareId);
 
         software.updateInfo(updateRequest.getName(), updateRequest.getVersion());
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
         return softwareId;
+    }
+
+    private Software getSoftwareOrElse(Long memberId, Long softwareId) {
+        Software software = softwareRepository.findByIdWithMember(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (!software.getMember().getId().equals(memberId))
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        return software;
     }
 }
