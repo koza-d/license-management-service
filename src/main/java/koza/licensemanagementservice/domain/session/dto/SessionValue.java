@@ -13,7 +13,7 @@ public class SessionValue {
     private String sessionId;
     private Long licenseId;
     private String ipAddress;
-    private String userAgent;
+    private String userAgent = "Unknown";
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime expiredAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -22,4 +22,6 @@ public class SessionValue {
     @Setter
     private LocalDateTime latestActiveAt;
 
+    @Setter
+    private byte[] sessionKey;
 }

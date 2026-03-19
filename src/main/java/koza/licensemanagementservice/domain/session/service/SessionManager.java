@@ -34,7 +34,7 @@ public class SessionManager {
 
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
-    public String createSession(Long licenseId, String ipAddress, String userAgent, LocalDateTime expiredAt) {
+    public String createSession(Long licenseId, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] sessionKey) {
         String sessionId = createNewSessionId();
         SessionValue sessionValue = SessionValue.builder()
                 .sessionId(sessionId)
@@ -44,6 +44,7 @@ public class SessionManager {
                 .expiredAt(expiredAt)
                 .verifyAt(LocalDateTime.now())
                 .latestActiveAt(LocalDateTime.now())
+                .sessionKey(sessionKey)
                 .build();
         sessionRepository.save(sessionId, sessionValue, SESSION_TTL);
         return sessionId;
@@ -65,7 +66,7 @@ public class SessionManager {
         return sessionRepository.findSessionIdByLicenseId(licenseId);
     }
 
-    public void extendSession(String sessionId) {
+    public void extendSession(String sessionId, byte[] sessionKey) {
         boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
         if (!suc)
             throw new BusinessException(ErrorCode.EXPIRED_SESSION);
@@ -73,6 +74,7 @@ public class SessionManager {
             SessionValue session = sessionRepository.findById(sessionId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
             session.setLatestActiveAt(LocalDateTime.now());
+            session.setSessionKey(sessionKey);
             sessionRepository.save(sessionId, session, SESSION_TTL);
         }
     }

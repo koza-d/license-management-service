@@ -4,5 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class VerifyRequest {
+    private String publicKey;
     private String licenseKey;
 }

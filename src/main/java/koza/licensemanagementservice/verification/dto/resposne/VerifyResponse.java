@@ -9,10 +9,9 @@ import java.util.Map;
 @Getter
 @Builder
 public class VerifyResponse {
-    private String sessionId;
-    private LocalDateTime exp;
-    private LocalDateTime serverTime;
-    private Long remainMs;
-    private Map<String, Object> localVariables;
-    private Map<String, Object> globalVariables;
+    private String serverPublicKey;
+    private String encryptedSessionKey;
+    private String encryptedData; // VerifyData 직렬화 -> 암호화한 문자열
+    private String sig;
+    private String ts;
 }

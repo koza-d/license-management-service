@@ -27,7 +27,7 @@ public class VerificationController {
     @Operation(summary = "라이센스 인증", description = "세션이 생성되는 기능이 있으며, 프로그램 최초 실행 시 호출하는 라이센스 인증 API")
     @PostMapping("/verify")
     public ResponseEntity<ApiResponse<?>> verify(@RequestBody VerifyRequest request,
-                                                 HttpServletRequest servletRequest) {
+                                                 HttpServletRequest servletRequest) throws Exception {
         VerifyResponse verifyResponse = verificationService.verify(request, servletRequest);
         ApiResponse<VerifyResponse> response = ApiResponse.success(verifyResponse);
         return ResponseEntity.ok(response);
@@ -35,7 +35,7 @@ public class VerificationController {
 
     @Operation(summary = "라이센스 하트비트", description = "짧은 시간 내에 요청을 보내 세션이 살아있음을 알리는 API")
     @PostMapping("/hb")
-    public ResponseEntity<ApiResponse<?>> heartBeat(@RequestBody HeartbeatRequest request) {
+    public ResponseEntity<ApiResponse<?>> heartBeat(@RequestBody HeartbeatRequest request) throws Exception {
         HeartbeatResponse heartbeatResponse = verificationService.heartbeat(request);
         ApiResponse<HeartbeatResponse> response = ApiResponse.success(heartbeatResponse);
         return ResponseEntity.ok(response);
