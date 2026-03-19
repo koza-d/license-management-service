@@ -19,6 +19,7 @@ public class SessionRepositoryImpl implements SessionRepository {
     public static final String SESSION_KEY_PREFIX = "session";
     public static final String SESSION_LICENSE_PREFIX = "license";
     public static final String SESSION_TRIGGER_PREFIX = "trigger";
+    public static final String SESSION_LOCK_PREFIX = "lock";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -28,9 +29,16 @@ public class SessionRepositoryImpl implements SessionRepository {
         String sessionKey = getSessionKeyFormat(sessionId);
         String licenseKey = getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
+        String lockKey = getLockKeyFormat(sessionValue.getLicenseId());
+
+        Boolean isSave = redisTemplate.opsForValue().setIfAbsent(lockKey, sessionId, ttl);
+        if (!Boolean.TRUE.equals(isSave))
+            throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
+
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.opsForValue().set(licenseKey, sessionId);
         redisTemplate.opsForValue().set(triggerKey, "", ttl);
+        redisTemplate.delete(lockKey);
     }
 
     public Optional<SessionValue> findById(String sessionId) {
@@ -74,6 +82,10 @@ public class SessionRepositoryImpl implements SessionRepository {
 
     private String getTriggerKeyFormat(String sessionId) {
         return String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+    }
+
+    private String getLockKeyFormat(Long licenseId) {
+        return String.format("%s:%s", SESSION_LOCK_PREFIX, licenseId);
     }
 
     private String toJson(Object obj) {
