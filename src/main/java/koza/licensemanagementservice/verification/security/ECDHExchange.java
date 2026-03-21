@@ -36,6 +36,23 @@ public class ECDHExchange {
         return keyAgreement.generateSecret(); // 이게 공유비밀키 (양쪽이 동일한 값)
     }
 
+
+    /**
+     * secretKey → signingKey / encryptKey 분리
+     * 앞 16바이트 = signingKey (HMAC용)
+     * 뒤 16바이트 = encryptKey (AES용)
+     */
+    public static byte[] deriveSigningKey(byte[] secretKey) {
+        byte[] key = new byte[16];
+        System.arraycopy(secretKey, 0, key, 0, 16);
+        return key;
+    }
+
+    public static byte[] deriveEncryptKey(byte[] secretKey) {
+        byte[] key = new byte[16];
+        System.arraycopy(secretKey, 16, key, 0, 16);
+        return key;
+    }
     /**
      * 서버 공개키 → Base64 문자열 (SDK에 전달할 값)
      */

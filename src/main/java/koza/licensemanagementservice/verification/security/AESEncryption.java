@@ -10,9 +10,17 @@ import java.util.Base64;
 public class AESEncryption {
     /**
      * 데이터 암호화
-     * encryptKey로 plainText를 AES-256-GCM 암호화 → Base64 반환
+     * encryptKey로 plainText를 AES-128-GCM 암호화 → Base64 반환
      */
     public static String encrypt(String plainText, byte[] encryptKey) throws Exception {
+        return encrypt(plainText.getBytes(StandardCharsets.UTF_8), encryptKey);
+    }
+
+    /**
+     * 데이터 암호화
+     * encryptKey로 data를 AES-128-GCM 암호화 → Base64 반환
+     */
+    public static String encrypt(byte[] data, byte[] encryptKey) throws Exception {
         SecretKeySpec aesKey = new SecretKeySpec(encryptKey, "AES");
 
         byte[] iv = new byte[12];
@@ -20,7 +28,7 @@ public class AESEncryption {
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
-        byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+        byte[] encrypted = cipher.doFinal(data);
 
         // IV + 암호문 합쳐서 반환
         byte[] combined = new byte[iv.length + encrypted.length];

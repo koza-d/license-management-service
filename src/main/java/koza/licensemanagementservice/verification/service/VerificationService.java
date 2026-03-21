@@ -67,7 +67,7 @@ public class VerificationService {
 
         // 이후 통신에 쓰일 암호화 키 ( 매 하트비트마다 초기화) + 공유 비밀키로 암호화
         byte[] sessionKey = SessionKeyManager.generateSessionKey();
-        String encryptedSessionKey = SessionKeyManager.encryptSessionKey(sessionKey, sharedSecret);
+        String encryptedSessionKey = AESEncryption.encrypt(sessionKey, ECDHExchange.deriveEncryptKey(sharedSecret));
 
         byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
         byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
@@ -134,7 +134,7 @@ public class VerificationService {
         byte[] newSigningKey = SessionKeyManager.deriveSigningKey(newSessionKey);
         byte[] newEncryptKey = SessionKeyManager.deriveEncryptKey(newSessionKey);
         String encryptedNewSessionKey = AESEncryption.encrypt(
-                Base64.getEncoder().encodeToString(newSessionKey),
+                newSessionKey,
                 encryptKey
         );
 
