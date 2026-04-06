@@ -7,6 +7,7 @@ import koza.licensemanagementservice.global.error.CustomAuthenticationEntryPoint
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -45,6 +46,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/members", "/api/auth/login", "/").permitAll()
                         .requestMatchers("/swagger-ui/*", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/verification/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/qna").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/qna/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/software/*/faqs").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler
