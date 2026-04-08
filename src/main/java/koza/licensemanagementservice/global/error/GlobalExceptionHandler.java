@@ -33,7 +33,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<?>> handleBusinessException(BusinessException e) {
         ErrorCode error = e.getError();
-        ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage());
+        Object data = e.getData();
+        ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage(), data);
         return ResponseEntity.status(error.getStatus()).body(response);
     }
 

@@ -23,12 +23,17 @@ public class ApiResponse<T> {
     public static ApiResponse<?> fail(String code, String message) {
         return new ApiResponse<>(false, null, new ErrorResponse(code, message, null));
     }
-    
+
     // Validation 에러 시 호출
     // errors에는 필드명과 에러메시지가 각각 들어감
     public static ApiResponse<?> fail(String code, String message, Map<String, String> errors) {
         return new ApiResponse<>(false, null, new ErrorResponse(code, message, errors));
     }
+
+    public static <T> ApiResponse<T> fail(String code, String message, T data) {
+        return new ApiResponse<>(false, data, new ErrorResponse(code, message, null));
+    }
+
 
     @Getter
     @AllArgsConstructor
