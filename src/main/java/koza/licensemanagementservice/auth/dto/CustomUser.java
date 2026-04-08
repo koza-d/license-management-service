@@ -24,7 +24,11 @@ public class CustomUser implements UserDetails {
 
     @Getter
     private final String nickname;
+
+    @Getter
+    private final String profileURL;
     private final List<SimpleGrantedAuthority> roles;
+
 
     @Override
     public List<SimpleGrantedAuthority> getAuthorities() {

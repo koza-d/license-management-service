@@ -44,6 +44,7 @@ public class JwtTokenProvider {
                 .add("email", member.getEmail())
                 .add("roles", member.getRoles())
                 .add("nick", member.getNickname())
+                .add("p_img", member.getProfileURL() == null ? "" : member.getProfileURL())
                 .build();
 
         Date now = new Date();
@@ -75,7 +76,7 @@ public class JwtTokenProvider {
                 .map(role -> new SimpleGrantedAuthority(role.toString()))
                 .collect(Collectors.toList());
 
-        CustomUser principal = new CustomUser(Long.parseLong(claims.getSubject()), claims.get("email").toString(), claims.get("nick").toString(), authorities);
+        CustomUser principal = new CustomUser(Long.parseLong(claims.getSubject()), claims.get("email").toString(), claims.get("nick").toString(), claims.get("p_img").toString(), authorities);
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 

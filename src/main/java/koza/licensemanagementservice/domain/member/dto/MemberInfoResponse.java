@@ -10,5 +10,6 @@ import java.util.List;
 public class MemberInfoResponse {
     private String email;
     private String nickname;
+    private String profileImageURL;
     private List<String> roles;
 }
