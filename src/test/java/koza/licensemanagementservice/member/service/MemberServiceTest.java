@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.member.service;
 
+import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.domain.member.service.MemberService;
@@ -86,7 +87,8 @@ class MemberServiceTest {
         // given
         MemberLoginRequest request = new MemberLoginRequest("test@test.com", "password123");
         String encodePassword = "encodedPassword";
-        String createToken = "access-token";
+        String createAccessToken = "access-token";
+        String createRefreshToken = "refresh-token";
 
         Member member = Member.builder()
                 .email(request.getEmail())
@@ -96,13 +98,15 @@ class MemberServiceTest {
         given(memberRepository.findByEmail(request.getEmail())).willReturn(Optional.of(member));
 
         given(passwordEncoder.matches(request.getPassword(), encodePassword)).willReturn(true);
-        given(jwtTokenProvider.createToken(member)).willReturn(createToken);
+        given(jwtTokenProvider.createToken(member).getAccessToken()).willReturn(createAccessToken);
+        given(jwtTokenProvider.createToken(member).getRefreshToken()).willReturn(createRefreshToken);
 
         // when
-        String jwtToken = memberService.login(request);
+        JwtTokenDTO token = memberService.login(request);
 
         // then
-        assertThat(jwtToken).isEqualTo(createToken);
+        assertThat(token.getAccessToken()).isEqualTo(createAccessToken);
+        assertThat(token.getRefreshToken()).isEqualTo(createRefreshToken);
 
         verify(memberRepository).findByEmail(request.getEmail());
         verify(passwordEncoder).matches(request.getPassword(), encodePassword);
