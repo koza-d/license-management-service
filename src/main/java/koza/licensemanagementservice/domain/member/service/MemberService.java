@@ -34,7 +34,7 @@ public class MemberService {
                     throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
                 });
         List<String> roles = new ArrayList<>();
-        roles.add("ROLE_USER");
+        roles.add("USER");
 
         Member member = Member.builder().email(joinRequest.getEmail())
                 .nickname(joinRequest.getNickname())

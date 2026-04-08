@@ -28,7 +28,7 @@ public class OAuthService {
                 .orElseGet(() -> {
                     // 가입된 계정 없으면 즉시 가입
                     List<String> roles = new ArrayList<>();
-                    roles.add("ROLE_USER");
+                    roles.add("USER");
                     return memberRepository.save(Member.builder().email(userInfo.getEmail())
                             .nickname(userInfo.getName())
                             .provider(client.getProvider().getName())
