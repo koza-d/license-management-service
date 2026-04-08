@@ -63,6 +63,7 @@ public class MemberService {
         return MemberInfoResponse.builder()
                 .email(user.getUsername())
                 .nickname(user.getNickname())
+                .profileImageURL(user.getProfileURL())
                 .roles(user.getAuthorities().stream()
                         .map(SimpleGrantedAuthority::getAuthority)
                         .collect(Collectors.toList())

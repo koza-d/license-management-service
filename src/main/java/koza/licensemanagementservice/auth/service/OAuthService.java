@@ -9,6 +9,7 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -19,6 +20,7 @@ public class OAuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final SocialOAuthClientFactory oAuthClientFactory;
 
+    @Transactional
     public JwtTokenDTO login(String providerName, String code) {
         SocialOAuthClient client = oAuthClientFactory.getClient(providerName);
         String accessToken = client.getAccessToken(code);
@@ -31,6 +33,7 @@ public class OAuthService {
                     roles.add("USER");
                     return memberRepository.save(Member.builder().email(userInfo.getEmail())
                             .nickname(userInfo.getName())
+                            .profileURL(userInfo.getPicture())
                             .provider(client.getProvider().getName())
                             .providerId(userInfo.getId())
                             .roles(roles)
@@ -44,6 +47,10 @@ public class OAuthService {
             String provider = member.getProvider() == null || member.getProvider().isEmpty() ? "local" : member.getProvider();
             throw new BusinessException(ErrorCode.OAUTH_NOT_REGISTERED, new InvalidLoginProvider(provider));
         }
+
+        if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
+            member.changeProfileURL(userInfo.getPicture());
+
 
         return jwtTokenProvider.createToken(member);
     }

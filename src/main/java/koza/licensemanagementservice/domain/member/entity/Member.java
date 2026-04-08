@@ -30,6 +30,9 @@ public class Member extends BaseEntity {
     @Column(length = 20, nullable = false)
     private String nickname;
 
+    @Column(name = "profile_url")
+    private String profileURL;
+
     private String provider; // 소셜 브랜드명
     private String providerId; // 소셜이 부여한 고유 ID
 
@@ -38,4 +41,8 @@ public class Member extends BaseEntity {
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
+
+    public void changeProfileURL(String profileURL) {
+        this.profileURL = profileURL;
+    }
 }
