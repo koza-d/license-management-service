@@ -18,10 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomUser implements UserDetails {
     @Getter
-    private final String email;
-
-    @Getter
     private final Long id;
+    @Getter
+    private final String email;
 
     @Getter
     private final String nickname;

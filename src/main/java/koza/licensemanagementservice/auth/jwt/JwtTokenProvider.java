@@ -3,8 +3,11 @@ package koza.licensemanagementservice.auth.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,11 +21,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
+    public static final Long ACCESS_TOKEN_EXPIRY = 1000L * 60 * 60; // 1시간
+    public static final Long REFRESH_TOKEN_EXPIRY = 14 * 24 * 60 * 60 * 1000L; // 14일
+    
     @Value("${jwt.secret}")
     private String SECRET_KEY;
-    private final Long tokenValidityInMs = 1000L * 60 * 60;
     private SecretKey key;
+
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @PostConstruct
     protected void init() {
@@ -31,22 +39,31 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createToken(Member member) {
-        Claims claims = Jwts.claims().subject(member.getEmail())
-                .add("id", member.getId())
+    public JwtTokenDTO createToken(Member member) {
+        Claims claims = Jwts.claims().subject(member.getId().toString())
+                .add("email", member.getEmail())
                 .add("roles", member.getRoles())
                 .add("nick", member.getNickname())
                 .build();
 
         Date now = new Date();
-        Date validity = new Date(now.getTime() + tokenValidityInMs);
 
-        return Jwts.builder()
+        String accessToken = Jwts.builder()
                 .claims(claims)
                 .issuedAt(now) // 토큰 발행시간
-                .expiration(validity) // 토큰 만료시간
+                .expiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRY)) // 토큰 만료시간
                 .signWith(key)
                 .compact();
+
+        String refreshToken = Jwts.builder()
+                .subject(member.getId().toString())
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRY))
+                .signWith(key) // 추후 다른 키 권장
+                .compact();
+
+        refreshTokenRepository.save(refreshToken, member.getId(), REFRESH_TOKEN_EXPIRY);
+        return new JwtTokenDTO(accessToken, refreshToken);
     }
 
     public Authentication getAuthentication(String token) {
@@ -58,7 +75,7 @@ public class JwtTokenProvider {
                 .map(role -> new SimpleGrantedAuthority(role.toString()))
                 .collect(Collectors.toList());
 
-        CustomUser principal = new CustomUser(claims.getSubject(), Long.parseLong(claims.get("id").toString()), claims.get("nick").toString(), authorities);
+        CustomUser principal = new CustomUser(Long.parseLong(claims.getSubject()), claims.get("email").toString(), claims.get("nick").toString(), authorities);
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
