@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.member.service;
 
+import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.member.dto.MemberInfoResponse;
@@ -46,7 +47,7 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public String login(MemberLoginRequest memberLoginRequest) {
+    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest) {
         Member member = memberRepository.findByEmail(memberLoginRequest.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD));
 
@@ -67,6 +68,5 @@ public class MemberService {
                         .collect(Collectors.toList())
                 )
                 .build();
-
     }
 }

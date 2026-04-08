@@ -3,7 +3,7 @@ spring:
     name: LicenseManagementService
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/lms
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/lms
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
@@ -18,6 +18,23 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/login/oauth2/google/callback
+
+  github:
+    client-id: ${GITHUB_CLIENT_ID}
+    client-secret: ${GITHUB_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/login/oauth2/github/callback
+
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
+    redirect-uri: http://localhost:3000/login/oauth2/naver/callback
 
 jwt:
   secret: ${JWT_SECRET_KEY}

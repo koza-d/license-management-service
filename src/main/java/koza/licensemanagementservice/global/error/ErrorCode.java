@@ -12,7 +12,12 @@ public enum ErrorCode {
     ACCESS_DENIED(403, "COMMON_003", "접근 권한이 없습니다."),
     UNAUTHORIZED(401, "COMMON_004", "로그인이 필요합니다."),
     METADATA_FORMAT_WRONG(413, "COMMON_005", "메타데이터 형식이 잘못됐습니다."),
-        
+    INVALID_REQUEST(400, "COMMON_006", "잘못된 요청입니다."),
+
+    // OAuth 관련 예외
+    EMAIL_NOT_REGISTERED(404, "OAUTH_001", "가입되지 않은 이메일입니다."),
+    OAUTH_NOT_REGISTERED(404, "OAUTH_002", "선택한 소셜로 가입된 이메일이 아닙니다."),
+
     // 회원 도메인 관련 예외
     DUPLICATE_EMAIL(409, "MEMBER_001", "이미 가입된 이메일입니다."),
     INCORRECT_EMAIL_OR_PASSWORD(401, "MEMBER_002", "이메일 또는 비밀번호가 유효하지 않습니다."),

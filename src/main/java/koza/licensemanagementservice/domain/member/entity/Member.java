@@ -21,14 +21,17 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, length = 50, nullable = false)
+    @Column(unique = true, length = 50)
     private String email;
 
-    @Column(length = 200, nullable = false)
+    @Column(length = 200)
     private String password;
 
     @Column(length = 20, nullable = false)
     private String nickname;
+
+    private String provider; // 소셜 브랜드명
+    private String providerId; // 소셜이 부여한 고유 ID
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
