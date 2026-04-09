@@ -33,6 +33,16 @@ public enum ErrorCode {
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
 
+    // QNA 예외
+    QNA_NOT_FOUND(404, "QNA_001", "질문을 찾을 수 없습니다."),
+    QNA_ALREADY_ANSWERED(409, "QNA_002", "이미 답변된 질문입니다."),
+    QNA_ALREADY_ANSWERING(409, "QNA_004", "다른 관리자가 답변 중입니다."),
+    QNA_NOT_ANSWERING(400, "QNA_005", "답변 중 상태가 아닙니다."),
+    QNA_LICENSE_NOT_ACTIVE(403, "QNA_003", "유효하지 않은 라이센스입니다. 활성 상태의 라이센스만 질문할 수 있습니다."),
+
+    // FAQ 예외
+    FAQ_NOT_FOUND(404, "FAQ_001", "FAQ를 찾을 수 없습니다."),
+
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다.");
 

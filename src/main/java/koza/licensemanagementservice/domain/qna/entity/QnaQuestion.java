@@ -1,12 +1,16 @@
 package koza.licensemanagementservice.domain.qna.entity;
 
 import jakarta.persistence.*;
+import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "qna_question")
@@ -19,14 +23,70 @@ public class QnaQuestion extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "software_id", nullable = false)
+    private Software software;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "answer_id")
-    private QnaAnswer answer;
+    @JoinColumn(name = "license_id")
+    private License license;
 
+    @Column(name = "nickname", length = 30, nullable = false)
+    private String nickname;
+
+    @Column(name = "title", length = 100, nullable = false)
     private String title;
+
+    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
-    private boolean isRead;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    @Builder.Default
+    private QnaStatus status = QnaStatus.PENDING;
+
+    @Column(name = "answer", columnDefinition = "TEXT")
+    private String answer;
+
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
+
+    @Version
+    private Long version;
+
+    public void update(Software software, String title, String content) {
+        this.software = software;
+        this.title = title;
+        this.content = content;
+    }
+
+    public void startAnswering() {
+        if (this.status != QnaStatus.PENDING) {
+            throw new IllegalStateException("PENDING 상태에서만 답변을 시작할 수 있습니다. 현재: " + this.status);
+        }
+        this.status = QnaStatus.ANSWERING;
+    }
+
+    public void cancelAnswering() {
+        if (this.status != QnaStatus.ANSWERING) {
+            throw new IllegalStateException("ANSWERING 상태에서만 취소할 수 있습니다. 현재: " + this.status);
+        }
+        this.status = QnaStatus.PENDING;
+    }
+
+    public void submitAnswer(String answer) {
+        if (this.status != QnaStatus.ANSWERING) {
+            throw new IllegalStateException("ANSWERING 상태에서만 답변을 제출할 수 있습니다. 현재: " + this.status);
+        }
+        this.answer = answer;
+        this.answeredAt = LocalDateTime.now();
+        this.status = QnaStatus.ANSWERED;
+    }
+
+    public void changeStatus(QnaStatus status) {
+        this.status = status;
+    }
 }

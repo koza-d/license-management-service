@@ -2,6 +2,7 @@ package koza.licensemanagementservice.global.error;
 
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +36,14 @@ public class GlobalExceptionHandler {
         ErrorCode error = e.getError();
         Object data = e.getData();
         ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage(), data);
+        return ResponseEntity.status(error.getStatus()).body(response);
+    }
+
+    // 낙관적 락 충돌 (동시 수정)
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<?>> handleOptimisticLock(OptimisticLockingFailureException e) {
+        ErrorCode error = ErrorCode.QNA_ALREADY_ANSWERING;
+        ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage());
         return ResponseEntity.status(error.getStatus()).body(response);
     }
 
