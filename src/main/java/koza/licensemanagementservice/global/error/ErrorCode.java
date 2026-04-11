@@ -24,6 +24,8 @@ public enum ErrorCode {
 
     // 소프트웨어 버전 관련 예외
     DUPLICATE_VERSION(409, "VERSION_001", "이미 등록돼있는 버전입니다."),
+    NOT_FOUND_LATEST_VERSION(404, "VERSION_002", "최신버전을 찾을 수 없습니다."),
+
 
     // 라이센스 인증 로직 예외
     NOT_FOUND_LICENSE(404, "VERIFICATION_001", "존재하지 않는 라이센스 입니다."),

@@ -26,6 +26,7 @@ import static koza.licensemanagementservice.domain.license.entity.QLicense.licen
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.sessionLog.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
+import static koza.licensemanagementservice.domain.software.version.entity.QSoftwareVersion.softwareVersion;
 
 @RequiredArgsConstructor
 public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
@@ -136,18 +137,17 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .select(new QSoftwareSummaryResponse(
                         software.id,
                         software.name,
-                        software.latestVersion,
+                        softwareVersion.version,
                         license.count().intValue(),
                         license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().intValue(),
                         software.createAt
                 ))
                 .from(software)
                 .leftJoin(license).on(license.software.eq(software))
+                .leftJoin(software.versions, softwareVersion).on(softwareVersion.isLatest.isTrue())
                 .where(builder)
-                .groupBy(software.id);
-
-        if (activeOnly)
-            query.having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
+                .having(activeOnly ? license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L) : null)
+                .groupBy(software.id, softwareVersion.version);
 
         List<SoftwareSummaryResponse> content = query
                 .orderBy(getOrderSpecifier(pageable.getSort()))
@@ -155,11 +155,20 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = queryFactory
-                .select(software.count())
-                .from(software)
-                .where(builder)
-                .fetchOne();
+        JPAQuery<Long> countQuery = queryFactory
+                .select(software.id.countDistinct())
+                .from(software);
+
+        Long total = null;
+        if (activeOnly) {
+            countQuery
+                    .leftJoin(license).on(license.software.eq(software))
+                    .groupBy(software.id)
+                    .having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
+            total = (long) countQuery.fetch().size();
+        } else {
+            total = countQuery.where(builder).fetchOne();
+        }
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 

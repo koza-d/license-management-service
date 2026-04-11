@@ -9,6 +9,7 @@ import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetail
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
+import koza.licensemanagementservice.domain.software.version.repository.SoftwareVersionRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.auth.dto.CustomUser;
@@ -29,6 +30,7 @@ public class SoftwareService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
     private final MemberRepository memberRepository;
+    private final SoftwareVersionRepository versionRepository;
 
     @Transactional
     public SoftwareCreateResponse createSoftware(CustomUser user, SoftwareCreateRequest createRequest) {
@@ -39,7 +41,6 @@ public class SoftwareService {
 
         Software software = Software.builder()
                 .name(createRequest.getName())
-                .latestVersion(createRequest.getLatestVersion())
                 .member(member)
                 .apiKey(apiKey)
                 .globalVariables(createRequest.getGlobalVariables())
@@ -50,11 +51,12 @@ public class SoftwareService {
         SoftwareVersion version = SoftwareVersion.builder()
                 .version(createRequest.getLatestVersion())
                 .isAvailable(true)
+                .isLatest(true)
                 .build();
 
         software.addVersion(version);
         Software save = softwareRepository.save(software);
-        return SoftwareCreateResponse.from(save);
+        return SoftwareCreateResponse.of(save, version.getVersion());
     }
 
     @Transactional(readOnly = true)
@@ -89,8 +91,11 @@ public class SoftwareService {
     @Transactional
     public Long updateSoftware(CustomUser user, Long softwareId, SoftwareUpdateRequest updateRequest) {
         Software software = getSoftwareOrElse(user.getId(), softwareId);
+        String latestVersion = updateRequest.getVersion();
+        List<SoftwareVersion> versions = versionRepository.findBySoftwareId(softwareId);
 
-        software.updateInfo(updateRequest.getName(), updateRequest.getVersion());
+        software.changeLatestVersion(latestVersion, versions);
+        software.updateInfo(updateRequest.getName());
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
         return softwareId;
