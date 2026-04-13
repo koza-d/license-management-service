@@ -76,6 +76,7 @@ public class LicenseService {
         if (sessionOptional.isPresent())
             latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
+        // LicenseDetailResponse.of 내부에서 license.software.versions 을 타고 들어가서 쿼리 1번이 더 나감
         return LicenseDetailResponse.of(license, latestActiveAt, finalVars);
     }
 
