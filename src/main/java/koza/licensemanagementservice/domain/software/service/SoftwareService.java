@@ -7,6 +7,9 @@ import koza.licensemanagementservice.domain.software.dto.request.SoftwareCreateR
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUpdateRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareCreatedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareModifiedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareVersionChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.domain.software.version.repository.SoftwareVersionRepository;
@@ -17,12 +20,14 @@ import koza.licensemanagementservice.domain.software.dto.response.SoftwareCreate
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,8 @@ public class SoftwareService {
     private final LicenseRepository licenseRepository;
     private final MemberRepository memberRepository;
     private final SoftwareVersionRepository versionRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SoftwareCreateResponse createSoftware(CustomUser user, SoftwareCreateRequest createRequest) {
@@ -56,6 +63,7 @@ public class SoftwareService {
 
         software.addVersion(version);
         Software save = softwareRepository.save(software);
+        eventPublisher.publishEvent(new SoftwareCreatedEvent(save, member, save.toSnapshot()));
         return SoftwareCreateResponse.of(save, version.getVersion());
     }
 
@@ -74,7 +82,7 @@ public class SoftwareService {
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        return softwareRepository.findSummaryByMemberId(member.getId(), search, activeOnly,pageable);
+        return softwareRepository.findSummaryByMemberId(member.getId(), search, activeOnly, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -91,13 +99,30 @@ public class SoftwareService {
     @Transactional
     public Long updateSoftware(CustomUser user, Long softwareId, SoftwareUpdateRequest updateRequest) {
         Software software = getSoftwareOrElse(user.getId(), softwareId);
-        String latestVersion = updateRequest.getVersion();
         List<SoftwareVersion> versions = versionRepository.findBySoftwareId(softwareId);
+        Map<String, Object> before = software.toSnapshot();
+        SoftwareVersion latestVersion = versions.stream()
+                .filter(v -> v.getVersion().equals(updateRequest.getVersion()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        software.changeLatestVersion(latestVersion, versions);
+        SoftwareVersion beforeLatestVersion = versions.stream().filter(SoftwareVersion::isLatest).findFirst()
+                .orElseGet(() -> versions.get(0));
+
+        // 변경 로직
+        software.changeLatestVersion(latestVersion.getVersion(), versions);
         software.updateInfo(updateRequest.getName());
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
+
+
+        eventPublisher.publishEvent(new SoftwareVersionChangedEvent(
+                software,
+                software.getMember(),
+                beforeLatestVersion.toSnapshot(),
+                latestVersion.toSnapshot())
+        );
+        eventPublisher.publishEvent(new SoftwareModifiedEvent(software, software.getMember(), before, software.toSnapshot())); // 로그 비동기 저장
         return softwareId;
     }
 

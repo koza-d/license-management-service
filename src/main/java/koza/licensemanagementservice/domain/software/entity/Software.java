@@ -78,4 +78,19 @@ public class Software extends BaseEntity {
     public void updateInfo(String name) {
         if (name != null) this.name = name;
     }
+
+    public Map<String, Object> toSnapshot() {
+        Map<String, Object> globalVariables = new HashMap<>(this.globalVariables);
+        Map<String, Object> localVariables = new HashMap<>(this.localVariables);
+        return Map.of(
+                "id", id,
+                "memberId", member.getId(),
+                "versions", versions.stream().map(SoftwareVersion::getId).toList(),
+                "name", name,
+                "apiKey", apiKey,
+                "globalVariables", globalVariables,
+                "localVariables", localVariables,
+                "limitLicense", limitLicense
+        );
+    }
 }

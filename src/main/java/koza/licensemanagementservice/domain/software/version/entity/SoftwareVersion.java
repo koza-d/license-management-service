@@ -6,6 +6,8 @@ import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionUpdateRequest;
 import lombok.*;
 
+import java.util.Map;
+
 @Entity
 @Getter
 @Table(name="software_version")
@@ -49,5 +51,12 @@ public class SoftwareVersion extends BaseEntity {
 
     public void setLatest(boolean isLatest) {
         this.isLatest = isLatest;
+    }
+
+    public Map<String, Object> toSnapshot() {
+        return Map.of(
+                "id", id,
+                "version", version
+        );
     }
 }
