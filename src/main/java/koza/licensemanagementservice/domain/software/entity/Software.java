@@ -52,6 +52,11 @@ public class Software extends BaseEntity {
     @Column(name = "limit_license")
     private int limitLicense;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private SoftwareStatus status = SoftwareStatus.ACTIVE;
+  
     public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
         versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
     }
@@ -92,5 +97,9 @@ public class Software extends BaseEntity {
                 "localVariables", localVariables,
                 "limitLicense", limitLicense
         );
+    }
+
+    public void changeStatus(SoftwareStatus status) {
+        this.status = status;
     }
 }

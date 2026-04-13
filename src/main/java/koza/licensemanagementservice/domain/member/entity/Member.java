@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +37,37 @@ public class Member extends BaseEntity {
     private String provider; // 소셜 브랜드명
     private String providerId; // 소셜이 부여한 고유 ID
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grade", length = 20, nullable = false)
+    private MemberGrade grade = MemberGrade.BASIC;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private MemberStatus status = MemberStatus.ACTIVE;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
-
     public void changeProfileURL(String profileURL) {
         this.profileURL = profileURL;
+    }
+
+    public void changeGrade(MemberGrade grade) {
+        this.grade = grade;
+    }
+
+    public void changeStatus(MemberStatus status) {
+        this.status = status;
+    }
+
+    public void updateLastLoginAt() {
+        this.lastLoginAt = LocalDateTime.now();
     }
 }
