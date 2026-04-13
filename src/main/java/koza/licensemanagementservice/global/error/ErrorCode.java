@@ -21,6 +21,13 @@ public enum ErrorCode {
     // 회원 도메인 관련 예외
     DUPLICATE_EMAIL(409, "MEMBER_001", "이미 가입된 이메일입니다."),
     INCORRECT_EMAIL_OR_PASSWORD(401, "MEMBER_002", "이메일 또는 비밀번호가 유효하지 않습니다."),
+    MEMBER_NOT_FOUND(404, "MEMBER_003", "회원을 찾을 수 없습니다."),
+    MEMBER_STATUS_SAME(400, "MEMBER_004", "현재 상태와 동일한 상태로 변경할 수 없습니다."),
+    MEMBER_GRADE_SAME(400, "MEMBER_005", "현재 등급과 동일한 등급으로 변경할 수 없습니다."),
+
+    // 소프트웨어 관련 예외
+    SOFTWARE_NOT_FOUND(404, "SOFTWARE_001", "소프트웨어를 찾을 수 없습니다."),
+    SOFTWARE_STATUS_SAME(400, "SOFTWARE_002", "현재 상태와 동일한 상태로 변경할 수 없습니다."),
 
     // 소프트웨어 버전 관련 예외
     DUPLICATE_VERSION(409, "VERSION_001", "이미 등록돼있는 버전입니다."),
