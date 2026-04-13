@@ -2,12 +2,16 @@ package koza.licensemanagementservice.domain.license.dto.response;
 
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
+import koza.licensemanagementservice.global.error.BusinessException;
+import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Builder
@@ -32,11 +36,15 @@ public class LicenseDetailResponse {
         long remainingMs = calcRemainingMs(license.getExpiredAt());
 
         Software software = license.getSoftware();
+        Optional<SoftwareVersion> latestVersion = software.getVersions().stream()
+                .filter(SoftwareVersion::isLatest)
+                .findAny();
+
         return LicenseDetailResponse.builder()
                 .id(license.getId())
                 .softwareId(software.getId())
                 .softwareName(software.getName())
-                .softwareLatestVersion(software.getLatestVersion())
+                .softwareLatestVersion(latestVersion.isEmpty() ? "최신버전 찾을 수 없음" : latestVersion.get().getVersion())
                 .licenseName(license.getName())
                 .memo(license.getMemo())
                 .licenseKey(license.getLicenseKey())

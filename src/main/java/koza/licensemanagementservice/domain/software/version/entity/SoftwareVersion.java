@@ -6,6 +6,8 @@ import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionUpdateRequest;
 import lombok.*;
 
+import java.util.Map;
+
 @Entity
 @Getter
 @Table(name="software_version")
@@ -27,6 +29,9 @@ public class SoftwareVersion extends BaseEntity {
     @Column(name = "file_hash", length = 64)
     private String fileHash;
 
+    @Column(name = "is_latest")
+    private boolean isLatest;
+
     @Column(name = "is_available")
     private boolean isAvailable;
 
@@ -42,5 +47,16 @@ public class SoftwareVersion extends BaseEntity {
         if (request.getAvailable() != null) this.isAvailable = request.getAvailable();
         if (request.getDownloadURL() != null) this.downloadURL = request.getDownloadURL();
         if (request.getMemo() != null) this.memo = request.getMemo();
+    }
+
+    public void setLatest(boolean isLatest) {
+        this.isLatest = isLatest;
+    }
+
+    public Map<String, Object> toSnapshot() {
+        return Map.of(
+                "id", id,
+                "version", version
+        );
     }
 }

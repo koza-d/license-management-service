@@ -36,9 +36,6 @@ public class Software extends BaseEntity {
     @Column(name = "name", length = 30, nullable = false)
     private String name;
 
-    @Column(name = "latest_version", length = 50, nullable = false)
-    private String latestVersion;
-
     @Column(name = "api_key", length = 128, nullable = false)
     private String apiKey;
 
@@ -59,6 +56,10 @@ public class Software extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private SoftwareStatus status = SoftwareStatus.ACTIVE;
+  
+    public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
+        versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
+    }
 
     public void addVersion(SoftwareVersion version) {
         if (this.versions == null)
@@ -79,9 +80,23 @@ public class Software extends BaseEntity {
             this.localVariables.putAll(localVariables);
     }
 
-    public void updateInfo(String name, String latestVersion) {
+    public void updateInfo(String name) {
         if (name != null) this.name = name;
-        if (latestVersion != null) this.latestVersion = latestVersion;
+    }
+
+    public Map<String, Object> toSnapshot() {
+        Map<String, Object> globalVariables = new HashMap<>(this.globalVariables);
+        Map<String, Object> localVariables = new HashMap<>(this.localVariables);
+        return Map.of(
+                "id", id,
+                "memberId", member.getId(),
+                "versions", versions.stream().map(SoftwareVersion::getId).toList(),
+                "name", name,
+                "apiKey", apiKey,
+                "globalVariables", globalVariables,
+                "localVariables", localVariables,
+                "limitLicense", limitLicense
+        );
     }
 
     public void changeStatus(SoftwareStatus status) {

@@ -16,11 +16,12 @@ public class SoftwareCreateResponse {
     private int limitLicense;
     private Map<String, Object> globalVariables;
     private Map<String, Object> localVariables;
-    public static SoftwareCreateResponse from(Software software) {
+    public static SoftwareCreateResponse of(Software software, String latestVersion) {
+
         return SoftwareCreateResponse.builder()
                 .id(software.getId())
                 .name(software.getName())
-                .latestVersion(software.getLatestVersion())
+                .latestVersion(latestVersion)
                 .apiKey(software.getApiKey())
                 .limitLicense(software.getLimitLicense())
                 .globalVariables(software.getGlobalVariables())
