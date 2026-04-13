@@ -55,6 +55,11 @@ public class Software extends BaseEntity {
     @Column(name = "limit_license")
     private int limitLicense;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private SoftwareStatus status = SoftwareStatus.ACTIVE;
+
     public void addVersion(SoftwareVersion version) {
         if (this.versions == null)
             this.versions = new ArrayList<>();
@@ -77,5 +82,9 @@ public class Software extends BaseEntity {
     public void updateInfo(String name, String latestVersion) {
         if (name != null) this.name = name;
         if (latestVersion != null) this.latestVersion = latestVersion;
+    }
+
+    public void changeStatus(SoftwareStatus status) {
+        this.status = status;
     }
 }
