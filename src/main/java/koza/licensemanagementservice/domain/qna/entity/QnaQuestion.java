@@ -63,27 +63,9 @@ public class QnaQuestion extends BaseEntity {
         this.content = content;
     }
 
-    public void startAnswering() {
-        if (this.status != QnaStatus.PENDING) {
-            throw new IllegalStateException("PENDING 상태에서만 답변을 시작할 수 있습니다. 현재: " + this.status);
-        }
-        this.status = QnaStatus.ANSWERING;
-    }
-
-    public void cancelAnswering() {
-        if (this.status != QnaStatus.ANSWERING) {
-            throw new IllegalStateException("ANSWERING 상태에서만 취소할 수 있습니다. 현재: " + this.status);
-        }
-        this.status = QnaStatus.PENDING;
-    }
-
     public void submitAnswer(String answer) {
-        if (this.status != QnaStatus.ANSWERING) {
-            throw new IllegalStateException("ANSWERING 상태에서만 답변을 제출할 수 있습니다. 현재: " + this.status);
-        }
         this.answer = answer;
         this.answeredAt = LocalDateTime.now();
-        this.status = QnaStatus.ANSWERED;
     }
 
     public void changeStatus(QnaStatus status) {

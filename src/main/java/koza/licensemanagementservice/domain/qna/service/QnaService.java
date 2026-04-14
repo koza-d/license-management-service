@@ -81,47 +81,11 @@ public class QnaService {
         return QnaDetailResponse.from(question);
     }
 
-    // 6-1. 답변 시작 (PENDING → ANSWERING, 관리자 전용)
-    @Transactional
-    public QnaDetailResponse startAnswering(CustomUser user, Long qnaId) {
-        validateAdmin(user);
-        QnaQuestion question = findQuestion(qnaId);
-
-        if (question.getStatus() == QnaStatus.ANSWERING) {
-            throw new BusinessException(ErrorCode.QNA_ALREADY_ANSWERING);
-        }
-        if (question.getStatus() == QnaStatus.ANSWERED) {
-            throw new BusinessException(ErrorCode.QNA_ALREADY_ANSWERED);
-        }
-
-        question.startAnswering();
-        return QnaDetailResponse.from(question);
-    }
-
-    // 6-2. 답변 취소 (ANSWERING → PENDING, 관리자 전용)
-    @Transactional
-    public QnaDetailResponse cancelAnswering(CustomUser user, Long qnaId) {
-        validateAdmin(user);
-        QnaQuestion question = findQuestion(qnaId);
-
-        if (question.getStatus() != QnaStatus.ANSWERING) {
-            throw new BusinessException(ErrorCode.QNA_NOT_ANSWERING);
-        }
-
-        question.cancelAnswering();
-        return QnaDetailResponse.from(question);
-    }
-
-    // 6-3. 답변 제출 (ANSWERING → ANSWERED, 관리자 전용)
+    // 6. 답변 제출 (관리자 전용)
     @Transactional
     public QnaDetailResponse submitAnswer(CustomUser user, Long qnaId, QnaAnswerRequest request) {
         validateAdmin(user);
         QnaQuestion question = findQuestion(qnaId);
-
-        if (question.getStatus() != QnaStatus.ANSWERING) {
-            throw new BusinessException(ErrorCode.QNA_NOT_ANSWERING);
-        }
-
         question.submitAnswer(request.getAnswer());
         return QnaDetailResponse.from(question);
     }

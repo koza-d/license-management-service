@@ -70,23 +70,7 @@ public class QnaController {
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 
-    @Operation(summary = "답변 시작", description = "PENDING → ANSWERING 상태 변경")
-    @PostMapping("/{qnaId}/answer/start")
-    public ResponseEntity<ApiResponse<?>> startAnswering(@AuthenticationPrincipal CustomUser user,
-                                                          @PathVariable Long qnaId) {
-        QnaDetailResponse detail = qnaService.startAnswering(user, qnaId);
-        return ResponseEntity.ok(ApiResponse.success(detail));
-    }
-
-    @Operation(summary = "답변 취소", description = "ANSWERING → PENDING 상태 복원")
-    @PostMapping("/{qnaId}/answer/cancel")
-    public ResponseEntity<ApiResponse<?>> cancelAnswering(@AuthenticationPrincipal CustomUser user,
-                                                           @PathVariable Long qnaId) {
-        QnaDetailResponse detail = qnaService.cancelAnswering(user, qnaId);
-        return ResponseEntity.ok(ApiResponse.success(detail));
-    }
-
-    @Operation(summary = "답변 제출", description = "ANSWERING → ANSWERED 상태 변경 + 답변 저장")
+    @Operation(summary = "답변 제출", description = "관리자가 문의에 답변 저장")
     @PostMapping("/{qnaId}/answer")
     public ResponseEntity<ApiResponse<?>> submitAnswer(@AuthenticationPrincipal CustomUser user,
                                                         @PathVariable Long qnaId,

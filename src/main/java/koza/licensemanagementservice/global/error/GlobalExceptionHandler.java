@@ -42,9 +42,8 @@ public class GlobalExceptionHandler {
     // 낙관적 락 충돌 (동시 수정)
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ApiResponse<?>> handleOptimisticLock(OptimisticLockingFailureException e) {
-        ErrorCode error = ErrorCode.QNA_ALREADY_ANSWERING;
-        ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage());
-        return ResponseEntity.status(error.getStatus()).body(response);
+        ApiResponse<?> response = ApiResponse.fail("COMMON_006", "다른 사용자가 동시에 수정 중입니다. 다시 시도해주세요.");
+        return ResponseEntity.status(409).body(response);
     }
 
     // 처리되지 않은 예외
