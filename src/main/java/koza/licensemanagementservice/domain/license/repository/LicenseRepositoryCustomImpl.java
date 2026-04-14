@@ -3,9 +3,14 @@ package koza.licensemanagementservice.domain.license.repository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.QLicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
+import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -126,6 +131,67 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .where(builder)
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Page<LicenseAdminSummaryResponse> findByAllCondition(LicenseSearchCondition condition, Pageable pageable) {
+        List<LicenseAdminSummaryResponse> content = jpaQueryFactory
+                .select(new QLicenseAdminSummaryResponse(
+                        license.id,
+                        member.email,
+                        software.name,
+                        license.name,
+                        license.licenseKey,
+                        license.createAt,
+                        license.expiredAt,
+                        license.hasActiveSession,
+                        license.latestActiveAt,
+                        license.status.stringValue()
+                ))
+                .from(license)
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession())
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(license.count())
+                .from(license)
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession())
+                ).fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression sessionFilter(Boolean hasActiveSession) {
+        return hasActiveSession != null ? license.hasActiveSession.eq(hasActiveSession) : null;
+    }
+
+    private BooleanExpression searchFilter(LicenseSearchTarget target, String search) {
+        if (search == null || search.isEmpty())
+            return null;
+
+        if (target != null && target != LicenseSearchTarget.ALL) {
+            return switch (target) {
+                case SOFTWARE_OWNER_EMAIL -> member.email.containsIgnoreCase(search);
+                case SOFTWARE_NAME -> software.name.containsIgnoreCase(search);
+                case LICENSE_NAME -> license.name.containsIgnoreCase(search);
+                default -> null;
+            };
+        }
+
+        return member.email.containsIgnoreCase(search)
+                .or(software.name.containsIgnoreCase(search))
+                .or(license.name.containsIgnoreCase(search));
     }
 
     private OrderSpecifier[] getOrderSpecifier(Sort sort) {

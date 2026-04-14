@@ -1,7 +1,7 @@
-package koza.licensemanagementservice.domain.sessionLog.dto;
+package koza.licensemanagementservice.domain.session.log.dto;
 
-import koza.licensemanagementservice.domain.sessionLog.entity.ReleaseType;
-import koza.licensemanagementservice.domain.sessionLog.entity.SessionLog;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
+import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
 import lombok.Builder;
 import lombok.Getter;
 

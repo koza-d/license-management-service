@@ -1,7 +1,7 @@
 package koza.licensemanagementservice.dashboard.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
-import koza.licensemanagementservice.domain.sessionLog.dto.DailyUsageResponse;
+import koza.licensemanagementservice.domain.session.log.dto.DailyUsageResponse;
 import lombok.Getter;
 
 import java.util.ArrayList;

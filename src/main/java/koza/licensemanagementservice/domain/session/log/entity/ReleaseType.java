@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.domain.sessionLog.entity;
+package koza.licensemanagementservice.domain.session.log.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
