@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Getter
 @AllArgsConstructor
-public class LicenseExtendEvent {
+public class LicenseBulkExtendEvent {
     private Long operatorId;
     private List<Long> licenseIds;
     private Map<Long, LocalDateTime> beforeExpiredAt;

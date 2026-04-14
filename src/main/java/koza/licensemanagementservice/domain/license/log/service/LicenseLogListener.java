@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.license.log.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseBulkExtendEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
@@ -39,7 +39,7 @@ public class LicenseLogListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handleLicenseExtendEvent(LicenseExtendEvent event) {
+    public void handleLicenseBulkExtendEvent(LicenseBulkExtendEvent event) {
         Member operator = memberRepository.getReferenceById(event.getOperatorId());
         List<LicenseExtendLog> logs = new ArrayList<>();
         event.getLicenseIds().forEach(

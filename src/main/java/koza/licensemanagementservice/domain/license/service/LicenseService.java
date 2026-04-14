@@ -9,12 +9,11 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailRe
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseBulkExtendEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -141,7 +140,7 @@ public class LicenseService {
                 .collect(Collectors.toMap(License::getId, License::getExpiredAt));
         List<Long> licenseIds = targetLicenses.stream().map(License::getId).collect(Collectors.toList());
         Long periodMs = request.getDays() * 24 * 60 * 60 * 1000L;
-        eventPublisher.publishEvent(new LicenseExtendEvent(user.getId(), licenseIds, beforeExpiredAt, afterExpiredAt, periodMs));
+        eventPublisher.publishEvent(new LicenseBulkExtendEvent(user.getId(), licenseIds, beforeExpiredAt, afterExpiredAt, periodMs));
         return targetLicenses.stream()
                 .map(license -> LicenseExtendResponse.of(license, request.getDays()))
                 .collect(Collectors.toList());
