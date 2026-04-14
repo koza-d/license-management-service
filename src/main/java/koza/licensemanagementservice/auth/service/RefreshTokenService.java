@@ -4,6 +4,7 @@ import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -23,6 +24,11 @@ public class RefreshTokenService {
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        if (member.getStatus() == MemberStatus.SUSPENDED) {
+            refreshTokenRepository.delete(refreshToken);
+            throw new BusinessException(ErrorCode.MEMBER_SUSPENDED);
+        }
 
         refreshTokenRepository.delete(refreshToken);
         return jwtTokenProvider.createToken(member);
