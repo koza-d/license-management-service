@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.domain.log.repository;
+package koza.licensemanagementservice.domain.member.log.repository;
 
-import koza.licensemanagementservice.domain.log.entity.MemberGradeLog;
+import koza.licensemanagementservice.domain.member.log.entity.MemberGradeLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

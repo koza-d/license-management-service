@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.domain.log.dto.response;
+package koza.licensemanagementservice.domain.software.log.dto.response;
 
-import koza.licensemanagementservice.domain.log.entity.SoftwareStatusLog;
+import koza.licensemanagementservice.domain.software.log.entity.SoftwareStatusLog;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import lombok.Builder;
 import lombok.Getter;

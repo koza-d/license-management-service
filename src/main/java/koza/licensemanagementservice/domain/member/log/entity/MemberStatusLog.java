@@ -1,4 +1,4 @@
-package koza.licensemanagementservice.domain.log.entity;
+package koza.licensemanagementservice.domain.member.log.entity;
 
 import jakarta.persistence.*;
 import koza.licensemanagementservice.domain.member.entity.Member;

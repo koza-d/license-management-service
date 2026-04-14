@@ -1,12 +1,12 @@
 package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.log.dto.response.MemberGradeLogResponse;
-import koza.licensemanagementservice.domain.log.dto.response.MemberStatusLogResponse;
-import koza.licensemanagementservice.domain.log.entity.MemberGradeLog;
-import koza.licensemanagementservice.domain.log.entity.MemberStatusLog;
-import koza.licensemanagementservice.domain.log.repository.MemberGradeLogRepository;
-import koza.licensemanagementservice.domain.log.repository.MemberStatusLogRepository;
+import koza.licensemanagementservice.domain.member.log.dto.response.MemberGradeLogResponse;
+import koza.licensemanagementservice.domain.member.log.dto.response.MemberStatusLogResponse;
+import koza.licensemanagementservice.domain.member.log.entity.MemberGradeLog;
+import koza.licensemanagementservice.domain.member.log.entity.MemberStatusLog;
+import koza.licensemanagementservice.domain.member.log.repository.MemberGradeLogRepository;
+import koza.licensemanagementservice.domain.member.log.repository.MemberStatusLogRepository;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;

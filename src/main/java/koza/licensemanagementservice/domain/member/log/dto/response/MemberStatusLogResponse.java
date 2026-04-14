@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.domain.log.dto.response;
+package koza.licensemanagementservice.domain.member.log.dto.response;
 
-import koza.licensemanagementservice.domain.log.entity.MemberStatusLog;
+import koza.licensemanagementservice.domain.member.log.entity.MemberStatusLog;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import lombok.Builder;
 import lombok.Getter;
