@@ -2,14 +2,18 @@ package koza.licensemanagementservice.domain.license.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +37,10 @@ public class LicenseAdminService {
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+    }
+
+    public Page<LicenseAdminSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+        return licenseRepository.findByAllCondition(condition, pageable);
     }
 
     private static void validAdminAuthorized(CustomUser user) {

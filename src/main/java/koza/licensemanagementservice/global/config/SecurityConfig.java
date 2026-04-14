@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/qna").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/qna/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/software/*/faqs").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler
