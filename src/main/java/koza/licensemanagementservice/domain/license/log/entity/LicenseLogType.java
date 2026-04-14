@@ -8,7 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum LicenseLogType {
     ISSUED("발급"),
-    MODIFIED("수정")
+    MODIFIED("수정"),
+    CHANGED_STATUS("상태변경")
     ;
 
     private final String desc;

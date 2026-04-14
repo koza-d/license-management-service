@@ -12,6 +12,7 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryR
 import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
@@ -189,7 +190,10 @@ public class LicenseService {
         String statusString = request.getStatus();
         try {
             LicenseStatus status = LicenseStatus.valueOf(statusString);
+            LicenseStatus beforeStatus = license.getStatus();
+            String reason = request.getReason();
             license.changeStatus(status);
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, reason));
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
