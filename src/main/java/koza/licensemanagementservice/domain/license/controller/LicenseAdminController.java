@@ -4,8 +4,10 @@ package koza.licensemanagementservice.domain.license.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.license.dto.request.LicenseAdminExtendRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.service.LicenseAdminService;
@@ -41,6 +43,16 @@ public class LicenseAdminController {
                                                            @PathVariable("licenseId") Long licenseId) {
         LicenseAdminDetailResponse detailResponse = licenseAdminService.getLicenseDetail(user, licenseId);
         ApiResponse<LicenseAdminDetailResponse> response = ApiResponse.success(detailResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "라이센스 연장")
+    @PostMapping("/{licenseId}/extend")
+    public ResponseEntity<ApiResponse<?>> extendLicense(@AuthenticationPrincipal CustomUser user,
+                                                       @PathVariable("licenseId") Long licenseId,
+                                                       @RequestBody LicenseAdminExtendRequest request) {
+        LicenseAdminExtendResponse extendResponse = licenseAdminService.extend(user, licenseId, request);
+        ApiResponse<?> response = ApiResponse.success(extendResponse);
         return ResponseEntity.ok(response);
     }
 

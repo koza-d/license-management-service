@@ -3,10 +3,7 @@ package koza.licensemanagementservice.domain.license.log.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseBulkExtendEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.*;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseExtendLog;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLog;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLogType;
@@ -56,6 +53,22 @@ public class LicenseLogListener {
                 }
         );
         extendLogRepository.saveAll(logs);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleLicenseExtendEvent(LicenseExtendEvent event) {
+        Member operator = memberRepository.getReferenceById(event.getOperatorId());
+        License license = licenseRepository.getReferenceById(event.getLicenseId());
+        LicenseExtendLog licenseExtendLog = LicenseExtendLog.builder()
+                .license(license)
+                .operator(operator)
+                .beforeExpiredAt(event.getBeforeExpiredAt())
+                .afterExpiredAt(event.getAfterExpiredAt())
+                .periodMs(event.getPeriodMs())
+                .build();
+        extendLogRepository.save(licenseExtendLog);
     }
 
     @Async
@@ -114,13 +127,13 @@ public class LicenseLogListener {
         try {
             if (event.getBeforeStatus() == event.getAfterStatus())
                 return;
-             Map<String, Object> diffValues = Map.of(
+            Map<String, Object> diffValues = Map.of(
                     "status", Map.of(
                             "before", event.getBeforeStatus(),
                             "after", event.getAfterStatus()
-                     ),
-                     "reason", event.getReason()
-             );
+                    ),
+                    "reason", event.getReason()
+            );
 
             String value = objectMapper.writeValueAsString(diffValues);
             LicenseLog licenseLog = LicenseLog.builder()
@@ -134,7 +147,6 @@ public class LicenseLogListener {
             log.error("LicenseId={} 해당 라이센스 상태 변경 로그를 남기던 중 에러가 발생했습니다. 사유 : {}", event.getTargetId(), e.getMessage());
         }
     }
-
 
 
     private Map<String, Object> parseDiffValues(Map<String, Object> before, Map<String, Object> after) throws JsonProcessingException {
