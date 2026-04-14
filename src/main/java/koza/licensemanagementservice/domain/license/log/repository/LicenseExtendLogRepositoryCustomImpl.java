@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.QLicenseExtendLogResponse;
+import koza.licensemanagementservice.domain.license.log.entity.LicenseExtendLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -73,7 +74,7 @@ public class LicenseExtendLogRepositoryCustomImpl implements LicenseExtendLogRep
 
     private OrderSpecifier[] getOrderSpecifier(Sort sort) {
         List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<License> entityPath = new PathBuilder<>(License.class, "license");
+        PathBuilder<LicenseExtendLog> entityPath = new PathBuilder<>(LicenseExtendLog.class, "licenseExtendLog");
 
         for (Sort.Order order : sort) {
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
