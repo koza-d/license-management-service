@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.service.LicenseAdminService;
@@ -34,8 +35,17 @@ public class LicenseAdminController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "라이센스 상세조회")
+    @GetMapping("/{licenseId}")
+    public ResponseEntity<ApiResponse<?>> getLicenseDetail(@AuthenticationPrincipal CustomUser user,
+                                                           @PathVariable("licenseId") Long licenseId) {
+        LicenseAdminDetailResponse detailResponse = licenseAdminService.getLicenseDetail(user, licenseId);
+        ApiResponse<LicenseAdminDetailResponse> response = ApiResponse.success(detailResponse);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "라이센스 상태 변경", description = "라이센스 상태 변경 API")
-    @PatchMapping("/{licenseId}/status")
+    @PostMapping("/{licenseId}/status")
     public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
                                                        @RequestBody LicenseStatusUpdateRequest request) {
