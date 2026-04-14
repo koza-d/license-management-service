@@ -1,13 +1,13 @@
 package koza.licensemanagementservice.domain.session.service;
 
 import koza.licensemanagementservice.domain.session.repository.SessionRepository;
-import koza.licensemanagementservice.domain.sessionLog.entity.SessionLog;
-import koza.licensemanagementservice.domain.sessionLog.repository.SessionLogRepository;
+import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
+import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
-import koza.licensemanagementservice.domain.sessionLog.entity.ReleaseType;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

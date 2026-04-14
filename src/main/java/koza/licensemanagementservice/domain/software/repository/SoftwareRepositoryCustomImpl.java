@@ -24,7 +24,7 @@ import java.util.*;
 
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
-import static koza.licensemanagementservice.domain.sessionLog.entity.QSessionLog.sessionLog;
+import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.domain.software.version.entity.QSoftwareVersion.softwareVersion;
 

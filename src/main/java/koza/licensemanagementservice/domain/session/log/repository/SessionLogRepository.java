@@ -1,6 +1,6 @@
-package koza.licensemanagementservice.domain.sessionLog.repository;
+package koza.licensemanagementservice.domain.session.log.repository;
 
-import koza.licensemanagementservice.domain.sessionLog.entity.SessionLog;
+import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

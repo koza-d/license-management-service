@@ -15,8 +15,8 @@ import koza.licensemanagementservice.verification.dto.resposne.HeartbeatData;
 import koza.licensemanagementservice.verification.dto.resposne.HeartbeatResponse;
 import koza.licensemanagementservice.verification.dto.resposne.VerifyData;
 import koza.licensemanagementservice.verification.dto.resposne.VerifyResponse;
-import koza.licensemanagementservice.domain.sessionLog.entity.ReleaseType;
-import koza.licensemanagementservice.domain.sessionLog.repository.SessionLogRepository;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
+import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.verification.security.AESEncryption;
 import koza.licensemanagementservice.verification.security.ECDHExchange;
 import koza.licensemanagementservice.verification.security.HMACSignature;
@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
