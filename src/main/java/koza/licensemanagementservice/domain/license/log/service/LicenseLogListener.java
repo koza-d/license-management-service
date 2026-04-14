@@ -78,18 +78,13 @@ public class LicenseLogListener {
         Member operator = memberRepository.getReferenceById(event.getOperatorId());
         License issuedLicense = licenseRepository.getReferenceById(event.getLicenseId());
 
-        try {
-            String value = objectMapper.writeValueAsString(event.getSnapshot());
-            LicenseLog licenseLog = LicenseLog.builder()
-                    .license(issuedLicense)
-                    .operator(operator)
-                    .logType(LicenseLogType.ISSUED)
-                    .data(value)
-                    .build();
-            logRepository.save(licenseLog);
-        } catch (JsonProcessingException e) {
-            log.error("LicenseId={} 해당 라이센스 발급 로그를 남기던 중 에러가 발생했습니다. 사유 : {}", event.getLicenseId(), e.getMessage());
-        }
+        LicenseLog licenseLog = LicenseLog.builder()
+                .license(issuedLicense)
+                .operator(operator)
+                .logType(LicenseLogType.ISSUED)
+                .data(event.getSnapshot())
+                .build();
+        logRepository.save(licenseLog);
     }
 
     @Async
@@ -104,12 +99,11 @@ public class LicenseLogListener {
             if (diffValues.isEmpty())
                 return;
 
-            String value = objectMapper.writeValueAsString(diffValues);
             LicenseLog licenseLog = LicenseLog.builder()
                     .license(targetLicense)
                     .operator(operator)
                     .logType(LicenseLogType.MODIFIED)
-                    .data(value)
+                    .data(diffValues)
                     .build();
             logRepository.save(licenseLog);
         } catch (JsonProcessingException e) {
@@ -124,28 +118,23 @@ public class LicenseLogListener {
         License targetLicense = licenseRepository.getReferenceById(event.getTargetId());
         Member operator = memberRepository.getReferenceById(event.getOperatorId());
 
-        try {
-            if (event.getBeforeStatus() == event.getAfterStatus())
-                return;
-            Map<String, Object> diffValues = Map.of(
-                    "status", Map.of(
-                            "before", event.getBeforeStatus(),
-                            "after", event.getAfterStatus()
-                    ),
-                    "reason", event.getReason()
-            );
+        if (event.getBeforeStatus() == event.getAfterStatus())
+            return;
+        Map<String, Object> diffValues = Map.of(
+                "status", Map.of(
+                        "before", event.getBeforeStatus(),
+                        "after", event.getAfterStatus()
+                ),
+                "reason", event.getReason()
+        );
 
-            String value = objectMapper.writeValueAsString(diffValues);
-            LicenseLog licenseLog = LicenseLog.builder()
-                    .license(targetLicense)
-                    .operator(operator)
-                    .logType(LicenseLogType.CHANGED_STATUS)
-                    .data(value)
-                    .build();
-            logRepository.save(licenseLog);
-        } catch (JsonProcessingException e) {
-            log.error("LicenseId={} 해당 라이센스 상태 변경 로그를 남기던 중 에러가 발생했습니다. 사유 : {}", event.getTargetId(), e.getMessage());
-        }
+        LicenseLog licenseLog = LicenseLog.builder()
+                .license(targetLicense)
+                .operator(operator)
+                .logType(LicenseLogType.CHANGED_STATUS)
+                .data(diffValues)
+                .build();
+        logRepository.save(licenseLog);
     }
 
 

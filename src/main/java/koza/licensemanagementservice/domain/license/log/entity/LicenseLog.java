@@ -8,6 +8,8 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.Map;
+
 @Entity
 @Table(name = "license_log")
 @AllArgsConstructor
@@ -30,7 +32,8 @@ public class LicenseLog extends LogBaseEntity {
     @Enumerated(EnumType.STRING)
     private LicenseLogType logType;
 
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "json")
-    private String data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
+    private Map<String, Object> data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
 }
