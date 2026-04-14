@@ -15,6 +15,7 @@ public class MemberLogResponse {
     private Long memberId;
     private Long operatorId;
     private String operatorNickname;
+    private String operatorEmail;
     private MemberLogType logType;
     private String logTypeDesc;
     private String data;
@@ -27,6 +28,7 @@ public class MemberLogResponse {
                 .memberId(log.getMember().getId())
                 .operatorId(op == null ? null : op.getId())
                 .operatorNickname(op == null ? null : op.getNickname())
+                .operatorEmail(op == null ? null : op.getEmail())
                 .logType(log.getLogType())
                 .logTypeDesc(log.getLogType().getDesc())
                 .data(log.getData())
