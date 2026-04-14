@@ -9,6 +9,7 @@ import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,9 @@ class MemberServiceTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @Test
     @DisplayName("회원가입 성공 - 새로운 이메일인 경우")
@@ -102,7 +106,7 @@ class MemberServiceTest {
         given(jwtTokenProvider.createToken(member).getRefreshToken()).willReturn(createRefreshToken);
 
         // when
-        JwtTokenDTO token = memberService.login(request);
+        JwtTokenDTO token = memberService.login(request, "127.0.0.1", "test-agent");
 
         // then
         assertThat(token.getAccessToken()).isEqualTo(createAccessToken);

@@ -2,6 +2,10 @@ package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
+import koza.licensemanagementservice.domain.member.entity.JoinType;
+import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.member.dto.MemberInfoResponse;
 import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
@@ -11,6 +15,7 @@ import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +31,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public Long join(MemberJoinRequest joinRequest) {
@@ -46,13 +52,39 @@ public class MemberService {
         return save.getId();
     }
 
-    @Transactional(readOnly = true)
-    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest) {
+    @Transactional
+    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest, String ip, String userAgent) {
         Member member = memberRepository.findByEmail(memberLoginRequest.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD));
 
-        if (!passwordEncoder.matches(memberLoginRequest.getPassword(), member.getPassword()))
+        if (!passwordEncoder.matches(memberLoginRequest.getPassword(), member.getPassword())) {
+            publisher.publishEvent(MemberLoginFailEvent.builder()
+                    .memberId(member.getId())
+                    .joinType(JoinType.LOCAL)
+                    .ipAddress(ip)
+                    .userAgent(userAgent)
+                    .failReason("INCORRECT_PASSWORD")
+                    .build());
             throw new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD);
+        }
+
+        if (member.getStatus() == MemberStatus.SUSPENDED) {
+            publisher.publishEvent(MemberLoginFailEvent.builder()
+                    .memberId(member.getId())
+                    .joinType(JoinType.LOCAL)
+                    .ipAddress(ip)
+                    .userAgent(userAgent)
+                    .failReason("ACCOUNT_SUSPENDED")
+                    .build());
+            throw new BusinessException(ErrorCode.MEMBER_SUSPENDED);
+        }
+
+        publisher.publishEvent(MemberLoginSuccessEvent.builder()
+                .memberId(member.getId())
+                .joinType(JoinType.LOCAL)
+                .ipAddress(ip)
+                .userAgent(userAgent)
+                .build());
 
         return jwtTokenProvider.createToken(member);
     }

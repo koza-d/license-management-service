@@ -2,6 +2,7 @@ package koza.licensemanagementservice.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
@@ -31,8 +32,8 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저 로그인 API")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request) {
-        JwtTokenDTO token = memberService.login(request);
+    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request, HttpServletRequest httpRequest) {
+        JwtTokenDTO token = memberService.login(request, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
                 .secure(false)        // 로컬은 false, 배포 시 true
