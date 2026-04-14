@@ -1,9 +1,9 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.log.dto.response.SoftwareStatusLogResponse;
-import koza.licensemanagementservice.domain.log.entity.SoftwareStatusLog;
-import koza.licensemanagementservice.domain.log.repository.SoftwareStatusLogRepository;
+import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareStatusLogResponse;
+import koza.licensemanagementservice.domain.software.log.entity.SoftwareStatusLog;
+import koza.licensemanagementservice.domain.software.log.repository.SoftwareStatusLogRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;

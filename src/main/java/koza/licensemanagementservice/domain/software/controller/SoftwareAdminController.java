@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.log.dto.response.SoftwareStatusLogResponse;
+import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareStatusLogResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;
 import koza.licensemanagementservice.domain.software.service.SoftwareAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;

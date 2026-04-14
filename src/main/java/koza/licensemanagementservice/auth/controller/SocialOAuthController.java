@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.auth.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.SocialProvider;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
@@ -30,9 +31,9 @@ public class SocialOAuthController {
     }
 
     @PostMapping("/{provider}/callback")
-    public ResponseEntity<ApiResponse<?>> socialCallback(@RequestBody Map<String, String> body, @PathVariable("provider") String provider) {
+    public ResponseEntity<ApiResponse<?>> socialCallback(@RequestBody Map<String, String> body, @PathVariable("provider") String provider, HttpServletRequest httpRequest) {
         String authCode = body.get("code");
-        JwtTokenDTO token = oAuthService.login(provider, authCode);
+        JwtTokenDTO token = oAuthService.login(provider, authCode, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
 
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
