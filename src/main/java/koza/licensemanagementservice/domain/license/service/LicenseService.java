@@ -9,7 +9,11 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailRe
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -20,6 +24,7 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,6 +43,7 @@ public class LicenseService {
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public LicenseIssueResponse issueLicense(CustomUser user, LicenseIssueRequest request) {
@@ -61,6 +67,7 @@ public class LicenseService {
                 .build();
 
         License save = licenseRepository.saveAndFlush(license);
+        eventPublisher.publishEvent(new LicenseIssuedEvent(save.getId(), user.getId(), save.toSnapshot()));
         return LicenseIssueResponse.from(save);
     }
 
@@ -113,6 +120,9 @@ public class LicenseService {
     public List<LicenseExtendResponse> extendLicense(CustomUser user, Long softwareId, LicenseExtendRequest request) {
         // 라이센스 연장
         List<License> targetLicenses = licenseRepository.findByIdInWithSoftwareWithMember(request.getIds());
+        // beforeExpiredAt, afterExpiredAt
+        Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
+                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
 
         // 존재하지 않는 라이센스를 request에 담았을 때
         if (request.getIds().size() != targetLicenses.size())
@@ -126,6 +136,11 @@ public class LicenseService {
             license.extendPeriod(request.getDays());
         });
 
+        Map<Long, LocalDateTime> afterExpiredAt = targetLicenses.stream()
+                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
+        List<Long> licenseIds = targetLicenses.stream().map(License::getId).collect(Collectors.toList());
+        Long periodMs = request.getDays() * 24 * 60 * 60 * 1000L;
+        eventPublisher.publishEvent(new LicenseExtendEvent(user.getId(), licenseIds, beforeExpiredAt, afterExpiredAt, periodMs));
         return targetLicenses.stream()
                 .map(license -> LicenseExtendResponse.of(license, request.getDays()))
                 .collect(Collectors.toList());
@@ -158,10 +173,13 @@ public class LicenseService {
     @Transactional
     public void updateLicense(CustomUser user, Long licenseId, LicenseUpdateRequest request) {
         License license = getLicenseOrThrow(user, licenseId);
+        Map<String, Object> before = license.toSnapshot();
 
         license.updateName(request.getName());
         license.updateMemo(request.getMemo());
         license.updateLocalVariables(request.getLocalVariables());
+        Map<String, Object> after = license.toSnapshot();
+        eventPublisher.publishEvent(new LicenseModifiedEvent(licenseId, user.getId(), before, after));
     }
 
     @Transactional

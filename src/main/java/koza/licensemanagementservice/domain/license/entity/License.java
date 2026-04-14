@@ -110,4 +110,16 @@ public class License extends BaseEntity {
         this.latestActiveAt = LocalDateTime.now();
     }
 
+    public Map<String, Object> toSnapshot() {
+        Map<String, Object> localVariables = new HashMap<>(this.localVariables);
+        return Map.of(
+                "id", this.id,
+                "name", this.name,
+                "memo", this.memo,
+                "licenseKey", this.licenseKey,
+                "expiredAt", this.expiredAt,
+                "status", this.status.name(),
+                "localVariables", localVariables
+        );
+    }
 }
