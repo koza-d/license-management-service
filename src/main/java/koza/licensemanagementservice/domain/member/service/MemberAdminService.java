@@ -1,19 +1,26 @@
 package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.member.log.dto.response.MemberGradeLogResponse;
-import koza.licensemanagementservice.domain.member.log.dto.response.MemberStatusLogResponse;
-import koza.licensemanagementservice.domain.member.log.entity.MemberGradeLog;
-import koza.licensemanagementservice.domain.member.log.entity.MemberStatusLog;
-import koza.licensemanagementservice.domain.member.log.repository.MemberGradeLogRepository;
-import koza.licensemanagementservice.domain.member.log.repository.MemberStatusLogRepository;
+import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
+import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.entity.MemberGrade;
+import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
+import koza.licensemanagementservice.domain.member.log.entity.MemberLog;
+import koza.licensemanagementservice.domain.member.log.entity.MemberLogType;
+import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +31,26 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class MemberAdminService {
     private final MemberRepository memberRepository;
-    private final MemberStatusLogRepository memberStatusLogRepository;
-    private final MemberGradeLogRepository memberGradeLogRepository;
+    private final MemberLogRepository memberLogRepository;
+    private final ApplicationEventPublisher publisher;
+
+    public Page<AdminMemberSummaryResponse> getMembers(String keyword, MemberStatus status, Pageable pageable) {
+        return memberRepository.searchForAdmin(keyword, status, pageable)
+                .map(AdminMemberSummaryResponse::from);
+    }
+
+    public AdminMemberDetailResponse getMemberDetail(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        return AdminMemberDetailResponse.from(member);
+    }
+
+    public List<MemberLogResponse> getLogs(Long memberId, MemberLogType type) {
+        List<MemberLog> logs = (type == null)
+                ? memberLogRepository.findByMemberIdOrderByCreateAtDesc(memberId)
+                : memberLogRepository.findByMemberIdAndLogTypeOrderByCreateAtDesc(memberId, type);
+        return logs.stream().map(MemberLogResponse::from).toList();
+    }
 
     @Transactional
     public void changeStatus(CustomUser admin, Long memberId, MemberStatusChangeRequest request) {
@@ -38,15 +63,16 @@ public class MemberAdminService {
             throw new BusinessException(ErrorCode.MEMBER_STATUS_SAME);
         }
 
-        MemberStatusLog log = MemberStatusLog.builder()
-                .member(member)
-                .manager(manager)
-                .action(request.getAction())
-                .reason(request.getReason())
-                .build();
-        memberStatusLogRepository.save(log);
-
+        MemberStatus before = member.getStatus();
         member.changeStatus(request.getAction());
+
+        publisher.publishEvent(MemberStatusChangedEvent.builder()
+                .target(member)
+                .operator(manager)
+                .before(before)
+                .after(request.getAction())
+                .reason(request.getReason())
+                .build());
     }
 
     @Transactional
@@ -60,29 +86,15 @@ public class MemberAdminService {
             throw new BusinessException(ErrorCode.MEMBER_GRADE_SAME);
         }
 
-        MemberGradeLog log = MemberGradeLog.builder()
-                .member(member)
-                .manager(manager)
-                .previousGrade(member.getGrade())
-                .newGrade(request.getGrade())
-                .reason(request.getReason())
-                .build();
-        memberGradeLogRepository.save(log);
-
+        MemberGrade before = member.getGrade();
         member.changeGrade(request.getGrade());
-    }
 
-    public List<MemberStatusLogResponse> getStatusLogs(Long memberId) {
-        return memberStatusLogRepository.findByMemberIdOrderByCreateAtDesc(memberId)
-                .stream()
-                .map(MemberStatusLogResponse::from)
-                .toList();
-    }
-
-    public List<MemberGradeLogResponse> getGradeLogs(Long memberId) {
-        return memberGradeLogRepository.findByMemberIdOrderByCreateAtDesc(memberId)
-                .stream()
-                .map(MemberGradeLogResponse::from)
-                .toList();
+        publisher.publishEvent(MemberGradeChangedEvent.builder()
+                .target(member)
+                .operator(manager)
+                .before(before)
+                .after(request.getGrade())
+                .reason(request.getReason())
+                .build());
     }
 }
