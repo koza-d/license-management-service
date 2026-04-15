@@ -1,6 +1,8 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
+import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
@@ -51,6 +53,16 @@ public class SoftwareAdminService {
         validAdminAuthorized(user);
 
         return softwareRepository.searchSoftwareByCondition(condition, pageable);
+    }
+
+    public SoftwareAdminDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
+        validAdminAuthorized(user);
+        return softwareRepository.findBySoftwareId(softwareId);
+    }
+
+    public SoftwareAdminStatsResponse getSoftwareStats(CustomUser user, Long softwareId) {
+        validAdminAuthorized(user);
+        return softwareRepository.getSoftwareUsageStat(softwareId);
     }
 
     private static void validAdminAuthorized(CustomUser user) {

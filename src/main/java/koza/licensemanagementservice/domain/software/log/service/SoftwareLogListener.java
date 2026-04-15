@@ -109,7 +109,7 @@ public class SoftwareLogListener {
                         "before", event.getBeforeStatus(),
                         "after", event.getAfterStatus()
                 ),
-                "reason", event.getReason()
+                "reason", event.getReason() == null ? "" : event.getReason()
         );
 
         SoftwareLog softwareLog = SoftwareLog.builder()

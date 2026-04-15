@@ -1,19 +1,18 @@
 package koza.licensemanagementservice.domain.software.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.*;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareDailyUsage;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareDailyUsage;
-import koza.licensemanagementservice.domain.software.dto.response.QSoftwareAdminSummaryResponse;
-import koza.licensemanagementservice.domain.software.dto.response.QSoftwareSummaryResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
+import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +35,41 @@ import static koza.licensemanagementservice.domain.software.version.entity.QSoft
 @RequiredArgsConstructor
 public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public SoftwareAdminDetailResponse findBySoftwareId(Long softwareId) {
+        return queryFactory
+                .select(
+                        new QSoftwareAdminDetailResponse(
+                                software.id,
+                                member.email,
+                                member.nickname,
+                                software.name,
+                                softwareVersion.version,
+                                software.apiKey,
+                                ExpressionUtils.as(
+                                        JPAExpressions.select(license.count().intValue())
+                                                .from(license)
+                                                .where(license.software.eq(software)),
+                                        "licenseCount"
+                                ),
+                                software.limitLicense,
+                                software.globalVariables,
+                                software.localVariables,
+                                software.createAt
+                        )
+                )
+                .from(software)
+                .where(
+                        software.id.eq(softwareId)
+                )
+                .leftJoin(software.member, member)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .fetchOne();
+    }
 
     @Override
     public Optional<Software> findByIdWithMember(Long softwareId) {
@@ -220,6 +254,27 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         statusFilter(condition.getStatus())
                 ).fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public SoftwareAdminStatsResponse getSoftwareUsageStat(Long softwareId) {
+        NumberExpression<Long> durationMs = Expressions.numberTemplate(Long.class,
+                "TIMESTAMPDIFF(SECOND, {0}, {1}) * 1000",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt);
+
+        return queryFactory
+                .select(
+                        new QSoftwareAdminStatsResponse(
+                                durationMs.sum().coalesce(0L),
+                                sessionLog.count(),
+                                durationMs.avg().coalesce(0.0).longValue()
+                        )
+                )
+                .from(sessionLog)
+                .join(sessionLog.license, license)
+                .where(license.software.id.eq(softwareId))
+                .fetchOne();
     }
 
     private BooleanExpression searchFilter(SoftwareAdminSearchTarget target, String search) {
