@@ -1,12 +1,8 @@
 package koza.licensemanagementservice.domain.software.repository;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.ExpressionUtils;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.*;
 import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.JPAExpressions;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareDailyUsage;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareStatsResponse;
@@ -47,12 +43,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                                 software.name,
                                 softwareVersion.version,
                                 software.apiKey,
-                                ExpressionUtils.as(
-                                        JPAExpressions.select(license.count().intValue())
-                                                .from(license)
-                                                .where(license.software.eq(software)),
-                                        "licenseCount"
-                                ),
+                                licenseCount(),
                                 software.limitLicense,
                                 software.globalVariables,
                                 software.localVariables,
@@ -145,6 +136,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .then(license.id)
                 .otherwise((Long) null)
                 .countDistinct();
+
         return queryFactory
                 .select(
                         new QSoftwareStatsResponse(
@@ -156,9 +148,15 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         )
                 )
                 .from(member)
-                .leftJoin(software).on(software.member.id.eq(member.id))
-                .leftJoin(license).on(license.software.id.eq(software.id))
-                .leftJoin(sessionLog).on(sessionLog.license.id.eq(license.id))
+                .leftJoin(software).on(
+                        software.member.id.eq(member.id)
+                )
+                .leftJoin(license).on(
+                        license.software.id.eq(software.id)
+                )
+                .leftJoin(sessionLog).on(
+                        sessionLog.license.id.eq(license.id)
+                )
                 .where(member.id.eq(memberId))
                 .groupBy(software.id, software.name)
                 .fetch();
@@ -166,48 +164,41 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
 
     @Override
     public Page<SoftwareSummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable) {
-        // 추후 Repository가 복잡해지면 조회용 SoftwareQueryRepository로 분리
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(software.member.id.eq(memberId));
-        if (search != null)
-            builder.and(software.name.contains(search));
-
-        JPAQuery<SoftwareSummaryResponse> query = queryFactory
-                .select(new QSoftwareSummaryResponse(
-                        software.id,
-                        software.name,
-                        softwareVersion.version,
-                        license.count().intValue(),
-                        license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().intValue(),
-                        software.createAt
-                ))
+        List<SoftwareSummaryResponse> content = queryFactory
+                .select(
+                        new QSoftwareSummaryResponse(
+                                software.id,
+                                software.name,
+                                softwareVersion.version,
+                                licenseCount(),
+                                activeSessionCount(),
+                                software.createAt
+                        )
+                )
                 .from(software)
-                .leftJoin(license).on(license.software.eq(software))
-                .leftJoin(software.versions, softwareVersion).on(softwareVersion.isLatest.isTrue())
-                .where(builder)
-                .having(activeOnly ? license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L) : null)
-                .groupBy(software.id, softwareVersion.version);
-
-        List<SoftwareSummaryResponse> content = query
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .where(
+                        software.member.id.eq(memberId),
+                        containsName(search),
+                        activeSessionOnlyFilter(activeOnly)
+                )
                 .orderBy(getOrderSpecifier(pageable.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        JPAQuery<Long> countQuery = queryFactory
-                .select(software.id.countDistinct())
-                .from(software);
+        Long total = queryFactory
+                .select(software.count())
+                .from(software)
+                .where(
+                        software.member.id.eq(memberId),
+                        containsName(search),
+                        activeSessionOnlyFilter(activeOnly)
+                ).fetchOne();
 
-        Long total = null;
-        if (activeOnly) {
-            countQuery
-                    .leftJoin(license).on(license.software.eq(software))
-                    .groupBy(software.id)
-                    .having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
-            total = (long) countQuery.fetch().size();
-        } else {
-            total = countQuery.where(builder).fetchOne();
-        }
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
@@ -275,7 +266,9 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 )
                 .from(sessionLog)
                 .join(sessionLog.license, license)
-                .where(license.software.id.eq(softwareId))
+                .where(
+                        license.software.id.eq(softwareId)
+                )
                 .fetchOne();
     }
 
@@ -310,6 +303,37 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     private BooleanExpression statusFilter(SoftwareStatus status) {
         return status == null ? null : software.status.eq(status);
     }
+
+    private Expression<Integer> activeSessionCount() {
+        return ExpressionUtils.as(
+                JPAExpressions.select(license.count().intValue())
+                        .from(license)
+                        .where(license.software.eq(software), license.hasActiveSession.isTrue()),
+                "activeSessionCount"
+        );
+    }
+
+    private Expression<Integer> licenseCount() {
+        return ExpressionUtils.as(
+                JPAExpressions.select(license.count().intValue())
+                        .from(license)
+                        .where(license.software.eq(software)),
+                "licenseCount"
+        );
+    }
+
+    private BooleanExpression activeSessionOnlyFilter(boolean activeOnly) {
+        BooleanExpression exists = JPAExpressions.selectOne()
+                .from(license)
+                .where(license.software.eq(software), license.hasActiveSession.isTrue())
+                .exists();
+        return activeOnly ? exists : null;
+    }
+
+    private BooleanExpression containsName(String search) {
+        return search != null ? software.name.containsIgnoreCase(search) : null;
+    }
+
     private OrderSpecifier[] getOrderSpecifier(Sort sort) {
         List<OrderSpecifier> orders = new ArrayList<>();
         PathBuilder<Software> entityPath = new PathBuilder<>(Software.class, "software");
