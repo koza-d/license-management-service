@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,6 +26,7 @@ import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.domain.software.version.entity.QSoftwareVersion.softwareVersion;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 @RequiredArgsConstructor
 public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
@@ -51,13 +51,13 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         )
                 )
                 .from(software)
-                .where(
-                        software.id.eq(softwareId)
-                )
                 .leftJoin(software.member, member)
                 .leftJoin(softwareVersion).on(
                         softwareVersion.software.eq(software),
                         softwareVersion.isLatest.isTrue()
+                )
+                .where(
+                        software.id.eq(softwareId)
                 )
                 .fetchOne();
     }
@@ -66,8 +66,8 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     public Optional<Software> findByIdWithMember(Long softwareId) {
         return Optional.ofNullable(queryFactory
                 .selectFrom(software)
-                .where(software.id.eq(softwareId))
                 .innerJoin(software.member, member).fetchJoin()
+                .where(software.id.eq(softwareId))
                 .fetchOne());
     }
 
@@ -185,7 +185,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         containsName(search),
                         activeSessionOnlyFilter(activeOnly)
                 )
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -226,7 +226,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         createAtBetween(condition.getFrom(), condition.getTo()),
                         statusFilter(condition.getStatus())
                 )
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -332,18 +332,5 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
 
     private BooleanExpression containsName(String search) {
         return search != null ? software.name.containsIgnoreCase(search) : null;
-    }
-
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<Software> entityPath = new PathBuilder<>(Software.class, "software");
-
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
-        }
-
-        return orders.toArray(OrderSpecifier[]::new);
     }
 }

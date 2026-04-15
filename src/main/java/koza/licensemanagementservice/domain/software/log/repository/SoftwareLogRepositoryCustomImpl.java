@@ -1,28 +1,22 @@
 package koza.licensemanagementservice.domain.software.log.repository;
 
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.software.log.dto.QSoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
-import koza.licensemanagementservice.domain.software.log.entity.SoftwareLog;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLogType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.log.entity.QSoftwareLog.*;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 @RequiredArgsConstructor
 public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCustom {
@@ -41,13 +35,13 @@ public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCus
                         )
                 )
                 .from(softwareLog)
+                .leftJoin(softwareLog.operator, member)
                 .where(
                         softwareLog.software.id.eq(softwareId),
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .leftJoin(softwareLog.operator, member)
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), softwareLog))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -62,7 +56,6 @@ public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCus
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .leftJoin(softwareLog.operator, member)
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
@@ -84,18 +77,4 @@ public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCus
 
         return softwareLog.createAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
     }
-
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<SoftwareLog> entityPath = new PathBuilder<>(SoftwareLog.class, "softwareLog");
-
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
-        }
-
-        return orders.toArray(OrderSpecifier[]::new);
-    }
-
 }

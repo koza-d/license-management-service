@@ -1,27 +1,22 @@
 package koza.licensemanagementservice.domain.license.log.repository;
 
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.QLicenseLogResponse;
-import koza.licensemanagementservice.domain.license.log.entity.LicenseLog;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLogType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static koza.licensemanagementservice.domain.license.log.entity.QLicenseLog.licenseLog;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 @RequiredArgsConstructor
 public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCustom {
@@ -42,7 +37,7 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), licenseLog))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -72,18 +67,5 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
             return licenseLog.createAt.loe(to.atTime(LocalTime.MAX));
 
         return licenseLog.createAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
-    }
-
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<LicenseLog> entityPath = new PathBuilder<>(LicenseLog.class, "licenseLog");
-
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
-        }
-
-        return orders.toArray(OrderSpecifier[]::new);
     }
 }
