@@ -258,17 +258,19 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
 
     @Override
     public SoftwareAdminStatsResponse getSoftwareUsageStat(Long softwareId) {
-        NumberExpression<Long> durationMs = Expressions.numberTemplate(Long.class,
-                "TIMESTAMPDIFF(SECOND, {0}, {1}) * 1000",
+        NumberTemplate<Long> diffSeconds = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(SECOND, {0}, {1})",
                 sessionLog.verifyAt,
-                sessionLog.releaseAt);
+                sessionLog.releaseAt
+        );
 
         return queryFactory
                 .select(
                         new QSoftwareAdminStatsResponse(
-                                durationMs.sum().coalesce(0L),
+                                diffSeconds.sum().longValue(),
                                 sessionLog.count(),
-                                durationMs.avg().coalesce(0.0).longValue()
+                                diffSeconds.avg().longValue()
                         )
                 )
                 .from(sessionLog)

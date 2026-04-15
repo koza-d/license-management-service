@@ -5,14 +5,14 @@ import lombok.Getter;
 
 @Getter
 public class SoftwareAdminStatsResponse {
-    private final Long totalUsageMs;
+    private final Long totalUsageSeconds;
     private final Long usageSessionCount;
-    private final Long avgUsageMs;
+    private final Long avgUsageSeconds;
 
     @QueryProjection
-    public SoftwareAdminStatsResponse(Long totalUsageMs, Long usageSessionCount, Long avgUsageMs) {
-        this.totalUsageMs = totalUsageMs;
+    public SoftwareAdminStatsResponse(Long totalUsageSeconds, Long usageSessionCount, Long avgUsageSeconds) {
+        this.totalUsageSeconds = totalUsageSeconds;
         this.usageSessionCount = usageSessionCount;
-        this.avgUsageMs = avgUsageMs;
+        this.avgUsageSeconds = avgUsageSeconds;
     }
 }
