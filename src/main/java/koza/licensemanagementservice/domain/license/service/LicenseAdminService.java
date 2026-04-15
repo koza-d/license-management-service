@@ -6,6 +6,7 @@ import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpd
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
@@ -90,4 +91,15 @@ public class LicenseAdminService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
     }
 
+    public LicenseStat getLicenseStatBySoftware(CustomUser user, Long softwareId) {
+        validAdminAuthorized(user);
+
+        return LicenseStat.builder()
+                .total((long) licenseRepository.countBySoftwareId(softwareId))
+                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
+                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
+                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
+                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
+                .build();
+    }
 }

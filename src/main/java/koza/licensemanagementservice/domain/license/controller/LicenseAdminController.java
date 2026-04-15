@@ -9,6 +9,7 @@ import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpd
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.repository.LicenseLogSearchCondition;
@@ -97,4 +98,16 @@ public class LicenseAdminController {
         ApiResponse<?> response= ApiResponse.success(logResponses);
         return ResponseEntity.ok(response);
     }
+
+
+    @Operation(summary = "소프트웨어별 라이센스 현황")
+    @GetMapping("/software/{softwareId}/stats")
+    public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                               @PathVariable("softwareId") Long softwareId) {
+        LicenseStat stat = licenseAdminService.getLicenseStatBySoftware(user, softwareId);
+        ApiResponse<?> response= ApiResponse.success(stat);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
