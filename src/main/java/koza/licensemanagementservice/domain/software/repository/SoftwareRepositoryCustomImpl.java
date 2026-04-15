@@ -10,16 +10,21 @@ import koza.licensemanagementservice.dashboard.dto.QSoftwareDailyUsage;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareDailyUsage;
+import koza.licensemanagementservice.domain.software.dto.response.QSoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.dto.response.QSoftwareSummaryResponse;
+import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
@@ -172,6 +177,82 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
+    @Override
+    public Page<SoftwareAdminSummaryResponse> searchSoftwareByCondition(SoftwareAdminSearchCondition condition, Pageable pageable) {
+        List<SoftwareAdminSummaryResponse> content = queryFactory
+                .select(
+                        new QSoftwareAdminSummaryResponse(
+                                software.id,
+                                software.name,
+                                softwareVersion.version,
+                                member.email,
+                                software.status,
+                                software.createAt
+                        )
+                )
+                .from(software)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        createAtBetween(condition.getFrom(), condition.getTo()),
+                        statusFilter(condition.getStatus())
+                )
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(software.count())
+                .from(software)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        createAtBetween(condition.getFrom(), condition.getTo()),
+                        statusFilter(condition.getStatus())
+                ).fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression searchFilter(SoftwareAdminSearchTarget target, String search) {
+        if (search == null || search.isEmpty())
+            return null;
+
+        if (target != null && target != SoftwareAdminSearchTarget.ALL) {
+            return switch (target) {
+                case SOFTWARE_NAME -> software.name.containsIgnoreCase(search);
+                case OWNER_EMAIL -> member.email.containsIgnoreCase(search);
+                default -> null;
+            };
+        }
+
+        return software.name.containsIgnoreCase(search)
+                .or(member.email.containsIgnoreCase(search));
+    }
+
+    private BooleanExpression createAtBetween(LocalDate from, LocalDate to) {
+        if (from == null && to == null) return null;
+
+        if (to == null)
+            return software.createAt.goe(from.atStartOfDay());
+
+        if (from == null)
+            return software.createAt.loe(to.atTime(LocalTime.MAX));
+
+        return software.createAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
+    }
+
+    private BooleanExpression statusFilter(SoftwareStatus status) {
+        return status == null ? null : software.status.eq(status);
+    }
     private OrderSpecifier[] getOrderSpecifier(Sort sort) {
         List<OrderSpecifier> orders = new ArrayList<>();
         PathBuilder<Software> entityPath = new PathBuilder<>(Software.class, "software");

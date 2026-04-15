@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareStatusLogResponse;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareStatusLog;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareStatusLogRepository;
@@ -8,10 +9,13 @@ import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,10 +52,23 @@ public class SoftwareAdminService {
         software.changeStatus(request.getStatus());
     }
 
+    public Page<SoftwareAdminSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
+        validAdminAuthorized(user);
+
+        return softwareRepository.searchSoftwareByCondition(condition, pageable);
+    }
     public List<SoftwareStatusLogResponse> getStatusLogs(Long softwareId) {
         return softwareStatusLogRepository.findBySoftwareIdOrderByCreateAtDesc(softwareId)
                 .stream()
                 .map(SoftwareStatusLogResponse::from)
                 .toList();
     }
+
+    private static void validAdminAuthorized(CustomUser user) {
+        user.getAuthorities().stream()
+                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+    }
+
 }
