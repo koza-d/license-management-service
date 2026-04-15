@@ -35,7 +35,7 @@ public class LicenseLogAdminService {
 
     private static void validAdminAuthorized(CustomUser user) {
         user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ADMIN"))
+                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
     }
