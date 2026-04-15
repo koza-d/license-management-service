@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
-import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareStatusLogResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;
 import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.service.SoftwareAdminService;
@@ -47,10 +46,4 @@ public class SoftwareAdminController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @Operation(summary = "소프트웨어 상태 변경 이력 조회")
-    @GetMapping("/{softwareId}/status-logs")
-    public ResponseEntity<ApiResponse<?>> getStatusLogs(@PathVariable Long softwareId) {
-        List<SoftwareStatusLogResponse> logs = softwareAdminService.getStatusLogs(softwareId);
-        return ResponseEntity.ok(ApiResponse.success(logs));
-    }
 }

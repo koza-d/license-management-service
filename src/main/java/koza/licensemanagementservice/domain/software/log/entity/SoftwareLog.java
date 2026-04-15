@@ -8,6 +8,8 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.Map;
+
 @Entity
 @Table(name = "software_log")
 @AllArgsConstructor
@@ -16,7 +18,8 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @ToString
 public class SoftwareLog extends LogBaseEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,5 +35,5 @@ public class SoftwareLog extends LogBaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "json")
-    private String data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
+    private Map<String, Object> data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
 }
