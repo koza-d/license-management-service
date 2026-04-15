@@ -7,6 +7,7 @@ import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareCreatedEvent;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareModifiedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareVersionChangedEvent;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLog;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLogType;
@@ -37,19 +38,14 @@ public class SoftwareLogListener {
     public void handleSoftwareCreatedEvent(SoftwareCreatedEvent event) {
         Software createdSoftware = event.getCreatedSoftware();
         Member operator = event.getOperator();
-        try {
-            String value = objectMapper.writeValueAsString(createdSoftware.toSnapshot());
-            SoftwareLog softwareLog = SoftwareLog.builder()
-                    .software(createdSoftware)
-                    .operator(operator)
-                    .logType(SoftwareLogType.REGISTER)
-                    .data(value)
-                    .build();
+        SoftwareLog softwareLog = SoftwareLog.builder()
+                .software(createdSoftware)
+                .operator(operator)
+                .logType(SoftwareLogType.REGISTER)
+                .data(createdSoftware.toSnapshot())
+                .build();
 
-            softwareLogRepository.save(softwareLog);
-        } catch (JsonProcessingException e) {
-            log.error("SoftwareId={} 을 저장 중 JSON 파싱 에러가 발생해 소프트웨어 생성 로그 저장에 실패했습니다. 사유 : {}", event.getCreatedSoftware().getId(), e.getMessage());
-        }
+        softwareLogRepository.save(softwareLog);
     }
 
     @Async
@@ -63,12 +59,11 @@ public class SoftwareLogListener {
             if (diffValues.isEmpty())
                 return;
 
-            String value = objectMapper.writeValueAsString(diffValues);
             SoftwareLog softwareLog = SoftwareLog.builder()
                     .software(targetSoftware)
                     .operator(operator)
                     .logType(SoftwareLogType.MODIFIED)
-                    .data(value)
+                    .data(diffValues)
                     .build();
             softwareLogRepository.save(softwareLog);
         } catch (JsonProcessingException e) {
@@ -83,27 +78,50 @@ public class SoftwareLogListener {
     public void handleSoftwareVersionChangedEvent(SoftwareVersionChangedEvent event) {
         Software targetSoftware = event.getTargetSoftware();
         Member operator = event.getOperator();
-        try {
-            Map<String, String> data = Map.of(
-                    "before", objectMapper.writeValueAsString(event.getBeforeVersion()),
-                    "after", objectMapper.writeValueAsString(event.getAfterVersion())
-            );
-            if (data.get("after").equals(data.get("before")))
-                return;
+        Map<String, Object> data = Map.of(
+                "before", event.getBeforeVersion(),
+                "after", event.getAfterVersion()
+        );
+        if (data.get("after").equals(data.get("before")))
+            return;
 
-            String value = objectMapper.writeValueAsString(data);
-            SoftwareLog softwareLog = SoftwareLog.builder()
-                    .software(targetSoftware)
-                    .operator(operator)
-                    .logType(SoftwareLogType.CHANGE_VERSION)
-                    .data(value)
-                    .build();
-            softwareLogRepository.save(softwareLog);
-        } catch (JsonProcessingException e) {
-            log.error("SoftwareId={} 버전 변경 중 JSON 파싱 에러가 발생해 로그 저장에 실패했습니다. 사유 : {}", event.getTargetSoftware().getId(), e.getMessage());
-        }
+        SoftwareLog softwareLog = SoftwareLog.builder()
+                .software(targetSoftware)
+                .operator(operator)
+                .logType(SoftwareLogType.CHANGE_VERSION)
+                .data(data)
+                .build();
+        softwareLogRepository.save(softwareLog);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleSoftwareStatusChangedEvent(SoftwareStatusChangedEvent event) {
+        Software targetSoftware = event.getTargetSoftware();
+        Member operator = event.getOperator();
+
+        if (event.getBeforeStatus() == event.getAfterStatus())
+            return;
+
+        Map<String, Object> diffValues = Map.of(
+                "status", Map.of(
+                        "before", event.getBeforeStatus(),
+                        "after", event.getAfterStatus()
+                ),
+                "reason", event.getReason()
+        );
+
+        SoftwareLog softwareLog = SoftwareLog.builder()
+                .software(targetSoftware)
+                .operator(operator)
+                .logType(SoftwareLogType.CHANGE_STATUS)
+                .data(diffValues)
+                .build();
+        softwareLogRepository.save(softwareLog);
 
     }
+
     private Map<String, Object> parseDiffValues(Map<String, Object> before, Map<String, Object> after) throws JsonProcessingException {
         Map<String, Object> diff = new HashMap<>();
 
