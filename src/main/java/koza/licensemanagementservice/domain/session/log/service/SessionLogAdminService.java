@@ -20,8 +20,7 @@ public class SessionLogAdminService {
     public Page<SessionHistoryResponse> getLicenseUsageHistory(CustomUser user, Long licenseId, SessionLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
-        return logRepository.findByLicenseId(licenseId, condition, pageable)
-                .map(SessionHistoryResponse::from);
+        return logRepository.findByLicenseId(licenseId, condition, pageable);
     }
 
     private static void validAdminAuthorized(CustomUser user) {

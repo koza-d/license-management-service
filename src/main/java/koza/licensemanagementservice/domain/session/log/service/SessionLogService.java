@@ -35,8 +35,7 @@ public class SessionLogService {
    public Page<SessionHistoryResponse> getLicenseUsageHistory(CustomUser user, Long licenseId, Pageable pageable) {
        getLicenseOrThrow(user, licenseId);
 
-       return logRepository.findByLicenseId(licenseId, pageable)
-               .map(SessionHistoryResponse::from);
+       return logRepository.findByLicenseId(licenseId, pageable);
    }
 
     private void getLicenseOrThrow(CustomUser user, Long licenseId) {
