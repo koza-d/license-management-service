@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.software.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.global.common.BaseEntity;
@@ -26,6 +27,7 @@ public class Software extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
@@ -33,28 +35,34 @@ public class Software extends BaseEntity {
     @OneToMany(mappedBy = "software", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SoftwareVersion> versions;
 
-    @Column(name = "name", length = 30, nullable = false)
+    @NotNull
+    @Column(name = "name", length = 30)
     private String name;
 
-    @Column(name = "api_key", length = 128, nullable = false)
+    @NotNull
+    @Column(name = "api_key", length = 128)
     private String apiKey;
 
+    @NotNull
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "global_variables", columnDefinition = "json")
     private Map<String, Object> globalVariables = new HashMap<>(); // 라이센스마다 똑같이 적용될 전역 변수
 
+    @NotNull
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "local_variables", columnDefinition = "json")
     private Map<String, Object> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
 
+    @NotNull
     @Column(name = "limit_license")
     private int limitLicense;
 
+    @NotNull
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
+    @Column(name = "status", length = 20)
     private SoftwareStatus status = SoftwareStatus.ACTIVE;
   
     public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {

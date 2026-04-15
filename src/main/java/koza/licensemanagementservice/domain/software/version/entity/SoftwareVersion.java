@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.software.version.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionUpdateRequest;
@@ -19,23 +20,27 @@ public class SoftwareVersion extends BaseEntity {
     private Long id;
 
     @Setter
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "software_id", nullable = false)
+    @JoinColumn(name = "software_id")
     private Software software;
 
-    @Column(name = "version", length = 50, nullable = false)
+    @NotNull
+    @Column(name = "version", length = 20)
     private String version;
 
     @Column(name = "file_hash", length = 64)
     private String fileHash;
 
+    @NotNull
     @Column(name = "is_latest")
     private boolean isLatest;
 
+    @NotNull
     @Column(name = "is_available")
     private boolean isAvailable;
 
-    @Column(name = "download_url", length = 2048)
+    @Column(name = "download_url", length = 2083)
     private String downloadURL;
 
     @Column(name = "memo", length = 200)

@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.license.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.*;
@@ -24,33 +25,46 @@ public class License extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "software_id")
     private Software software;
 
-    @Column(name = "name", length = 20, nullable = false)
+    @NotNull
+    @Column(name = "name", length = 20)
     private String name;
+
+    @NotNull
     @Column(name = "memo", length = 200)
     private String memo;
-    @Column(name = "license_key", length = 128, nullable = false)
+
+    @NotNull
+    @Column(name = "license_key", length = 128)
     private String licenseKey;
-    @Column(name = "expired_at", nullable = false)
+
+    @NotNull
+    @Column(name = "expired_at")
     private LocalDateTime expiredAt;
+
     @Column(name = "latest_active_at")
     private LocalDateTime latestActiveAt;
 
+    @NotNull
     @Builder.Default
     @Getter(AccessLevel.NONE)
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json")
     private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
 
+    @NotNull
     @Getter(AccessLevel.NONE)
     private boolean hasActiveSession;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     private LicenseStatus status;
+
     public void updateName(String name) {
         this.name = name;
     }
