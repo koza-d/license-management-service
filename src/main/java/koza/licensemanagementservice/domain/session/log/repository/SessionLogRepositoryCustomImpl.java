@@ -1,8 +1,8 @@
 package koza.licensemanagementservice.domain.session.log.repository;
 
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,22 +27,18 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
 
     @Override
     public Page<SessionLog> findByLicenseId(Long licenseId, Pageable pageable) {
-        return findByLicenseId(licenseId, null, null, pageable);
+        return findByLicenseId(licenseId, new SessionLogSearchCondition(), pageable);
     }
 
     @Override
-    public Page<SessionLog> findByLicenseId(Long licenseId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(sessionLog.license.id.eq(licenseId));
-        if (startDate != null)
-            builder.and(sessionLog.verifyAt.goe(startDate.atStartOfDay()));
-
-        if (endDate != null)
-            builder.and(sessionLog.verifyAt.lt(endDate.atStartOfDay()));
+    public Page<SessionLog> findByLicenseId(Long licenseId, SessionLogSearchCondition condition, Pageable pageable) {
 
         List<SessionLog> content = queryFactory
                 .selectFrom(sessionLog)
-                .where(sessionLog.license.id.eq(licenseId))
+                .where(
+                        sessionLog.license.id.eq(licenseId),
+                        verifyAtBetween(condition.getFrom(), condition.getTo())
+                )
                 .leftJoin(sessionLog.license, license)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -50,9 +47,24 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
         Long total = queryFactory
                 .select(sessionLog.count())
                 .from(sessionLog)
-                .where(builder)
+                .where(
+                        sessionLog.license.id.eq(licenseId),
+                        verifyAtBetween(condition.getFrom(), condition.getTo())
+                )
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private static BooleanExpression verifyAtBetween(LocalDate from, LocalDate to) {
+        if (from == null && to == null) return null;
+
+        if (to == null)
+            return sessionLog.verifyAt.goe(from.atStartOfDay());
+
+        if (from == null)
+            return sessionLog.verifyAt.loe(to.atTime(LocalTime.MAX));
+
+        return sessionLog.verifyAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
     }
 
     private OrderSpecifier[] getOrderSpecifier(Sort sort) {

@@ -8,5 +8,5 @@ import java.time.LocalDate;
 
 public interface SessionLogRepositoryCustom {
     Page<SessionLog> findByLicenseId(Long licenseId, Pageable pageable);
-    Page<SessionLog> findByLicenseId(Long licenseId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<SessionLog> findByLicenseId(Long licenseId, SessionLogSearchCondition condition, Pageable pageable);
 }
