@@ -46,7 +46,7 @@ public class SoftwareLogListener {
                 .software(createdSoftware)
                 .operator(operator)
                 .logType(SoftwareLogType.REGISTER)
-                .data(createdSoftware.toSnapshot())
+                .data(event.getSoftwareSnapshot())
                 .build();
 
         softwareLogRepository.save(softwareLog);
