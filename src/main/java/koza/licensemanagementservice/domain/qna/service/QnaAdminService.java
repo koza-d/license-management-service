@@ -16,6 +16,7 @@ public class QnaAdminService {
 
     @Transactional(readOnly = true)
     public Page<QnaAdminListResponse> getQuestions(QnaAdminSearchCondition condition, Pageable pageable) {
+        condition.validateDateRanges();
         return qnaQuestionRepository.findByAdminCondition(condition, pageable);
     }
 }

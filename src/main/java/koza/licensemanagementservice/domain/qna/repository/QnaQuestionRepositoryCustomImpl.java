@@ -4,12 +4,10 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
-import koza.licensemanagementservice.domain.qna.entity.QnaQuestion;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -104,6 +102,15 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
             );
         }
 
+        if (condition.getCreatedAfter() != null)
+            builder.and(qnaQuestion.createAt.goe(condition.getCreatedAfter()));
+        if (condition.getCreatedBefore() != null)
+            builder.and(qnaQuestion.createAt.loe(condition.getCreatedBefore()));
+        if (condition.getAnsweredAfter() != null)
+            builder.and(qnaQuestion.answeredAt.goe(condition.getAnsweredAfter()));
+        if (condition.getAnsweredBefore() != null)
+            builder.and(qnaQuestion.answeredAt.loe(condition.getAnsweredBefore()));
+
         List<QnaAdminListResponse> content = queryFactory
                 .select(Projections.constructor(QnaAdminListResponse.class,
                         qnaQuestion.id,
@@ -136,17 +143,21 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
 
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
-        PathBuilder<QnaQuestion> path = new PathBuilder<>(QnaQuestion.class, "qnaQuestion");
 
-        if (sort.isUnsorted()) {
-            orders.add(new OrderSpecifier<>(Order.DESC, path.getComparable("createAt", java.time.LocalDateTime.class)));
-            return orders.toArray(OrderSpecifier[]::new);
+        if (!sort.isUnsorted()) {
+            for (Sort.Order order : sort) {
+                Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+                String prop = order.getProperty();
+                if ("createdAt".equals(prop) || "createAt".equals(prop)) {
+                    orders.add(new OrderSpecifier<>(direction, qnaQuestion.createAt));
+                } else if ("answeredAt".equals(prop)) {
+                    orders.add(new OrderSpecifier<>(direction, qnaQuestion.answeredAt).nullsLast());
+                }
+            }
         }
 
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = "createdAt".equals(order.getProperty()) ? "createAt" : order.getProperty();
-            orders.add(new OrderSpecifier(direction, path.get(prop)));
+        if (orders.isEmpty()) {
+            orders.add(new OrderSpecifier<>(Order.DESC, qnaQuestion.createAt));
         }
         return orders.toArray(OrderSpecifier[]::new);
     }
