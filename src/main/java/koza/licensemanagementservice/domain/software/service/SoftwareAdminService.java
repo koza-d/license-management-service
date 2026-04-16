@@ -48,18 +48,21 @@ public class SoftwareAdminService {
         software.changeStatus(request.getStatus());
     }
 
+    @Transactional(readOnly = true)
     public Page<SoftwareAdminSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return softwareRepository.searchSoftwareByCondition(condition, pageable);
     }
 
+    @Transactional(readOnly = true)
     public SoftwareAdminDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
         return softwareRepository.findBySoftwareId(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
     public SoftwareAdminStatsResponse getSoftwareStats(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
         return softwareRepository.getSoftwareUsageStat(softwareId)

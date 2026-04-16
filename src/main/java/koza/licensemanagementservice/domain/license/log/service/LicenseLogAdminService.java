@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -23,6 +24,7 @@ public class LicenseLogAdminService {
     private final LicenseExtendLogRepository extendLogRepository;
     private final LicenseLogRepository logRepository;
 
+    @Transactional(readOnly = true)
     public Page<LicenseExtendLogResponse> getLicenseExtendLogs(CustomUser user, Long licenseId, LocalDate from, LocalDate to, Pageable pageable) {
         validAdminAuthorized(user);
 
@@ -32,6 +34,7 @@ public class LicenseLogAdminService {
         return extendLogRepository.findByLicenseId(licenseId, from, to, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<LicenseLogResponse> getLicenseChangedLogs(CustomUser user, Long licenseId, LicenseLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 

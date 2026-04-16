@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
@@ -18,6 +19,8 @@ import static koza.licensemanagementservice.global.validation.ValidUserAuthorize
 @RequiredArgsConstructor
 public class SoftwareAdminLogService {
     private final SoftwareLogRepository logRepository;
+
+    @Transactional(readOnly = true)
     public Page<SoftwareLogResponse> getSoftwareLogs(CustomUser user, Long softwareId, SoftwareLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 

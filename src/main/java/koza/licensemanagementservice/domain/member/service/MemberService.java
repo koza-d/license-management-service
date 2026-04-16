@@ -89,7 +89,6 @@ public class MemberService {
         return jwtTokenProvider.createToken(member);
     }
 
-
     @Transactional(readOnly = true)
     public MemberInfoResponse userInfo(CustomUser user) {
         return MemberInfoResponse.builder()

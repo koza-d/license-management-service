@@ -55,12 +55,14 @@ public class LicenseAdminService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Page<LicenseAdminSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return licenseRepository.findByAllCondition(condition, pageable);
     }
 
+    @Transactional(readOnly = true)
     public LicenseAdminDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
         validAdminAuthorized(user);
 
@@ -92,6 +94,7 @@ public class LicenseAdminService {
         return LicenseAdminExtendResponse.of(license, request.getDays());
     }
 
+    @Transactional(readOnly = true)
     public LicenseStat getLicenseStatBySoftware(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
 

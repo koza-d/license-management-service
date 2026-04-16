@@ -24,6 +24,7 @@ public class DashboardService {
     private final LicenseRepository licenseRepository;
     private final SoftwareRepository softwareRepository;
 
+    @Transactional(readOnly = true)
     public DashboardStatsResponse getStats(CustomUser user) {
         // 대시보드 주요 지표
         Long memberId = user.getId();
@@ -36,6 +37,7 @@ public class DashboardService {
         return new DashboardStatsResponse(total, active, banned, expired, activeSessions);
     }
 
+    @Transactional(readOnly = true)
     public List<SoftwareStatsResponse> getSoftwareStats(CustomUser user) {
         Long memberId = user.getId();
         LocalDateTime startDate = LocalDateTime.now().minusDays(30);

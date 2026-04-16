@@ -42,7 +42,6 @@ public class LicenseService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
-    private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
