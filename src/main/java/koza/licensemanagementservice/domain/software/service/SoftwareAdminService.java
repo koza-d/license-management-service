@@ -44,7 +44,7 @@ public class SoftwareAdminService {
         }
 
         SoftwareStatus beforeStatus = software.getStatus();
-        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(user.getId(), softwareId, beforeStatus, request.getStatus(), request.getReason()));
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, request.getStatus(), request.getReason()));
         software.changeStatus(request.getStatus());
     }
 
