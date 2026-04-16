@@ -15,13 +15,6 @@ import java.util.Set;
 
 @Component
 public class QuerydslOrderUtil {
-    public static OrderSpecifier<?>[] getOrderSpecifiers(Sort sort, EntityPath<?> parent) {
-        return getOrderSpecifiers(sort, parent, "id", Set.of("createAt"));
-    }
-
-    public static OrderSpecifier<?>[] getOrderSpecifiers(Sort sort, EntityPath<?> parent, Set<String> allowedProps) {
-        return getOrderSpecifiers(sort, parent, "id", allowedProps);
-    }
 
     public static OrderSpecifier<?>[] getOrderSpecifiers(Sort sort, EntityPath<?> parent, String defaultProp, Set<String> allowedProps) {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
@@ -31,7 +24,7 @@ public class QuerydslOrderUtil {
         if (sort.isEmpty()) {
             orders.add(new OrderSpecifier(Order.DESC, pathBuilder.get(defaultProp)));
         } else {
-            sort.stream().forEach(order -> {
+            sort.forEach(order -> {
                 Order direction = order.isAscending() ? Order.ASC : Order.DESC;
                 String prop = order.getProperty();
                 if (!allowedProps.contains(prop))

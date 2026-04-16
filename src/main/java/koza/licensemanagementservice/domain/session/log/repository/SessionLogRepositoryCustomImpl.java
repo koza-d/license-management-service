@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
@@ -44,7 +45,7 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
                         sessionLog.license.id.eq(licenseId),
                         verifyAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), sessionLog))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), sessionLog, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

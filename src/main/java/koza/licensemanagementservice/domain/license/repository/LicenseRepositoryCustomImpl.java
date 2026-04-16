@@ -82,7 +82,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                         sessionFilter(hasActiveSession),
                         isExpired(expireWithin)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -114,7 +114,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                         searchNameOrMemo(search),
                         sessionFilter(hasActiveSession)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -163,7 +163,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .fetch();
 
         Long total = queryFactory

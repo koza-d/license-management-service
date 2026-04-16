@@ -186,7 +186,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         containsName(search),
                         activeSessionOnlyFilter(activeOnly)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), software))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -227,7 +227,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         createAtBetween(condition.getFrom(), condition.getTo()),
                         statusFilter(condition.getStatus())
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), software))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

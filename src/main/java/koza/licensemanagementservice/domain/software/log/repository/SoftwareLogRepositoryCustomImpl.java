@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.log.entity.QSoftwareLog.*;
@@ -41,7 +42,7 @@ public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCus
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), softwareLog))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), softwareLog, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

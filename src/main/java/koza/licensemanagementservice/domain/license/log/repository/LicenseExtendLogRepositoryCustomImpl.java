@@ -40,7 +40,7 @@ public class LicenseExtendLogRepositoryCustomImpl implements LicenseExtendLogRep
                 .where(
                         createAtBetween(from, to)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), licenseExtendLog))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), licenseExtendLog, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
