@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.license.log.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.global.common.LogBaseEntity;
@@ -22,23 +21,19 @@ public class LicenseLog extends LogBaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "license_id")
     private License license;
 
-    @NotNull
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "operator_id")
     private Member operator;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "log_type", length = 20)
+    @Column(name = "log_type", length = 20, nullable = false)
     private LicenseLogType logType;
 
-    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "data", columnDefinition = "json")
+    @Column(name = "data", columnDefinition = "json", nullable = false)
     private Map<String, Object> data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
 }

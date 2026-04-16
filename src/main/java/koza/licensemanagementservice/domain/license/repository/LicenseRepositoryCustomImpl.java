@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.license.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
@@ -15,11 +16,13 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
+import static org.springframework.util.StringUtils.hasText;
 
 
 @RequiredArgsConstructor
@@ -75,12 +78,11 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .leftJoin(software.member, member)
                 .where(
                         license.software.member.id.eq(memberId),
-                        nameContains(search),
-                        memoContains(search),
+                        searchNameOrMemo(search),
                         sessionFilter(hasActiveSession),
                         isExpired(expireWithin)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -90,8 +92,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .from(license)
                 .where(
                         license.software.member.id.eq(memberId),
-                        nameContains(search),
-                        memoContains(search),
+                        searchNameOrMemo(search),
                         sessionFilter(hasActiveSession),
                         isExpired(expireWithin)
                 )
@@ -110,11 +111,10 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .selectFrom(license)
                 .where(
                         license.software.id.eq(softwareId),
-                        nameContains(search),
-                        memoContains(search),
+                        searchNameOrMemo(search),
                         sessionFilter(hasActiveSession)
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -124,20 +124,19 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .from(license)
                 .where(
                         license.software.id.eq(softwareId),
-                        nameContains(search),
-                        memoContains(search),
+                        searchNameOrMemo(search),
                         sessionFilter(hasActiveSession)
                 )
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    private static BooleanExpression memoContains(String search) {
-        return search != null ? license.memo.containsIgnoreCase(search) : null;
-    }
+    private static BooleanExpression searchNameOrMemo(String search) {
+        if (!hasText(search))
+            return null;
 
-    private static BooleanExpression nameContains(String search) {
-        return search != null ? license.name.containsIgnoreCase(search) : null;
+        return license.memo.containsIgnoreCase(search)
+                .or(license.name.containsIgnoreCase(search));
     }
 
     @Override
@@ -164,7 +163,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, Set.of("createAt", "expiredAt")))
                 .fetch();
 
         Long total = queryFactory
@@ -184,7 +183,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     private BooleanExpression searchFilter(LicenseSearchTarget target, String search) {
-        if (search == null || search.isEmpty())
+        if (!hasText(search))
             return null;
 
         if (target != null && target != LicenseSearchTarget.ALL) {

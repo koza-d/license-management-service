@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.member.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,8 +28,7 @@ public class Member extends BaseEntity {
     @Column(name = "password", length = 200)
     private String password;
 
-    @NotNull
-    @Column(name = "nickname", length = 20)
+    @Column(name = "nickname", length = 20, nullable = false)
     private String nickname;
 
     @Column(name = "profile_url")
@@ -42,16 +40,14 @@ public class Member extends BaseEntity {
     @Column(name = "provider_id", length = 255)
     private String providerId; // 소셜이 부여한 고유 ID
 
-    @NotNull
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "grade", length = 20)
+    @Column(name = "grade", length = 20, nullable = false)
     private MemberGrade grade = MemberGrade.BASIC;
 
-    @NotNull
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", length = 20, nullable = false)
     private MemberStatus status = MemberStatus.ACTIVE;
 
     @Column(name = "last_login_at")

@@ -12,7 +12,7 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public class SoftwareCreatedEvent {
-    private Software createdSoftware;
-    private Member operator;
+    private Long targetSoftwareId;
+    private Long operatorId;
     private Map<String, Object> softwareSnapshot;
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareCreatedEvent;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareModifiedEvent;
@@ -12,6 +13,7 @@ import koza.licensemanagementservice.domain.software.log.dto.SoftwareVersionChan
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLog;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLogType;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
+import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -29,6 +31,8 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 public class SoftwareLogListener {
+    private final MemberRepository memberRepository;
+    private final SoftwareRepository softwareRepository;
     private final SoftwareLogRepository softwareLogRepository;
     private final ObjectMapper objectMapper;
 
@@ -36,8 +40,8 @@ public class SoftwareLogListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleSoftwareCreatedEvent(SoftwareCreatedEvent event) {
-        Software createdSoftware = event.getCreatedSoftware();
-        Member operator = event.getOperator();
+        Software createdSoftware = softwareRepository.getReferenceById(event.getTargetSoftwareId());
+        Member operator = memberRepository.getReferenceById(event.getOperatorId());
         SoftwareLog softwareLog = SoftwareLog.builder()
                 .software(createdSoftware)
                 .operator(operator)
@@ -52,8 +56,8 @@ public class SoftwareLogListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleSoftwareModifiedEvent(SoftwareModifiedEvent event) {
-        Software targetSoftware = event.getTargetSoftware();
-        Member operator = event.getOperator();
+        Software targetSoftware = softwareRepository.getReferenceById(event.getTargetSoftwareId());
+        Member operator = memberRepository.getReferenceById(event.getOperatorId());
         try {
             Map<String, Object> diffValues = parseDiffValues(event.getBefore(), event.getAfter());
             if (diffValues.isEmpty())
@@ -67,7 +71,7 @@ public class SoftwareLogListener {
                     .build();
             softwareLogRepository.save(softwareLog);
         } catch (JsonProcessingException e) {
-            log.error("SoftwareId={} 의 변경사항을 저장중 JSON 파싱 에러가 발생해 로그 저장에 실패했습니다. 사유 : {}", event.getTargetSoftware().getId(), e.getMessage());
+            log.error("SoftwareId={} 의 변경사항을 저장중 JSON 파싱 에러가 발생해 로그 저장에 실패했습니다. 사유 : {}", event.getTargetSoftwareId(), e.getMessage());
         }
     }
 
@@ -76,8 +80,8 @@ public class SoftwareLogListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleSoftwareVersionChangedEvent(SoftwareVersionChangedEvent event) {
-        Software targetSoftware = event.getTargetSoftware();
-        Member operator = event.getOperator();
+        Software targetSoftware = softwareRepository.getReferenceById(event.getTargetSoftwareId());
+        Member operator = memberRepository.getReferenceById(event.getOperatorId());
         Map<String, Object> data = Map.of(
                 "before", event.getBeforeVersion(),
                 "after", event.getAfterVersion()
@@ -98,8 +102,8 @@ public class SoftwareLogListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 커밋 성공 시에만 실행
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleSoftwareStatusChangedEvent(SoftwareStatusChangedEvent event) {
-        Software targetSoftware = event.getTargetSoftware();
-        Member operator = event.getOperator();
+        Software targetSoftware = softwareRepository.getReferenceById(event.getTargetSoftwareId());
+        Member operator = memberRepository.getReferenceById(event.getOperatorId());
 
         if (event.getBeforeStatus() == event.getAfterStatus())
             return;

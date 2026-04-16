@@ -33,8 +33,8 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public SoftwareAdminDetailResponse findBySoftwareId(Long softwareId) {
-        return queryFactory
+    public Optional<SoftwareAdminDetailResponse> findBySoftwareId(Long softwareId) {
+        return Optional.ofNullable(queryFactory
                 .select(
                         new QSoftwareAdminDetailResponse(
                                 software.id,
@@ -59,7 +59,8 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .where(
                         software.id.eq(softwareId)
                 )
-                .fetchOne();
+                .fetchOne()
+        );
     }
 
     @Override
@@ -248,7 +249,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
-    public SoftwareAdminStatsResponse getSoftwareUsageStat(Long softwareId) {
+    public Optional<SoftwareAdminStatsResponse> getSoftwareUsageStat(Long softwareId) {
         NumberTemplate<Long> diffSeconds = Expressions.numberTemplate(
                 Long.class,
                 "TIMESTAMPDIFF(SECOND, {0}, {1})",
@@ -256,12 +257,12 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 sessionLog.releaseAt
         );
 
-        return queryFactory
+        return Optional.ofNullable(queryFactory
                 .select(
                         new QSoftwareAdminStatsResponse(
-                                diffSeconds.sum().longValue(),
+                                diffSeconds.sum().coalesce(0L).longValue(),
                                 sessionLog.count(),
-                                diffSeconds.avg().longValue()
+                                diffSeconds.avg().coalesce(0.0).longValue()
                         )
                 )
                 .from(sessionLog)
@@ -269,7 +270,8 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .where(
                         license.software.id.eq(softwareId)
                 )
-                .fetchOne();
+                .fetchOne()
+        );
     }
 
     private BooleanExpression searchFilter(SoftwareAdminSearchTarget target, String search) {

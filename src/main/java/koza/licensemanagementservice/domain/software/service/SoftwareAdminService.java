@@ -21,13 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
+
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SoftwareAdminService {
     private final SoftwareRepository softwareRepository;
-    private final MemberRepository memberRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -38,14 +39,12 @@ public class SoftwareAdminService {
         Software software = softwareRepository.findById(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOFTWARE_NOT_FOUND));
 
-        Member operator = memberRepository.getReferenceById(user.getId());
-
         if (software.getStatus() == request.getStatus()) {
             throw new BusinessException(ErrorCode.SOFTWARE_STATUS_SAME);
         }
 
         SoftwareStatus beforeStatus = software.getStatus();
-        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(operator, software, beforeStatus, request.getStatus(), request.getReason()));
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(user.getId(), softwareId, beforeStatus, request.getStatus(), request.getReason()));
         software.changeStatus(request.getStatus());
     }
 
@@ -57,19 +56,14 @@ public class SoftwareAdminService {
 
     public SoftwareAdminDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
-        return softwareRepository.findBySoftwareId(softwareId);
+        return softwareRepository.findBySoftwareId(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 
     public SoftwareAdminStatsResponse getSoftwareStats(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
-        return softwareRepository.getSoftwareUsageStat(softwareId);
-    }
-
-    private static void validAdminAuthorized(CustomUser user) {
-        user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+        return softwareRepository.getSoftwareUsageStat(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 
 }

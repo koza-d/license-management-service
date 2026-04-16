@@ -10,8 +10,8 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public class SoftwareVersionChangedEvent {
-    private Software targetSoftware;
-    private Member operator;
+    private Long targetSoftwareId;
+    private Long operatorId;
     private Map<String, Object> beforeVersion;
     private Map<String, Object> afterVersion;
 }

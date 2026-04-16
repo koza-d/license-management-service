@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
+
 @Service
 @RequiredArgsConstructor
 public class SessionLogAdminService {
@@ -21,12 +23,5 @@ public class SessionLogAdminService {
         validAdminAuthorized(user);
 
         return logRepository.findByLicenseId(licenseId, condition, pageable);
-    }
-
-    private static void validAdminAuthorized(CustomUser user) {
-        user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
     }
 }

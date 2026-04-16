@@ -96,7 +96,9 @@ public class MemberService {
                 .email(user.getUsername())
                 .nickname(user.getNickname())
                 .profileImageURL(user.getProfileURL())
-                .roles(user.getAuthorities().stream()
+                .roles(user.getAuthorities() == null
+                        ? new ArrayList<>()
+                        : user.getAuthorities().stream()
                         .map(SimpleGrantedAuthority::getAuthority)
                         .collect(Collectors.toList())
                 )

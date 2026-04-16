@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.session.log.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.global.common.LogBaseEntity;
 import lombok.AllArgsConstructor;
@@ -21,34 +20,27 @@ public class SessionLog extends LogBaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "license_id")
     private License license;
 
-    @NotNull
-    @Column(name = "session_id", length = 36)
+    @Column(name = "session_id", length = 36, nullable = false)
     private String sessionId;
 
-    @NotNull
-    @Column(name = "ip_address", length = 45)
+    @Column(name = "ip_address", length = 45, nullable = false)
     private String ipAddress;
 
-    @NotNull
-    @Column(name = "user_agent", length = 500)
+    @Column(name = "user_agent", length = 500, nullable = false)
     private String userAgent;
 
-    @NotNull
-    @Column(name = "verify_at")
+    @Column(name = "verify_at", nullable = false)
     private LocalDateTime verifyAt;
 
-    @NotNull
-    @Column(name = "release_at")
+    @Column(name = "release_at", nullable = false)
     private LocalDateTime releaseAt;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "release_type", length = 20)
+    @Column(name = "release_type", length = 20, nullable = false)
     private ReleaseType releaseType;
 
 }

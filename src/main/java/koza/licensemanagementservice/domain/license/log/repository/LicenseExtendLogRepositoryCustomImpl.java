@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static koza.licensemanagementservice.domain.license.log.entity.QLicenseExtendLog.licenseExtendLog;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;

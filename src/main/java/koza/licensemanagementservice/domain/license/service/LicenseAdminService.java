@@ -15,6 +15,7 @@ import koza.licensemanagementservice.domain.license.repository.LicenseRepository
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
+import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +29,12 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
+
 @Service
 @RequiredArgsConstructor
 public class LicenseAdminService {
+    private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
     private final ApplicationEventPublisher eventPublisher;
@@ -52,10 +56,14 @@ public class LicenseAdminService {
     }
 
     public Page<LicenseAdminSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+        validAdminAuthorized(user);
+
         return licenseRepository.findByAllCondition(condition, pageable);
     }
 
     public LicenseAdminDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
+        validAdminAuthorized(user);
+
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
 
@@ -84,15 +92,11 @@ public class LicenseAdminService {
         return LicenseAdminExtendResponse.of(license, request.getDays());
     }
 
-    private static void validAdminAuthorized(CustomUser user) {
-        user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
-    }
-
     public LicenseStat getLicenseStatBySoftware(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
+
+        softwareRepository.findById(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         return LicenseStat.builder()
                 .total((long) licenseRepository.countBySoftwareId(softwareId))

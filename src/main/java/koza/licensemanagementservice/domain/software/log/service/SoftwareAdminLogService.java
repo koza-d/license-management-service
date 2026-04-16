@@ -6,10 +6,13 @@ import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogR
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
+import koza.licensemanagementservice.global.validation.ValidUserAuthorized;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
 @Service
 @RequiredArgsConstructor
@@ -18,13 +21,10 @@ public class SoftwareAdminLogService {
     public Page<SoftwareLogResponse> getSoftwareLogs(CustomUser user, Long softwareId, SoftwareLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
-        return logRepository.findBySoftwareId(softwareId, condition, pageable);
-    }
+        if (condition.getFrom() != null && condition.getTo() != null
+                && condition.getFrom().isAfter(condition.getTo()))
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
-    private static void validAdminAuthorized(CustomUser user) {
-        user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+        return logRepository.findBySoftwareId(softwareId, condition, pageable);
     }
 }

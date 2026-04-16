@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.member.log.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.global.common.LogBaseEntity;
 import lombok.*;
@@ -20,23 +19,19 @@ public class MemberLog extends LogBaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id")
     private Member member;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "operator_id")
     private Member operator;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "log_type", length = 30, nullable = false)
     private MemberLogType logType;
 
-    @NotNull
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "data", columnDefinition = "json")
+    @Column(name = "data", columnDefinition = "json", nullable = false)
     private String data;
 }

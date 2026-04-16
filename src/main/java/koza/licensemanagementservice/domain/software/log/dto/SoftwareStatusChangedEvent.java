@@ -9,8 +9,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class SoftwareStatusChangedEvent {
-    private Member operator;
-    private Software targetSoftware;
+    private Long targetSoftwareId;
+    private Long operatorId;
     private SoftwareStatus beforeStatus;
     private SoftwareStatus afterStatus;
     private String reason;

@@ -43,7 +43,7 @@ public class SoftwareAdminController {
 
     @Operation(summary = "소프트웨어 상세 조회")
     @GetMapping("/{softwareId}")
-    public ResponseEntity<ApiResponse<?>> getSoftwareList(@AuthenticationPrincipal CustomUser user,
+    public ResponseEntity<ApiResponse<?>> getSoftwareDetail(@AuthenticationPrincipal CustomUser user,
                                                           @PathVariable("softwareId") Long softwareId) {
         SoftwareAdminDetailResponse detailResponse = softwareAdminService.getSoftwareDetail(user, softwareId);
         ApiResponse<?> response = ApiResponse.success(detailResponse);
