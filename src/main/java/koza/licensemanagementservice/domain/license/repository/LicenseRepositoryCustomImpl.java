@@ -208,17 +208,17 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
         if (condition.getStartedBefore() != null)
             builder.and(license.latestActiveAt.loe(condition.getStartedBefore()));
 
-        List<License> content = jpaQueryFactory
-                .selectFrom(license)
+        List<License> content = queryFactory
+                .select(license)
                 .join(license.software, software).fetchJoin()
                 .join(software.member, member).fetchJoin()
                 .where(builder)
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("c")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = jpaQueryFactory
+        Long total = queryFactory
                 .select(license.count())
                 .from(license)
                 .leftJoin(license.software, software)
