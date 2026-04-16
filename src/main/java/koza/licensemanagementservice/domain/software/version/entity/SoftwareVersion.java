@@ -20,7 +20,7 @@ public class SoftwareVersion extends BaseEntity {
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "software_id")
+    @JoinColumn(name = "software_id", nullable = false)
     private Software software;
 
     @Column(name = "version", length = 20, nullable = false)

@@ -22,11 +22,11 @@ public class LicenseLog extends LogBaseEntity {
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "license_id")
+    @JoinColumn(name = "license_id", nullable = false)
     private License license;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "operator_id")
+    @JoinColumn(name = "operator_id", nullable = false)
     private Member operator;
 
     @Enumerated(EnumType.STRING)

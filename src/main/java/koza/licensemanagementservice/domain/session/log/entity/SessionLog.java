@@ -21,7 +21,7 @@ public class SessionLog extends LogBaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "license_id")
+    @JoinColumn(name = "license_id", nullable = false)
     private License license;
 
     @Column(name = "session_id", length = 36, nullable = false)

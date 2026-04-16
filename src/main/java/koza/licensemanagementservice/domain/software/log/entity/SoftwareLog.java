@@ -23,11 +23,11 @@ public class SoftwareLog extends LogBaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "software_id")
+    @JoinColumn(name = "software_id", nullable = false)
     private Software software;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "operator_id")
+    @JoinColumn(name = "operator_id", nullable = false)
     private Member operator;
 
     @Enumerated(EnumType.STRING)
