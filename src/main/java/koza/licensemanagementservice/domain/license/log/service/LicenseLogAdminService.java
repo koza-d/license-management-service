@@ -26,11 +26,18 @@ public class LicenseLogAdminService {
     public Page<LicenseExtendLogResponse> getLicenseExtendLogs(CustomUser user, Long licenseId, LocalDate from, LocalDate to, Pageable pageable) {
         validAdminAuthorized(user);
 
+        if (from != null && to != null && from.isAfter(to))
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+
         return extendLogRepository.findByLicenseId(licenseId, from, to, pageable);
     }
 
     public Page<LicenseLogResponse> getLicenseChangedLogs(CustomUser user, Long licenseId, LicenseLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
+
+        if (condition.getFrom() != null && condition.getTo() != null
+                && condition.getFrom().isAfter(condition.getTo()))
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
         return logRepository.findByLicenseId(licenseId, condition, pageable);
     }

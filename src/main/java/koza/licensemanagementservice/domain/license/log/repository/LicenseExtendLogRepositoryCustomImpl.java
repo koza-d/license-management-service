@@ -38,6 +38,7 @@ public class LicenseExtendLogRepositoryCustomImpl implements LicenseExtendLogRep
                 .from(licenseExtendLog)
                 .leftJoin(licenseExtendLog.operator, member)
                 .where(
+                        licenseExtendLog.license.id.eq(licenseId),
                         createAtBetween(from, to)
                 )
                 .orderBy(getOrderSpecifiers(pageable.getSort(), licenseExtendLog, "id", Set.of("id", "createAt")))
@@ -50,6 +51,7 @@ public class LicenseExtendLogRepositoryCustomImpl implements LicenseExtendLogRep
                 .from(licenseExtendLog)
                 .leftJoin(licenseExtendLog.operator, member)
                 .where(
+                        licenseExtendLog.license.id.eq(licenseId),
                         createAtBetween(from, to)
                 ).fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
