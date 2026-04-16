@@ -6,6 +6,9 @@ import koza.licensemanagementservice.global.error.ErrorCode;
 
 public class ValidUserAuthorized {
     public static void validAdminAuthorized(CustomUser user) {
+        if (user == null)
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+
         if (user.getAuthorities() == null)
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
