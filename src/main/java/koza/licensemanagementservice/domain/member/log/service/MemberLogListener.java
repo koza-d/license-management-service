@@ -64,7 +64,7 @@ public class MemberLogListener {
             payload.put("joinType", event.getJoinType().name());
             payload.put("ipAddress", event.getIpAddress());
             payload.put("userAgent", event.getUserAgent());
-            persist(member, null, MemberLogType.LOGIN_SUCCESS, payload);
+            persist(member, member, MemberLogType.LOGIN_SUCCESS, payload);
         });
     }
 
@@ -78,7 +78,7 @@ public class MemberLogListener {
             payload.put("ipAddress", event.getIpAddress());
             payload.put("userAgent", event.getUserAgent());
             payload.put("failReason", event.getFailReason());
-            persist(member, null, MemberLogType.LOGIN_FAIL, payload);
+            persist(member, member, MemberLogType.LOGIN_FAIL, payload);
         });
     }
 

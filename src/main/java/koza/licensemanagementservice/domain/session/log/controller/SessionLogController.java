@@ -10,6 +10,8 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -41,7 +43,7 @@ public class SessionLogController {
     @GetMapping("/licenses/{licenseId}")
     public ResponseEntity<ApiResponse<?>> getLicenseUsageHistory(@AuthenticationPrincipal CustomUser user,
                                                                  @PathVariable(name = "licenseId") Long licenseId,
-                                                                 Pageable pageable) {
+                                                                 @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<SessionHistoryResponse> responses = logService.getLicenseUsageHistory(user, licenseId, pageable);
         ApiResponse<?> response = ApiResponse.success(responses);
         return ResponseEntity.ok(response);

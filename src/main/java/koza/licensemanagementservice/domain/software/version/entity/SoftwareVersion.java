@@ -19,14 +19,14 @@ public class SoftwareVersion extends BaseEntity {
     private Long id;
 
     @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "software_id", nullable = false)
     private Software software;
 
-    @Column(name = "version", length = 50, nullable = false)
+    @Column(name = "version", length = 20, nullable = false)
     private String version;
 
-    @Column(name = "file_hash", length = 64)
+    @Column(name = "file_hash", length = 64, nullable = false)
     private String fileHash;
 
     @Column(name = "is_latest")
@@ -35,7 +35,7 @@ public class SoftwareVersion extends BaseEntity {
     @Column(name = "is_available")
     private boolean isAvailable;
 
-    @Column(name = "download_url", length = 2048)
+    @Column(name = "download_url", length = 2083)
     private String downloadURL;
 
     @Column(name = "memo", length = 200)

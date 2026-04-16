@@ -1,36 +1,32 @@
 package koza.licensemanagementservice.domain.session.log.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
-import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
-import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
 public class SessionHistoryResponse {
-    private String sessionId;
-    private String ipAddress;
-    private String userAgent;
-    private LocalDateTime verifyAt;
-    private LocalDateTime releaseAt;
-    private ReleaseType releaseType;
-    private String releaseTypeLabel; // "정상적으로 해제" 등
-    private long durationMinutes; // releaseAt - verifyAt
+    private final String sessionId;
+    private final String ipAddress;
+    private final String userAgent;
+    private final LocalDateTime verifyAt;
+    private final LocalDateTime releaseAt;
+    private final ReleaseType releaseType;
+    private final String releaseTypeLabel; // "정상적으로 해제" 등
+    private final long durationMinutes; // releaseAt - verifyAt
 
-    public static SessionHistoryResponse from(SessionLog log) {
-        return SessionHistoryResponse.builder()
-                .sessionId(log.getSessionId())
-                .ipAddress(log.getIpAddress())
-                .userAgent(log.getUserAgent())
-                .verifyAt(log.getVerifyAt())
-                .releaseAt(log.getReleaseAt())
-                .releaseType(log.getReleaseType())
-                .releaseTypeLabel(log.getReleaseType().getDesc())
-                .durationMinutes(Duration.between(log.getVerifyAt(), log.getReleaseAt()).toMinutes())
-                .build();
+    @QueryProjection
+    public SessionHistoryResponse(String sessionId, String ipAddress, String userAgent, LocalDateTime verifyAt, LocalDateTime releaseAt, ReleaseType releaseType) {
+        this.sessionId = sessionId;
+        this.ipAddress = ipAddress;
+        this.userAgent = userAgent;
+        this.verifyAt = verifyAt;
+        this.releaseAt = releaseAt;
+        this.releaseType = releaseType;
+        this.releaseTypeLabel = releaseType.getDesc();
+        this.durationMinutes = Duration.between(verifyAt, releaseAt).toMinutes();
     }
-
 }

@@ -26,8 +26,8 @@ public class Software extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     @OneToMany(mappedBy = "software", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -41,12 +41,12 @@ public class Software extends BaseEntity {
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
-    @Column(name = "global_variables", columnDefinition = "json")
+    @Column(name = "global_variables", columnDefinition = "json", nullable = false)
     private Map<String, Object> globalVariables = new HashMap<>(); // 라이센스마다 똑같이 적용될 전역 변수
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "local_variables", columnDefinition = "json")
+    @Column(name = "local_variables", columnDefinition = "json", nullable = false)
     private Map<String, Object> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
 
     @Column(name = "limit_license")

@@ -19,6 +19,10 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     Page<License> findBySoftware_MemberIdAndHasActiveSessionIsTrue(Long memberId, Pageable pageable);
     List<License> findByIdIn(List<Long> id);
     int countBySoftwareId(Long softwareId);
+
+    Long countBySoftwareIdAndStatusEquals(Long softwareId, LicenseStatus status);
+    Long countBySoftwareIdAndExpiredAtBefore(Long softwareId, LocalDateTime at);
+    Long countBySoftwareIdAndHasActiveSessionTrue(Long softwareId);
     Long countBySoftware_MemberId(Long memberId);
     Long countBySoftware_MemberIdAndStatusEquals(Long memberId, LicenseStatus status);
     Long countBySoftware_MemberIdAndStatusAndExpiredAtBefore(Long memberId, LicenseStatus status, LocalDateTime at);

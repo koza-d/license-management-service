@@ -21,15 +21,20 @@ public class LicenseExtendLog extends LogBaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "license_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "license_id", nullable = false)
     private License license;
 
-    @ManyToOne
-    @JoinColumn(name = "operator_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "operator_id", nullable = false)
     private Member operator;
 
+    @Column(name = "before_expired_at", nullable = false)
     private LocalDateTime beforeExpiredAt;
+
+    @Column(name = "after_expired_at", nullable = false)
     private LocalDateTime afterExpiredAt;
+
+    @Column(name = "period_ms", nullable = false)
     private Long periodMs;
 }

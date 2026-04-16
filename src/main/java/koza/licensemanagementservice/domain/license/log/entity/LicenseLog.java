@@ -21,19 +21,19 @@ public class LicenseLog extends LogBaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "license_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "license_id", nullable = false)
     private License license;
 
-    @ManyToOne
-    @JoinColumn(name = "operator_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "operator_id", nullable = false)
     private Member operator;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "log_type", length = 20, nullable = false)
     private LicenseLogType logType;
 
-
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "data", columnDefinition = "json")
+    @Column(name = "data", columnDefinition = "json", nullable = false)
     private Map<String, Object> data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
 }

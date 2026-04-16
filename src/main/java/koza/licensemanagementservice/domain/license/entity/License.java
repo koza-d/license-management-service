@@ -24,33 +24,38 @@ public class License extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "software_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "software_id", nullable = false)
     private Software software;
 
     @Column(name = "name", length = 20, nullable = false)
     private String name;
-    @Column(name = "memo", length = 200)
+
+    @Column(name = "memo", length = 200, nullable = false)
     private String memo;
+
     @Column(name = "license_key", length = 128, nullable = false)
     private String licenseKey;
+
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
-    @Column(name = "latest_active_at")
+
+    @Column(name = "latest_active_at", nullable = false)
     private LocalDateTime latestActiveAt;
 
     @Builder.Default
     @Getter(AccessLevel.NONE)
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
-    @Column(name = "local_variables", columnDefinition = "json")
+    @Column(name = "local_variables", columnDefinition = "json", nullable = false)
     private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
 
     @Getter(AccessLevel.NONE)
     private boolean hasActiveSession;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", length = 20, nullable = false)
     private LicenseStatus status;
+
     public void updateName(String name) {
         this.name = name;
     }

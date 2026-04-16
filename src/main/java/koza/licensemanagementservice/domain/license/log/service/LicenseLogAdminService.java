@@ -12,8 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
 @Service
 @RequiredArgsConstructor
@@ -21,22 +24,24 @@ public class LicenseLogAdminService {
     private final LicenseExtendLogRepository extendLogRepository;
     private final LicenseLogRepository logRepository;
 
+    @Transactional(readOnly = true)
     public Page<LicenseExtendLogResponse> getLicenseExtendLogs(CustomUser user, Long licenseId, LocalDate from, LocalDate to, Pageable pageable) {
         validAdminAuthorized(user);
+
+        if (from != null && to != null && from.isAfter(to))
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
         return extendLogRepository.findByLicenseId(licenseId, from, to, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<LicenseLogResponse> getLicenseChangedLogs(CustomUser user, Long licenseId, LicenseLogSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
-        return logRepository.findByLicenseId(licenseId, condition, pageable);
-    }
+        if (condition.getFrom() != null && condition.getTo() != null
+                && condition.getFrom().isAfter(condition.getTo()))
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
-    private static void validAdminAuthorized(CustomUser user) {
-        user.getAuthorities().stream()
-                .filter(auth -> auth.toString().equals("ROLE_ADMIN"))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+        return logRepository.findByLicenseId(licenseId, condition, pageable);
     }
 }

@@ -1,25 +1,24 @@
 package koza.licensemanagementservice.domain.software.repository;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.*;
 import com.querydsl.core.types.dsl.*;
-import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareDailyUsage;
 import koza.licensemanagementservice.dashboard.dto.QSoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareDailyUsage;
-import koza.licensemanagementservice.domain.software.dto.response.QSoftwareSummaryResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
+import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
@@ -27,17 +26,49 @@ import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.domain.software.version.entity.QSoftwareVersion.softwareVersion;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 @RequiredArgsConstructor
 public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public Optional<SoftwareAdminDetailResponse> findBySoftwareId(Long softwareId) {
+        return Optional.ofNullable(queryFactory
+                .select(
+                        new QSoftwareAdminDetailResponse(
+                                software.id,
+                                member.email,
+                                member.nickname,
+                                software.name,
+                                softwareVersion.version,
+                                software.apiKey,
+                                licenseCount(),
+                                software.limitLicense,
+                                software.globalVariables,
+                                software.localVariables,
+                                software.createAt
+                        )
+                )
+                .from(software)
+                .leftJoin(software.member, member)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .where(
+                        software.id.eq(softwareId)
+                )
+                .fetchOne()
+        );
+    }
+
+    @Override
     public Optional<Software> findByIdWithMember(Long softwareId) {
         return Optional.ofNullable(queryFactory
                 .selectFrom(software)
-                .where(software.id.eq(softwareId))
                 .innerJoin(software.member, member).fetchJoin()
+                .where(software.id.eq(softwareId))
                 .fetchOne());
     }
 
@@ -106,6 +137,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                 .then(license.id)
                 .otherwise((Long) null)
                 .countDistinct();
+
         return queryFactory
                 .select(
                         new QSoftwareStatsResponse(
@@ -117,9 +149,15 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                         )
                 )
                 .from(member)
-                .leftJoin(software).on(software.member.id.eq(member.id))
-                .leftJoin(license).on(license.software.id.eq(software.id))
-                .leftJoin(sessionLog).on(sessionLog.license.id.eq(license.id))
+                .leftJoin(software).on(
+                        software.member.id.eq(member.id)
+                )
+                .leftJoin(license).on(
+                        license.software.id.eq(software.id)
+                )
+                .leftJoin(sessionLog).on(
+                        sessionLog.license.id.eq(license.id)
+                )
                 .where(member.id.eq(memberId))
                 .groupBy(software.id, software.name)
                 .fetch();
@@ -127,61 +165,174 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
 
     @Override
     public Page<SoftwareSummaryResponse> findSummaryByMemberId(Long memberId, String search, boolean activeOnly, Pageable pageable) {
-        // 추후 Repository가 복잡해지면 조회용 SoftwareQueryRepository로 분리
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(software.member.id.eq(memberId));
-        if (search != null)
-            builder.and(software.name.contains(search));
-
-        JPAQuery<SoftwareSummaryResponse> query = queryFactory
-                .select(new QSoftwareSummaryResponse(
-                        software.id,
-                        software.name,
-                        softwareVersion.version,
-                        license.count().intValue(),
-                        license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().intValue(),
-                        software.createAt
-                ))
+        List<SoftwareSummaryResponse> content = queryFactory
+                .select(
+                        new QSoftwareSummaryResponse(
+                                software.id,
+                                software.name,
+                                softwareVersion.version,
+                                licenseCount(),
+                                activeSessionCount(),
+                                software.createAt
+                        )
+                )
                 .from(software)
-                .leftJoin(license).on(license.software.eq(software))
-                .leftJoin(software.versions, softwareVersion).on(softwareVersion.isLatest.isTrue())
-                .where(builder)
-                .having(activeOnly ? license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L) : null)
-                .groupBy(software.id, softwareVersion.version);
-
-        List<SoftwareSummaryResponse> content = query
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .where(
+                        software.member.id.eq(memberId),
+                        containsName(search),
+                        activeSessionOnlyFilter(activeOnly)
+                )
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        JPAQuery<Long> countQuery = queryFactory
-                .select(software.id.countDistinct())
-                .from(software);
+        Long total = queryFactory
+                .select(software.count())
+                .from(software)
+                .where(
+                        software.member.id.eq(memberId),
+                        containsName(search),
+                        activeSessionOnlyFilter(activeOnly)
+                ).fetchOne();
 
-        Long total = null;
-        if (activeOnly) {
-            countQuery
-                    .leftJoin(license).on(license.software.eq(software))
-                    .groupBy(software.id)
-                    .having(license.hasActiveSession.when(true).then(1L).otherwise(0L).sum().gt(0L));
-            total = (long) countQuery.fetch().size();
-        } else {
-            total = countQuery.where(builder).fetchOne();
-        }
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<Software> entityPath = new PathBuilder<>(Software.class, "software");
+    @Override
+    public Page<SoftwareAdminSummaryResponse> searchSoftwareByCondition(SoftwareAdminSearchCondition condition, Pageable pageable) {
+        List<SoftwareAdminSummaryResponse> content = queryFactory
+                .select(
+                        new QSoftwareAdminSummaryResponse(
+                                software.id,
+                                software.name,
+                                softwareVersion.version,
+                                member.email,
+                                software.status,
+                                software.createAt
+                        )
+                )
+                .from(software)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        createAtBetween(condition.getFrom(), condition.getTo()),
+                        statusFilter(condition.getStatus())
+                )
+                .orderBy(getOrderSpecifiers(pageable.getSort(), software, "id", Set.of("id", "createAt")))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
+        Long total = queryFactory
+                .select(software.count())
+                .from(software)
+                .leftJoin(softwareVersion).on(
+                        softwareVersion.software.eq(software),
+                        softwareVersion.isLatest.isTrue()
+                )
+                .leftJoin(software.member, member)
+                .where(
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        createAtBetween(condition.getFrom(), condition.getTo()),
+                        statusFilter(condition.getStatus())
+                ).fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Optional<SoftwareAdminStatsResponse> getSoftwareUsageStat(Long softwareId) {
+        NumberTemplate<Long> diffSeconds = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(SECOND, {0}, {1})",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt
+        );
+
+        return Optional.ofNullable(queryFactory
+                .select(
+                        new QSoftwareAdminStatsResponse(
+                                diffSeconds.sum().coalesce(0L).longValue(),
+                                sessionLog.count(),
+                                diffSeconds.avg().coalesce(0.0).longValue()
+                        )
+                )
+                .from(sessionLog)
+                .join(sessionLog.license, license)
+                .where(
+                        license.software.id.eq(softwareId)
+                )
+                .fetchOne()
+        );
+    }
+
+    private BooleanExpression searchFilter(SoftwareAdminSearchTarget target, String search) {
+        if (search == null || search.isEmpty())
+            return null;
+
+        if (target != null && target != SoftwareAdminSearchTarget.ALL) {
+            return switch (target) {
+                case SOFTWARE_NAME -> software.name.containsIgnoreCase(search);
+                case OWNER_EMAIL -> member.email.containsIgnoreCase(search);
+                default -> null;
+            };
         }
 
-        return orders.toArray(OrderSpecifier[]::new);
+        return software.name.containsIgnoreCase(search)
+                .or(member.email.containsIgnoreCase(search));
+    }
+
+    private BooleanExpression createAtBetween(LocalDate from, LocalDate to) {
+        if (from == null && to == null) return null;
+
+        if (to == null)
+            return software.createAt.goe(from.atStartOfDay());
+
+        if (from == null)
+            return software.createAt.loe(to.atTime(LocalTime.MAX));
+
+        return software.createAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
+    }
+
+    private BooleanExpression statusFilter(SoftwareStatus status) {
+        return status == null ? null : software.status.eq(status);
+    }
+
+    private Expression<Integer> activeSessionCount() {
+        return ExpressionUtils.as(
+                JPAExpressions.select(license.count().intValue())
+                        .from(license)
+                        .where(license.software.eq(software), license.hasActiveSession.isTrue()),
+                "activeSessionCount"
+        );
+    }
+
+    private Expression<Integer> licenseCount() {
+        return ExpressionUtils.as(
+                JPAExpressions.select(license.count().intValue())
+                        .from(license)
+                        .where(license.software.eq(software)),
+                "licenseCount"
+        );
+    }
+
+    private BooleanExpression activeSessionOnlyFilter(boolean activeOnly) {
+        BooleanExpression exists = JPAExpressions.selectOne()
+                .from(license)
+                .where(license.software.eq(software), license.hasActiveSession.isTrue())
+                .exists();
+        return activeOnly ? exists : null;
+    }
+
+    private BooleanExpression containsName(String search) {
+        return search != null ? software.name.containsIgnoreCase(search) : null;
     }
 }

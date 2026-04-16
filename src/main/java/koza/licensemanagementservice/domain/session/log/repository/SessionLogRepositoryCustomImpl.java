@@ -1,23 +1,21 @@
 package koza.licensemanagementservice.domain.session.log.repository;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
+import koza.licensemanagementservice.domain.session.log.dto.QSessionHistoryResponse;
+import koza.licensemanagementservice.domain.session.log.dto.SessionHistoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
-import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 
 @RequiredArgsConstructor
@@ -25,24 +23,29 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<SessionLog> findByLicenseId(Long licenseId, Pageable pageable) {
-        return findByLicenseId(licenseId, null, null, pageable);
+    public Page<SessionHistoryResponse> findByLicenseId(Long licenseId, Pageable pageable) {
+        return findByLicenseId(licenseId, new SessionLogSearchCondition(), pageable);
     }
 
     @Override
-    public Page<SessionLog> findByLicenseId(Long licenseId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(sessionLog.license.id.eq(licenseId));
-        if (startDate != null)
-            builder.and(sessionLog.verifyAt.goe(startDate.atStartOfDay()));
-
-        if (endDate != null)
-            builder.and(sessionLog.verifyAt.lt(endDate.atStartOfDay()));
-
-        List<SessionLog> content = queryFactory
-                .selectFrom(sessionLog)
-                .where(sessionLog.license.id.eq(licenseId))
-                .leftJoin(sessionLog.license, license)
+    public Page<SessionHistoryResponse> findByLicenseId(Long licenseId, SessionLogSearchCondition condition, Pageable pageable) {
+        List<SessionHistoryResponse> content = queryFactory
+                .select(
+                        new QSessionHistoryResponse(
+                                sessionLog.sessionId,
+                                sessionLog.ipAddress,
+                                sessionLog.userAgent,
+                                sessionLog.verifyAt,
+                                sessionLog.releaseAt,
+                                sessionLog.releaseType
+                        )
+                )
+                .from(sessionLog)
+                .where(
+                        sessionLog.license.id.eq(licenseId),
+                        verifyAtBetween(condition.getFrom(), condition.getTo())
+                )
+                .orderBy(getOrderSpecifiers(pageable.getSort(), sessionLog, "id", Set.of("id", "createAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -50,21 +53,23 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
         Long total = queryFactory
                 .select(sessionLog.count())
                 .from(sessionLog)
-                .where(builder)
+                .where(
+                        sessionLog.license.id.eq(licenseId),
+                        verifyAtBetween(condition.getFrom(), condition.getTo())
+                )
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<SessionLog> entityPath = new PathBuilder<>(SessionLog.class, "sessionLog");
+    private static BooleanExpression verifyAtBetween(LocalDate from, LocalDate to) {
+        if (from == null && to == null) return null;
 
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
-        }
+        if (to == null)
+            return sessionLog.verifyAt.goe(from.atStartOfDay());
 
-        return orders.toArray(OrderSpecifier[]::new);
+        if (from == null)
+            return sessionLog.verifyAt.loe(to.atTime(LocalTime.MAX));
+
+        return sessionLog.verifyAt.between(from.atStartOfDay(), to.atTime(LocalTime.MAX));
     }
 }

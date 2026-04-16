@@ -2,16 +2,16 @@ package koza.licensemanagementservice.domain.software.log.dto;
 
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Map;
-
 @Getter
 @AllArgsConstructor
-public class SoftwareVersionChangedEvent {
+public class SoftwareStatusChangedEvent {
     private Long targetSoftwareId;
     private Long operatorId;
-    private Map<String, Object> beforeVersion;
-    private Map<String, Object> afterVersion;
+    private SoftwareStatus beforeStatus;
+    private SoftwareStatus afterStatus;
+    private String reason;
 }

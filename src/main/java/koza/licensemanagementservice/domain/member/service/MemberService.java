@@ -89,14 +89,15 @@ public class MemberService {
         return jwtTokenProvider.createToken(member);
     }
 
-
     @Transactional(readOnly = true)
     public MemberInfoResponse userInfo(CustomUser user) {
         return MemberInfoResponse.builder()
                 .email(user.getUsername())
                 .nickname(user.getNickname())
                 .profileImageURL(user.getProfileURL())
-                .roles(user.getAuthorities().stream()
+                .roles(user.getAuthorities() == null
+                        ? new ArrayList<>()
+                        : user.getAuthorities().stream()
                         .map(SimpleGrantedAuthority::getAuthority)
                         .collect(Collectors.toList())
                 )

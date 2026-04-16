@@ -1,10 +1,7 @@
 package koza.licensemanagementservice.domain.license.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.QLicenseAdminSummaryResponse;
@@ -16,127 +13,136 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
+import static org.springframework.util.StringUtils.hasText;
 
 
 @RequiredArgsConstructor
 public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
-    private final JPAQueryFactory jpaQueryFactory;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Optional<License> findByIdWithSoftwareAndMember(Long licenseId) {
-        // Member(Software의 연관관계) 까지 끌어오는건 해당 LicenseRepository 의 영역을 침범한 느낌이지만 일단 이대로 타협함
         return Optional.ofNullable(
-                jpaQueryFactory
+                queryFactory
                         .selectFrom(license)
-                        .where(license.id.eq(licenseId))
                         .join(license.software, software).fetchJoin()
                         .join(software.member, member).fetchJoin()
+                        .where(license.id.eq(licenseId))
                         .fetchOne());
     }
 
     @Override
     public Optional<License> findByLicenseKeyWithSoftware(String licenseKey) {
         return Optional.ofNullable(
-                jpaQueryFactory
+                queryFactory
                         .selectFrom(license)
-                        .where(license.licenseKey.eq(licenseKey))
                         .leftJoin(license.software, software).fetchJoin()
+                        .where(license.licenseKey.eq(licenseKey))
                         .fetchOne());
     }
 
     @Override
     public List<License> findByIdInWithSoftwareWithMember(List<Long> ids) {
-        return jpaQueryFactory
+        return queryFactory
                 .selectFrom(license)
-                .where(license.id.in(ids))
                 .leftJoin(license.software, software)
                 .leftJoin(software.member, member)
+                .where(license.id.in(ids))
                 .fetch();
     }
 
     @Override
     public List<License> findByMemberId(Long memberId) {
-        return jpaQueryFactory
+        return queryFactory
                 .selectFrom(license)
-                .where(member.id.eq(memberId))
                 .leftJoin(license.software, software)
                 .leftJoin(software.member, member)
-                .fetch()
-                ;
+                .where(member.id.eq(memberId))
+                .fetch();
     }
 
     @Override
     public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(license.software.member.id.eq(memberId));
-
-        if (search != null)
-            builder.and(license.name.containsIgnoreCase(search).or(license.memo.containsIgnoreCase(search)));
-
-        if (hasActiveSession != null)
-            builder.and(license.hasActiveSession.eq(hasActiveSession));
-
-        if (expireWithin != null)
-            builder.and(license.expiredAt.before(LocalDateTime.now().plusDays(expireWithin)));
-
-        List<License> content = jpaQueryFactory
+        List<License> content = queryFactory
                 .selectFrom(license)
-                .where(builder)
                 .leftJoin(license.software, software)
                 .leftJoin(software.member, member)
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .where(
+                        license.software.member.id.eq(memberId),
+                        searchNameOrMemo(search),
+                        sessionFilter(hasActiveSession),
+                        isExpired(expireWithin)
+                )
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = jpaQueryFactory
+        Long total = queryFactory
                 .select(license.count())
                 .from(license)
-                .where(builder)
+                .where(
+                        license.software.member.id.eq(memberId),
+                        searchNameOrMemo(search),
+                        sessionFilter(hasActiveSession),
+                        isExpired(expireWithin)
+                )
                 .fetchOne();
+
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private static BooleanExpression isExpired(Integer expireWithin) {
+        return expireWithin != null ? license.expiredAt.before(LocalDateTime.now().plusDays(expireWithin)) : null;
     }
 
     @Override
     public Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(license.software.id.eq(softwareId));
-
-        if (search != null)
-            builder.and(license.name.containsIgnoreCase(search).or(license.memo.containsIgnoreCase(search)));
-
-        if (hasActiveSession != null)
-            builder.and(license.hasActiveSession.eq(hasActiveSession));
-
-        List<License> content = jpaQueryFactory
+        List<License> content = queryFactory
                 .selectFrom(license)
-                .where(builder)
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .where(
+                        license.software.id.eq(softwareId),
+                        searchNameOrMemo(search),
+                        sessionFilter(hasActiveSession)
+                )
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = jpaQueryFactory
+        Long total = queryFactory
                 .select(license.count())
                 .from(license)
-                .where(builder)
+                .where(
+                        license.software.id.eq(softwareId),
+                        searchNameOrMemo(search),
+                        sessionFilter(hasActiveSession)
+                )
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
+    private static BooleanExpression searchNameOrMemo(String search) {
+        if (!hasText(search))
+            return null;
+
+        return license.memo.containsIgnoreCase(search)
+                .or(license.name.containsIgnoreCase(search));
+    }
+
     @Override
     public Page<LicenseAdminSummaryResponse> findByAllCondition(LicenseSearchCondition condition, Pageable pageable) {
-        List<LicenseAdminSummaryResponse> content = jpaQueryFactory
+        List<LicenseAdminSummaryResponse> content = queryFactory
                 .select(new QLicenseAdminSummaryResponse(
                         license.id,
                         member.email,
@@ -158,10 +164,10 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
                 .fetch();
 
-        Long total = jpaQueryFactory
+        Long total = queryFactory
                 .select(license.count())
                 .from(license)
                 .leftJoin(license.software, software)
@@ -228,7 +234,7 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     private BooleanExpression searchFilter(LicenseSearchTarget target, String search) {
-        if (search == null || search.isEmpty())
+        if (!hasText(search))
             return null;
 
         if (target != null && target != LicenseSearchTarget.ALL) {
@@ -244,18 +250,4 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .or(software.name.containsIgnoreCase(search))
                 .or(license.name.containsIgnoreCase(search));
     }
-
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        List<OrderSpecifier> orders = new ArrayList<>();
-        PathBuilder<License> entityPath = new PathBuilder<>(License.class, "license");
-
-        for (Sort.Order order : sort) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            String prop = order.getProperty();
-            orders.add(new OrderSpecifier(direction, entityPath.get(prop)));
-        }
-
-        return orders.toArray(OrderSpecifier[]::new);
-    }
-
 }

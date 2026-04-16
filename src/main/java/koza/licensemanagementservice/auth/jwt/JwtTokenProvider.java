@@ -73,7 +73,7 @@ public class JwtTokenProvider {
         // 토큰에 담긴 권한 추출
         List<?> roles = claims.get("roles", List.class);
         List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toString()))
+                .map(role -> new SimpleGrantedAuthority(role.toString()))
                 .collect(Collectors.toList());
 
         CustomUser principal = new CustomUser(Long.parseLong(claims.getSubject()), claims.get("email").toString(), claims.get("nick").toString(), claims.get("p_img").toString(), authorities);

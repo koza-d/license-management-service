@@ -28,23 +28,25 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class MemberAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
     private final ApplicationEventPublisher publisher;
 
+    @Transactional(readOnly = true)
     public Page<AdminMemberSummaryResponse> getMembers(String keyword, MemberStatus status, Pageable pageable) {
         return memberRepository.searchForAdmin(keyword, status, pageable)
                 .map(AdminMemberSummaryResponse::from);
     }
 
+    @Transactional(readOnly = true)
     public AdminMemberDetailResponse getMemberDetail(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         return AdminMemberDetailResponse.from(member);
     }
 
+    @Transactional(readOnly = true)
     public List<MemberLogResponse> getLogs(Long memberId, MemberLogType type) {
         List<MemberLog> logs = (type == null)
                 ? memberLogRepository.findByMemberIdOrderByCreateAtDesc(memberId)

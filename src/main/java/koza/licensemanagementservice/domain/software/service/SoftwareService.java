@@ -63,7 +63,7 @@ public class SoftwareService {
 
         software.addVersion(version);
         Software save = softwareRepository.save(software);
-        eventPublisher.publishEvent(new SoftwareCreatedEvent(save, member, save.toSnapshot()));
+        eventPublisher.publishEvent(new SoftwareCreatedEvent(save.getId(), user.getId(), save.toSnapshot()));
         return SoftwareCreateResponse.of(save, version.getVersion());
     }
 
@@ -115,14 +115,18 @@ public class SoftwareService {
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
 
-
         eventPublisher.publishEvent(new SoftwareVersionChangedEvent(
-                software,
-                software.getMember(),
+                softwareId,
+                user.getId(),
                 beforeLatestVersion.toSnapshot(),
                 latestVersion.toSnapshot())
         );
-        eventPublisher.publishEvent(new SoftwareModifiedEvent(software, software.getMember(), before, software.toSnapshot())); // 로그 비동기 저장
+        eventPublisher.publishEvent(new SoftwareModifiedEvent(
+                softwareId,
+                user.getId(),
+                before,
+                software.toSnapshot())
+        ); // 로그 비동기 저장
         return softwareId;
     }
 

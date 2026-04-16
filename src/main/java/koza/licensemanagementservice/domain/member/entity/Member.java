@@ -22,19 +22,22 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, length = 50)
+    @Column(name = "email", unique = true, length = 50)
     private String email;
 
-    @Column(length = 200)
+    @Column(name = "password", length = 200)
     private String password;
 
-    @Column(length = 20, nullable = false)
+    @Column(name = "nickname", length = 20, nullable = false)
     private String nickname;
 
     @Column(name = "profile_url")
     private String profileURL;
 
+    @Column(name = "provider", length = 50)
     private String provider; // 소셜 브랜드명
+
+    @Column(name = "provider_id", length = 255)
     private String providerId; // 소셜이 부여한 고유 ID
 
     @Builder.Default

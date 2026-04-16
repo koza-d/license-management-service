@@ -19,12 +19,12 @@ public class MemberLog extends LogBaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "operator_id", nullable = false)
     private Member operator;
 
     @Enumerated(EnumType.STRING)
@@ -32,6 +32,6 @@ public class MemberLog extends LogBaseEntity {
     private MemberLogType logType;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "data", columnDefinition = "json")
+    @Column(name = "data", columnDefinition = "json", nullable = false)
     private String data;
 }
