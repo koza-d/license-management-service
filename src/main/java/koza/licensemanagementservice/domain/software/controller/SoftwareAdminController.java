@@ -74,7 +74,7 @@ public class SoftwareAdminController {
 
 
     @Operation(summary = "소프트웨어 상태 변경", description = "소프트웨어의 상태를 활성/정지로 변경합니다.")
-    @PostMapping("/{softwareId}/status")
+    @PatchMapping("/{softwareId}/status")
     public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser admin,
                                                        @PathVariable Long softwareId,
                                                        @RequestBody @Valid SoftwareStatusChangeRequest request) {

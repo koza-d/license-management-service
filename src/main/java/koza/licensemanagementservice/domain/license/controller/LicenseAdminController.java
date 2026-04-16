@@ -67,7 +67,7 @@ public class LicenseAdminController {
     }
 
     @Operation(summary = "라이센스 상태 변경", description = "라이센스 상태 변경 API")
-    @PostMapping("/{licenseId}/status")
+    @PatchMapping("/{licenseId}/status")
     public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
                                                        @RequestBody LicenseStatusUpdateRequest request) {
