@@ -42,6 +42,8 @@ public enum ErrorCode {
 
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
+    SESSION_NOT_FOUND(404, "SESSION_002", "세션을 찾을 수 없습니다."),
+    SESSION_ALREADY_TERMINATED(409, "SESSION_003", "이미 종료된 세션입니다."),
 
     // QNA 예외
     QNA_NOT_FOUND(404, "QNA_001", "질문을 찾을 수 없습니다."),

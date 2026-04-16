@@ -11,6 +11,7 @@ import koza.licensemanagementservice.domain.license.dto.response.QLicenseAdminSu
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchTarget;
+import koza.licensemanagementservice.domain.session.dto.request.SessionSearchCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -169,6 +170,56 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                         searchFilter(condition.getTarget(), condition.getSearch()),
                         sessionFilter(condition.getHasActiveSession())
                 ).fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Page<License> findActiveSessionLicensesByCondition(SessionSearchCondition condition, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(license.hasActiveSession.isTrue());
+
+        if (condition.hasAnyFieldFilter()) {
+            if (condition.getOwnerEmail() != null)
+                builder.and(member.email.containsIgnoreCase(condition.getOwnerEmail()));
+            if (condition.getSoftwareName() != null)
+                builder.and(software.name.containsIgnoreCase(condition.getSoftwareName()));
+            if (condition.getLicenseKey() != null)
+                builder.and(license.licenseKey.containsIgnoreCase(condition.getLicenseKey()));
+            if (condition.getLicenseName() != null)
+                builder.and(license.name.containsIgnoreCase(condition.getLicenseName()));
+        } else if (condition.hasFullTextFilter()) {
+            String q = condition.getQ();
+            builder.and(
+                    member.email.containsIgnoreCase(q)
+                            .or(software.name.containsIgnoreCase(q))
+                            .or(license.licenseKey.containsIgnoreCase(q))
+                            .or(license.name.containsIgnoreCase(q))
+            );
+        }
+
+        if (condition.getStartedAfter() != null)
+            builder.and(license.latestActiveAt.goe(condition.getStartedAfter()));
+        if (condition.getStartedBefore() != null)
+            builder.and(license.latestActiveAt.loe(condition.getStartedBefore()));
+
+        List<License> content = jpaQueryFactory
+                .selectFrom(license)
+                .join(license.software, software).fetchJoin()
+                .join(software.member, member).fetchJoin()
+                .where(builder)
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(license.count())
+                .from(license)
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .where(builder)
+                .fetchOne();
+
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 

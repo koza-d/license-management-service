@@ -66,6 +66,7 @@ public class QnaQuestion extends BaseEntity {
     public void submitAnswer(String answer) {
         this.answer = answer;
         this.answeredAt = LocalDateTime.now();
+        this.status = QnaStatus.CLOSED;
     }
 
     public void changeStatus(QnaStatus status) {
