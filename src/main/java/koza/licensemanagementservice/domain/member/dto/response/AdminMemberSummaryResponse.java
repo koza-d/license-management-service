@@ -12,9 +12,9 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class AdminMemberSummaryResponse {
-    private Long id;
-    private String email;
-    private String nickname;
+    private Long memberId;
+    private String memberEmail;
+    private String memberNickname;
     private String profileURL;
     private MemberGrade grade;
     private MemberStatus status;
@@ -24,9 +24,9 @@ public class AdminMemberSummaryResponse {
 
     public static AdminMemberSummaryResponse from(Member m) {
         return AdminMemberSummaryResponse.builder()
-                .id(m.getId())
-                .email(m.getEmail())
-                .nickname(m.getNickname())
+                .memberId(m.getId())
+                .memberEmail(m.getEmail())
+                .memberNickname(m.getNickname())
                 .profileURL(m.getProfileURL())
                 .grade(m.getGrade())
                 .status(m.getStatus())

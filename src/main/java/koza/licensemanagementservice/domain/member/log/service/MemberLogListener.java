@@ -3,10 +3,7 @@ package koza.licensemanagementservice.domain.member.log.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.*;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLog;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLogType;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
@@ -80,6 +77,20 @@ public class MemberLogListener {
             payload.put("failReason", event.getFailReason());
             persist(member, member, MemberLogType.LOGIN_FAIL, payload);
         });
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleWithdraw(MemberWithdrawEvent event) {
+        Member memberReference = memberRepository.getReferenceById(event.getMemberId());
+        Map<String, Object> payload = Map.of(
+                "provider", event.getProvider(),
+                "finalGrade", event.getGrade(),
+                "reason", event.getReason(),
+                "registerAt", event.getRegisterAt()
+        );
+        persist(memberReference, memberReference, MemberLogType.WITHDRAW, payload);
     }
 
     private void persist(Member member, Member operator, MemberLogType type, Map<String, Object> payload) {

@@ -73,4 +73,10 @@ public class Member extends BaseEntity {
     public void updateLastLoginAt() {
         this.lastLoginAt = LocalDateTime.now();
     }
+
+    public void withdraw() {
+        this.email = "#탈퇴한유저";
+        this.password = null;
+        this.status = MemberStatus.WITHDRAW;
+    }
 }

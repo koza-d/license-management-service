@@ -2,10 +2,12 @@ package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
+import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
 import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.member.dto.MemberInfoResponse;
 import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
@@ -21,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,6 +48,7 @@ public class MemberService {
         Member member = Member.builder().email(joinRequest.getEmail())
                 .nickname(joinRequest.getNickname())
                 .password(passwordEncoder.encode(joinRequest.getPassword()))
+                .provider("LOCAL")
                 .roles(roles)
                 .build();
 
@@ -87,6 +91,25 @@ public class MemberService {
                 .build());
 
         return jwtTokenProvider.createToken(member);
+    }
+
+
+    @Transactional
+    public void withdraw(CustomUser user, MemberWithdrawRequest request) {
+        Member member = memberRepository.findById(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        if (member.getStatus() == MemberStatus.WITHDRAW)
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+
+        member.withdraw();
+        publisher.publishEvent(new MemberWithdrawEvent(
+                user.getId(),
+                member.getProvider(),
+                member.getGrade(),
+                request.getReason(),
+                member.getCreateAt()
+        ));
     }
 
     @Transactional(readOnly = true)
