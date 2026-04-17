@@ -23,7 +23,7 @@ import static koza.licensemanagementservice.domain.qna.entity.QQnaQuestion.qnaQu
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 
 @RequiredArgsConstructor
-public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCustom {
+public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override

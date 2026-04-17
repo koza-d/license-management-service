@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.qna.entity;
 
 import jakarta.persistence.*;
-import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.global.common.BaseEntity;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Getter
-public class QnaQuestion extends BaseEntity {
+public class Qna extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
