@@ -40,6 +40,18 @@ public class QnaService {
         return qnaRepository.findBySoftwareId(softwareId, search, status, pageable);
     }
 
+    // 2-1. 본인 문의 목록
+    @Transactional(readOnly = true)
+    public Page<QnaListResponse> getMyQuestions(CustomUser user, String search, QnaStatus status, Pageable pageable) {
+        return qnaRepository.findMyQuestions(user.getId(), null, search, status, pageable);
+    }
+
+    // 2-2. 본인 문의 목록 (소프트웨어별)
+    @Transactional(readOnly = true)
+    public Page<QnaListResponse> getMyQuestionsBySoftware(CustomUser user, Long softwareId, String search, QnaStatus status, Pageable pageable) {
+        return qnaRepository.findMyQuestions(user.getId(), softwareId, search, status, pageable);
+    }
+
     // 3. 문의 단건 조회
     @Transactional(readOnly = true)
     public QnaDetailResponse getQuestionDetail(Long qnaId) {

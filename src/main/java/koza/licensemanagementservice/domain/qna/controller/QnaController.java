@@ -46,6 +46,27 @@ public class QnaController {
         return ResponseEntity.ok(ApiResponse.success(questions));
     }
 
+    @Operation(summary = "본인 문의 목록", description = "로그인한 사용자가 작성한 문의 목록 조회")
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<?>> getMyQuestions(@AuthenticationPrincipal CustomUser user,
+                                                          @RequestParam(required = false) String search,
+                                                          @RequestParam(required = false) QnaStatus status,
+                                                          Pageable pageable) {
+        Page<QnaListResponse> questions = qnaService.getMyQuestions(user, search, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(questions));
+    }
+
+    @Operation(summary = "본인 문의 목록 (소프트웨어별)", description = "로그인한 사용자가 특정 소프트웨어에 작성한 문의 목록 조회")
+    @GetMapping("/my/software/{softwareId}")
+    public ResponseEntity<ApiResponse<?>> getMyQuestionsBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                                    @PathVariable Long softwareId,
+                                                                    @RequestParam(required = false) String search,
+                                                                    @RequestParam(required = false) QnaStatus status,
+                                                                    Pageable pageable) {
+        Page<QnaListResponse> questions = qnaService.getMyQuestionsBySoftware(user, softwareId, search, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(questions));
+    }
+
     @Operation(summary = "문의 단건 조회", description = "문의 상세 + 답변 조회")
     @GetMapping("/{qnaId}")
     public ResponseEntity<ApiResponse<?>> getQuestionDetail(@PathVariable Long qnaId) {
