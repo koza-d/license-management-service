@@ -5,6 +5,7 @@ import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
 import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawEvent;
@@ -53,6 +54,7 @@ public class MemberService {
                 .build();
 
         Member save = memberRepository.save(member);
+        publisher.publishEvent(new MemberJoinEvent(save.getId(), save.toSnapshot()));
         return save.getId();
     }
 

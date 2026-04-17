@@ -93,6 +93,14 @@ public class MemberLogListener {
         persist(memberReference, memberReference, MemberLogType.WITHDRAW, payload);
     }
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleJoin(MemberJoinEvent event) {
+        Member memberReference = memberRepository.getReferenceById(event.getMemberId());
+        persist(memberReference, memberReference, MemberLogType.JOIN, event.getMemberSnapshot());
+    }
+
     private void persist(Member member, Member operator, MemberLogType type, Map<String, Object> payload) {
         try {
             String data = objectMapper.writeValueAsString(payload);

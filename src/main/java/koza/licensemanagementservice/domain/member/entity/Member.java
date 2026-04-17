@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name="members")
@@ -78,5 +79,13 @@ public class Member extends BaseEntity {
         this.email = "#탈퇴한유저";
         this.password = null;
         this.status = MemberStatus.WITHDRAW;
+    }
+
+    public Map<String, Object> toSnapshot() {
+        return Map.of(
+                "nickname", this.nickname,
+                "provider", this.provider
+        );
+
     }
 }

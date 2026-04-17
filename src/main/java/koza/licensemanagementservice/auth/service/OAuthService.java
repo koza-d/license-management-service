@@ -6,6 +6,7 @@ import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
@@ -38,13 +39,16 @@ public class OAuthService {
                     // 가입된 계정 없으면 즉시 가입
                     List<String> roles = new ArrayList<>();
                     roles.add("ROLE_USER");
-                    return memberRepository.save(Member.builder().email(userInfo.getEmail())
+                    Member saveMember = Member.builder().email(userInfo.getEmail())
                             .nickname(userInfo.getName())
                             .profileURL(userInfo.getPicture())
                             .provider(client.getProvider().getName())
                             .providerId(userInfo.getId())
                             .roles(roles)
-                            .build());
+                            .build();
+                    Member save = memberRepository.save(saveMember);
+                    publisher.publishEvent(new MemberJoinEvent(save.getId(), saveMember.toSnapshot()));
+                    return save;
                 });
 
         boolean isOAuthUser = member.getProviderId() != null
