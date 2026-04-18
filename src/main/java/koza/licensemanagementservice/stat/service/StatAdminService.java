@@ -3,11 +3,13 @@ package koza.licensemanagementservice.stat.service;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.global.validation.ValidUserAuthorized;
 import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
 import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
+import koza.licensemanagementservice.stat.dto.SoftwareRegisterTrendResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,7 @@ import static koza.licensemanagementservice.global.validation.ValidUserAuthorize
 public class StatAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
+    private final SoftwareLogRepository softwareLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
@@ -55,5 +58,23 @@ public class StatAdminService {
         validAdminAuthorized(user);
 
         return memberRepository.getMemberPlanDistribution();
+    }
+
+    public List<SoftwareRegisterTrendResponse> getSoftwareRegistrationTrends(CustomUser user, LocalDate from, LocalDate to) {
+        validAdminAuthorized(user);
+
+        List<SoftwareRegisterTrendResponse> softwareTrends = new ArrayList<>();
+        List<SoftwareRegisterTrendResponse> result = softwareLogRepository.getSoftwareRegistrationTrends(from, to);
+        Map<LocalDate, SoftwareRegisterTrendResponse> resultMap = result.stream()
+                .collect(Collectors.toMap(SoftwareRegisterTrendResponse::getDate, r -> r));
+
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            SoftwareRegisterTrendResponse response = resultMap.getOrDefault(date,
+                    new SoftwareRegisterTrendResponse(date.toString(), 0L));
+
+            softwareTrends.add(response);
+        }
+
+        return softwareTrends;
     }
 }
