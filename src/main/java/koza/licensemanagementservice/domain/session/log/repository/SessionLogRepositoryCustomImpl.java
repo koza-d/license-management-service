@@ -1,9 +1,13 @@
 package koza.licensemanagementservice.domain.session.log.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.session.log.dto.QSessionHistoryResponse;
 import koza.licensemanagementservice.domain.session.log.dto.SessionHistoryResponse;
+import koza.licensemanagementservice.stat.dto.QSoftwareUsageResponse;
+import koza.licensemanagementservice.stat.dto.SoftwareUsageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -14,7 +18,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
+import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
+import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.session.log.entity.QSessionLog.sessionLog;
+import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 
 
@@ -59,6 +66,34 @@ public class SessionLogRepositoryCustomImpl implements SessionLogRepositoryCusto
                 )
                 .fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<SoftwareUsageResponse> getTopNSoftwareByUsageTime(int n) {
+        NumberTemplate<Long> usageMinute = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(MINUTE, {0}, {1})",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt
+        );
+
+        return queryFactory
+                .select(
+                        new QSoftwareUsageResponse(
+                                software.name,
+                                member.email,
+                                member.nickname,
+                                sessionLog.count(),
+                                usageMinute.sum()
+                        )
+                )
+                .from(sessionLog)
+                .leftJoin(sessionLog.license, license)
+                .leftJoin(license.software, software)
+                .leftJoin(software.member, member)
+                .groupBy(software)
+                .orderBy(usageMinute.sum().desc())
+                .fetch();
     }
 
     private static BooleanExpression verifyAtBetween(LocalDate from, LocalDate to) {

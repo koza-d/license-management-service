@@ -55,4 +55,13 @@ public class StatAdminController {
         ApiResponse<?> response = ApiResponse.success(registrationTrends);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/software/top-usage")
+    @Operation(summary = "소프트웨어 top N 사용시간", description = "소프트웨어 하위 라이센스의 사용시간")
+    public ResponseEntity<ApiResponse<?>> getSoftwareTopNUsage(@AuthenticationPrincipal CustomUser user,
+                                                                        @RequestParam Integer topN) {
+        List<SoftwareUsageResponse> topNUsage = statAdminService.getSoftwareTopNUsage(user, topN);
+        ApiResponse<?> response = ApiResponse.success(topNUsage);
+        return ResponseEntity.ok(response);
+    }
 }

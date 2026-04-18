@@ -3,13 +3,14 @@ package koza.licensemanagementservice.stat.service;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.global.validation.ValidUserAuthorized;
 import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
 import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
 import koza.licensemanagementservice.stat.dto.SoftwareRegisterTrendResponse;
+import koza.licensemanagementservice.stat.dto.SoftwareUsageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class StatAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
     private final SoftwareLogRepository softwareLogRepository;
+    private final SessionLogRepository sessionLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
@@ -76,5 +78,11 @@ public class StatAdminService {
         }
 
         return softwareTrends;
+    }
+
+    public List<SoftwareUsageResponse> getSoftwareTopNUsage(CustomUser user, Integer topN) {
+        validAdminAuthorized(user);
+
+        return sessionLogRepository.getTopNSoftwareByUsageTime(topN);
     }
 }
