@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MemberLogRepository extends JpaRepository<MemberLog, Long> {
+public interface MemberLogRepository extends MemberLogRepositoryCustom, JpaRepository<MemberLog, Long> {
     List<MemberLog> findByMemberIdOrderByCreateAtDesc(Long memberId);
     List<MemberLog> findByMemberIdAndLogTypeOrderByCreateAtDesc(Long memberId, MemberLogType logType);
 }
