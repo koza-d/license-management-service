@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,4 +25,15 @@ public class QnaCreateRequest {
     @NotBlank(message = "내용은 필수입니다.")
     @Schema(description = "문의 내용", example = "라이센스 키 입력 시 오류가 발생합니다...")
     private String content;
+
+    @Schema(description = "문의 긴급도 (미지정 시 NORMAL)", example = "NORMAL")
+    private QnaPriority priority;
+
+    public QnaCreateRequest(Long softwareId, String title, String content) {
+        this(softwareId, title, content, null);
+    }
+
+    public QnaPriority getPriorityOrDefault() {
+        return priority != null ? priority : QnaPriority.NORMAL;
+    }
 }

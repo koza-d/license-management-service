@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
+import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaDetailResponse;
 import koza.licensemanagementservice.domain.qna.service.QnaAdminService;
@@ -51,6 +52,15 @@ public class QnaAdminController {
                                                         @PathVariable Long qnaId,
                                                         @RequestBody @Valid QnaAnswerRequest request) {
         QnaDetailResponse detail = qnaService.submitAnswer(user, qnaId, request);
+        return ResponseEntity.ok(ApiResponse.success(detail));
+    }
+
+    @Operation(summary = "긴급도 변경", description = "관리자가 문의 긴급도(URGENT/NORMAL)를 변경")
+    @PatchMapping("/{qnaId}/priority")
+    public ResponseEntity<ApiResponse<?>> changePriority(@AuthenticationPrincipal CustomUser user,
+                                                          @PathVariable Long qnaId,
+                                                          @RequestBody @Valid QnaPriorityUpdateRequest request) {
+        QnaDetailResponse detail = qnaService.changePriority(user, qnaId, request);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 }

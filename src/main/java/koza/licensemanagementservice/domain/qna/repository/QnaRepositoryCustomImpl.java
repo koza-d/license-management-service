@@ -68,6 +68,7 @@ public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
                         qna.nickname,
                         qna.title,
                         qna.status,
+                        qna.priority,
                         qna.createAt
                 ))
                 .from(qna)
@@ -92,6 +93,10 @@ public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
 
         if (condition.getStatus() != null && !condition.getStatus().isEmpty()) {
             builder.and(qna.status.in(condition.getStatus()));
+        }
+
+        if (condition.getPriority() != null && !condition.getPriority().isEmpty()) {
+            builder.and(qna.priority.in(condition.getPriority()));
         }
 
         if (condition.hasAnyFieldFilter()) {
@@ -126,6 +131,7 @@ public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
                         member.email,
                         software.name,
                         qna.status,
+                        qna.priority,
                         qna.createAt,
                         qna.answeredAt
                 ))

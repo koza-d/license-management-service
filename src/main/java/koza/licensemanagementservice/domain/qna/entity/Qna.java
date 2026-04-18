@@ -44,6 +44,11 @@ public class Qna extends BaseEntity {
     @Builder.Default
     private QnaStatus status = QnaStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", length = 20, nullable = false)
+    @Builder.Default
+    private QnaPriority priority = QnaPriority.NORMAL;
+
     @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
 
@@ -67,5 +72,9 @@ public class Qna extends BaseEntity {
 
     public void changeStatus(QnaStatus status) {
         this.status = status;
+    }
+
+    public void changePriority(QnaPriority priority) {
+        this.priority = priority;
     }
 }

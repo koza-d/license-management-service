@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.qna.dto.request;
 
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -12,6 +13,7 @@ import java.util.List;
 @Data
 public class QnaAdminSearchCondition {
     private List<QnaStatus> status;
+    private List<QnaPriority> priority;
     private String q;
     private String title;
     private String authorEmail;

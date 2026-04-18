@@ -3,6 +3,7 @@ package koza.licensemanagementservice.domain.qna.service;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaCreateRequest;
+import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaStatusUpdateRequest;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaDetailResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
@@ -74,6 +75,7 @@ public class QnaService {
                 .nickname(user.getNickname())
                 .title(request.getTitle())
                 .content(request.getContent())
+                .priority(request.getPriorityOrDefault())
                 .build();
 
         Qna saved = qnaRepository.save(question);
@@ -108,6 +110,15 @@ public class QnaService {
         validateAdmin(user);
         Qna question = findQuestion(qnaId);
         question.changeStatus(request.getStatus());
+        return QnaDetailResponse.from(question);
+    }
+
+    // 7-1. 긴급도 변경 (관리자 전용)
+    @Transactional
+    public QnaDetailResponse changePriority(CustomUser user, Long qnaId, QnaPriorityUpdateRequest request) {
+        validateAdmin(user);
+        Qna question = findQuestion(qnaId);
+        question.changePriority(request.getPriority());
         return QnaDetailResponse.from(question);
     }
 
