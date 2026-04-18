@@ -2,9 +2,11 @@ package koza.licensemanagementservice.stat.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.global.validation.ValidUserAuthorized;
+import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
 import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,13 +17,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.*;
+
 @Service
 @RequiredArgsConstructor
 public class StatAdminService {
+    private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
-        ValidUserAuthorized.validAdminAuthorized(user);
+        validAdminAuthorized(user);
 
         if (from != null && to != null && from.isAfter(to))
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
@@ -44,5 +49,11 @@ public class StatAdminService {
         }
 
         return memberFlowTrend;
+    }
+
+    public MemberPlanDistributionResponse getMemberPlanDistribution(CustomUser user) {
+        validAdminAuthorized(user);
+
+        return memberRepository.getMemberPlanDistribution();
     }
 }

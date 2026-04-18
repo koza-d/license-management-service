@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.global.common.ApiResponse;
+import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
 import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
 import koza.licensemanagementservice.stat.service.StatAdminService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,13 @@ public class StatAdminController {
                                                       @RequestParam LocalDate to) {
         List<MemberTrendResponse> memberTrend = statAdminService.getMemberTrend(user, from, to);
         ApiResponse<?> response = ApiResponse.success(memberTrend);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/members/plan-distribution")
+    @Operation(summary = "회원 플랜 분포", description = "현재 유저의 플랜 분포")
+    public ResponseEntity<ApiResponse<?>> getMemberPlanDistribution(@AuthenticationPrincipal CustomUser user) {
+        MemberPlanDistributionResponse planDistribution = statAdminService.getMemberPlanDistribution(user);
+        ApiResponse<?> response = ApiResponse.success(planDistribution);
         return ResponseEntity.ok(response);
     }
 }
