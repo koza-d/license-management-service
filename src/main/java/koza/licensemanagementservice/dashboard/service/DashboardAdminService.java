@@ -1,0 +1,57 @@
+package koza.licensemanagementservice.dashboard.service;
+
+import koza.licensemanagementservice.dashboard.dto.AdminStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
+import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
+import koza.licensemanagementservice.domain.qna.repository.QnaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class DashboardAdminService {
+    private static final int PENDING_QNA_MIN_LIMIT = 1;
+    private static final int PENDING_QNA_MAX_LIMIT = 50;
+
+    private final LicenseRepository licenseRepository;
+    private final MemberRepository memberRepository;
+    private final QnaRepository qnaRepository;
+
+    public List<PendingQnaResponse> getPendingQna(int limit) {
+        int safeLimit = Math.min(Math.max(limit, PENDING_QNA_MIN_LIMIT), PENDING_QNA_MAX_LIMIT);
+        return qnaRepository.findPendingForDashboard(safeLimit);
+    }
+
+    public AdminStatsResponse getStats() {
+        Long totalLicenses = licenseRepository.count();
+        Long activeLicenses = licenseRepository.countByStatusEquals(LicenseStatus.ACTIVE);
+        Long bannedLicenses = licenseRepository.countByStatusEquals(LicenseStatus.BANNED);
+        Long expiredLicenses = licenseRepository.countByStatusAndExpiredAtBefore(
+                LicenseStatus.ACTIVE, LocalDateTime.now());
+        Long activeSessions = licenseRepository.countByHasActiveSessionTrue();
+        Long totalMembers = memberRepository.count();
+        Long pendingQna = qnaRepository.countByStatus(QnaStatus.PENDING);
+        Long urgentPendingQna = qnaRepository.countByStatusAndPriority(
+                QnaStatus.PENDING, QnaPriority.URGENT);
+
+        return AdminStatsResponse.builder()
+                .totalLicenses(totalLicenses)
+                .activeLicenses(activeLicenses)
+                .bannedLicenses(bannedLicenses)
+                .expiredLicenses(expiredLicenses)
+                .activeSessions(activeSessions)
+                .totalMembers(totalMembers)
+                .pendingQna(pendingQna)
+                .urgentPendingQna(urgentPendingQna)
+                .build();
+    }
+}

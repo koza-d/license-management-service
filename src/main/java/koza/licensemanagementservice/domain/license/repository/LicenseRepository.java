@@ -28,5 +28,9 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     Long countBySoftware_MemberIdAndStatusAndExpiredAtBefore(Long memberId, LicenseStatus status, LocalDateTime at);
     Long countBySoftware_MemberIdAndHasActiveSessionTrue(Long memberId);
 
+    Long countByStatusEquals(LicenseStatus status);
+    Long countByStatusAndExpiredAtBefore(LicenseStatus status, LocalDateTime at);
+    Long countByHasActiveSessionTrue();
+
     boolean existsByLicenseKey(String licenseKey);
 }

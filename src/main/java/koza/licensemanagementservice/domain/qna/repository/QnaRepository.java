@@ -1,6 +1,8 @@
 package koza.licensemanagementservice.domain.qna.repository;
 
 import koza.licensemanagementservice.domain.qna.entity.Qna;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
+import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,4 +15,7 @@ public interface QnaRepository extends JpaRepository<Qna, Long>, QnaRepositoryCu
 
     @Query("SELECT q FROM Qna q JOIN FETCH q.software WHERE q.id = :id")
     Optional<Qna> findByIdWithSoftware(@Param("id") Long id);
+
+    Long countByStatus(QnaStatus status);
+    Long countByStatusAndPriority(QnaStatus status, QnaPriority priority);
 }

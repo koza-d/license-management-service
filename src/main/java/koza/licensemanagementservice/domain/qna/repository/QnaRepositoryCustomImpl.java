@@ -4,10 +4,15 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
+import koza.licensemanagementservice.dashboard.dto.QPendingQnaResponse;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -153,6 +158,31 @@ public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<PendingQnaResponse> findPendingForDashboard(int limit) {
+        // URGENT=0, NORMAL=1 → ASC 정렬 시 URGENT 먼저.
+        // 문자열 사전순에 의존하지 않아 추후 LOW/HIGH 같은 단계 추가에도 강건.
+        NumberExpression<Integer> priorityRank = new CaseBuilder()
+                .when(qna.priority.eq(QnaPriority.URGENT)).then(0)
+                .otherwise(1);
+
+        return queryFactory
+                .select(new QPendingQnaResponse(
+                        qna.id,
+                        qna.title,
+                        software.name,
+                        member.email,
+                        qna.priority,
+                        qna.createAt))
+                .from(qna)
+                .innerJoin(qna.software, software)
+                .innerJoin(qna.member, member)
+                .where(qna.status.eq(QnaStatus.PENDING))
+                .orderBy(priorityRank.asc(), qna.createAt.asc())
+                .limit(limit)
+                .fetch();
     }
 
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
