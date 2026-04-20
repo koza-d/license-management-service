@@ -1,5 +1,7 @@
 package koza.licensemanagementservice.dashboard.service;
 
+import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
+import koza.licensemanagementservice.domain.audit.repository.AdminAuditLogRepository;
 import koza.licensemanagementservice.dashboard.dto.AdminStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
@@ -21,14 +23,22 @@ import java.util.List;
 public class DashboardAdminService {
     private static final int PENDING_QNA_MIN_LIMIT = 1;
     private static final int PENDING_QNA_MAX_LIMIT = 50;
+    private static final int RECENT_AUDIT_MIN_LIMIT = 1;
+    private static final int RECENT_AUDIT_MAX_LIMIT = 50;
 
     private final LicenseRepository licenseRepository;
     private final MemberRepository memberRepository;
     private final QnaRepository qnaRepository;
+    private final AdminAuditLogRepository auditLogRepository;
 
     public List<PendingQnaResponse> getPendingQna(int limit) {
         int safeLimit = Math.min(Math.max(limit, PENDING_QNA_MIN_LIMIT), PENDING_QNA_MAX_LIMIT);
         return qnaRepository.findPendingForDashboard(safeLimit);
+    }
+
+    public List<RecentAuditResponse> getRecentAudit(int limit) {
+        int safeLimit = Math.min(Math.max(limit, RECENT_AUDIT_MIN_LIMIT), RECENT_AUDIT_MAX_LIMIT);
+        return auditLogRepository.findRecent(safeLimit);
     }
 
     public AdminStatsResponse getStats() {

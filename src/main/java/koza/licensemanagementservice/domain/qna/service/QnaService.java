@@ -10,13 +10,17 @@ import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.qna.entity.Qna;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
+import koza.licensemanagementservice.domain.qna.log.dto.QnaAnsweredEvent;
+import koza.licensemanagementservice.domain.qna.log.dto.QnaPriorityChangedEvent;
 import koza.licensemanagementservice.domain.qna.repository.QnaRepository;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,7 @@ public class QnaService {
     private final QnaRepository qnaRepository;
     private final SoftwareRepository softwareRepository;
     private final MemberRepository memberRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 1. 전체 문의 목록
     @Transactional(readOnly = true)
@@ -101,6 +106,11 @@ public class QnaService {
         validateAdmin(user);
         Qna question = findQuestion(qnaId);
         question.submitAnswer(request.getAnswer());
+        Member asker = question.getMember();
+        eventPublisher.publishEvent(new QnaAnsweredEvent(
+                user.getId(), question.getId(), question.getTitle(),
+                asker != null ? asker.getId() : null,
+                asker != null ? asker.getEmail() : null));
         return QnaDetailResponse.from(question);
     }
 
@@ -118,7 +128,13 @@ public class QnaService {
     public QnaDetailResponse changePriority(CustomUser user, Long qnaId, QnaPriorityUpdateRequest request) {
         validateAdmin(user);
         Qna question = findQuestion(qnaId);
+        QnaPriority before = question.getPriority();
         question.changePriority(request.getPriority());
+        if (before != request.getPriority()) {
+            eventPublisher.publishEvent(new QnaPriorityChangedEvent(
+                    user.getId(), question.getId(), question.getTitle(),
+                    before, request.getPriority()));
+        }
         return QnaDetailResponse.from(question);
     }
 

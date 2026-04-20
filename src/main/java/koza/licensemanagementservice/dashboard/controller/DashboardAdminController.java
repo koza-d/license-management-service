@@ -2,6 +2,7 @@ package koza.licensemanagementservice.dashboard.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
 import koza.licensemanagementservice.dashboard.dto.AdminStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardAdminService;
@@ -34,6 +35,14 @@ public class DashboardAdminController {
     public ResponseEntity<ApiResponse<?>> getPendingQna(
             @RequestParam(defaultValue = "5") int limit) {
         List<PendingQnaResponse> items = dashboardAdminService.getPendingQna(limit);
+        return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
+    @Operation(summary = "최근 감사 로그 위젯", description = "라이센스/회원/소프트웨어 전역 최근 이벤트 상위 N건")
+    @GetMapping("/recent-audit")
+    public ResponseEntity<ApiResponse<?>> getRecentAudit(
+            @RequestParam(defaultValue = "20") int limit) {
+        List<RecentAuditResponse> items = dashboardAdminService.getRecentAudit(limit);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 }

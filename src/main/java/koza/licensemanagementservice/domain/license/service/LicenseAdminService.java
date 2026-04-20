@@ -9,6 +9,7 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSum
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.license.log.dto.LicenseAdminStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
@@ -50,6 +51,7 @@ public class LicenseAdminService {
             LicenseStatus beforeStatus = target.getStatus();
             target.changeStatus(status);
             eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason()));
+            eventPublisher.publishEvent(new LicenseAdminStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason()));
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
