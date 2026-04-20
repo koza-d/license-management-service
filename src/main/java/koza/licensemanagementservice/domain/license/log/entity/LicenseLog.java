@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Entity
@@ -36,4 +37,7 @@ public class LicenseLog extends LogBaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "json", nullable = false)
     private Map<String, Object> data; // 변경된 데이터 { field: { before:data, after:data2 }, ... }
+
+    @Column(name = "operated_at", nullable = false)
+    private LocalDateTime operatedAt;
 }
