@@ -1,16 +1,14 @@
 package koza.licensemanagementservice.stat.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.license.log.repository.LicenseLogRepository;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
-import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
-import koza.licensemanagementservice.stat.dto.SoftwareRegisterTrendResponse;
-import koza.licensemanagementservice.stat.dto.SoftwareUsageResponse;
+import koza.licensemanagementservice.stat.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +27,7 @@ public class StatAdminService {
     private final MemberLogRepository memberLogRepository;
     private final SoftwareLogRepository softwareLogRepository;
     private final SessionLogRepository sessionLogRepository;
+    private final LicenseLogRepository licenseLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
@@ -84,5 +83,22 @@ public class StatAdminService {
         validAdminAuthorized(user);
 
         return sessionLogRepository.getTopNSoftwareByUsageTime(topN);
+    }
+
+    public List<LicenseStatusTrendResponse> getLicenseStatusTrends(CustomUser user, LocalDate from, LocalDate to) {
+        validAdminAuthorized(user);
+
+        List<LicenseStatusTrendResponse> licenseStatusTrends = new ArrayList<>();
+        List<LicenseStatusTrendResponse> result = licenseLogRepository.getLicenseStatusTrendsByDate(from, to);
+        Map<LocalDate, LicenseStatusTrendResponse> resultMap = result.stream()
+                .collect(Collectors.toMap(LicenseStatusTrendResponse::getDate, r -> r));
+
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            LicenseStatusTrendResponse response = resultMap.getOrDefault(date,
+                    new LicenseStatusTrendResponse(date.toString(), 0L, 0L, 0L));
+
+            licenseStatusTrends.add(response);
+        }
+        return licenseStatusTrends;
     }
 }

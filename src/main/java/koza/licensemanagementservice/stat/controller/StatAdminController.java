@@ -5,10 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
-import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
-import koza.licensemanagementservice.stat.dto.SoftwareRegisterTrendResponse;
-import koza.licensemanagementservice.stat.dto.SoftwareUsageResponse;
+import koza.licensemanagementservice.stat.dto.*;
 import koza.licensemanagementservice.stat.service.StatAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,8 +46,8 @@ public class StatAdminController {
     @GetMapping("/software/registration-trends")
     @Operation(summary = "회원 플랜 분포", description = "현재 유저의 플랜 분포")
     public ResponseEntity<ApiResponse<?>> getSoftwareRegistrationTrends(@AuthenticationPrincipal CustomUser user,
-                                                                        @RequestParam LocalDate from,
-                                                                        @RequestParam LocalDate to) {
+                                                                       @RequestParam LocalDate from,
+                                                                       @RequestParam LocalDate to) {
         List<SoftwareRegisterTrendResponse> registrationTrends = statAdminService.getSoftwareRegistrationTrends(user, from, to);
         ApiResponse<?> response = ApiResponse.success(registrationTrends);
         return ResponseEntity.ok(response);
@@ -62,6 +59,16 @@ public class StatAdminController {
                                                                         @RequestParam Integer topN) {
         List<SoftwareUsageResponse> topNUsage = statAdminService.getSoftwareTopNUsage(user, topN);
         ApiResponse<?> response = ApiResponse.success(topNUsage);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/licenses/status-trends")
+    @Operation(summary = "라이센스 날짜별 상태 통계", description = "라이센스 발급, 만료, 정지 날짜별 통계")
+    public ResponseEntity<ApiResponse<?>> getLicenseStatusTrends(@AuthenticationPrincipal CustomUser user,
+                                                                 @RequestParam LocalDate from,
+                                                                 @RequestParam LocalDate to) {
+        List<LicenseStatusTrendResponse> licenseStatusTrendResponses = statAdminService.getLicenseStatusTrends(user, from, to);
+        ApiResponse<?> response = ApiResponse.success(licenseStatusTrendResponses);
         return ResponseEntity.ok(response);
     }
 }

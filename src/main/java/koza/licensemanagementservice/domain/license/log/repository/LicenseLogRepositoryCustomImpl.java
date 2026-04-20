@@ -1,10 +1,16 @@
 package koza.licensemanagementservice.domain.license.log.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.BooleanTemplate;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.QLicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLogType;
+import koza.licensemanagementservice.stat.dto.LicenseStatusTrendResponse;
+import koza.licensemanagementservice.stat.dto.QLicenseStatusTrendResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -53,6 +59,36 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
                 ).fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<LicenseStatusTrendResponse> getLicenseStatusTrendsByDate(LocalDate from, LocalDate to) {
+        StringTemplate formattedDate = Expressions.stringTemplate(
+                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                licenseLog.operatedAt);
+
+        StringTemplate afterStatus = Expressions.stringTemplate("JSON_UNQUOTE(JSON_EXTRACT(data, '$.status.after'))");
+        return queryFactory
+                .select(
+                        new QLicenseStatusTrendResponse(
+                                formattedDate,
+                                licenseLog.logType.when(LicenseLogType.ISSUED).then(1L).otherwise(Expressions.nullExpression()).count(),
+                                licenseLog.logType.when(LicenseLogType.EXPIRED).then(1L).otherwise(Expressions.nullExpression()).count(),
+                                licenseLog.logType.when(LicenseLogType.CHANGED_STATUS).then(1L).otherwise(Expressions.nullExpression()).count()
+                        )
+                )
+                .from(licenseLog)
+                .where(
+                        createAtBetween(from, to),
+                        licenseLog.logType.in(LicenseLogType.ISSUED, LicenseLogType.EXPIRED)
+                                .or(
+                                        licenseLog.logType.eq(LicenseLogType.CHANGED_STATUS)
+                                                .and(afterStatus.eq(LicenseStatus.BANNED.name()))
+                                )
+                )
+                .groupBy(formattedDate)
+                .orderBy(formattedDate.asc())
+                .fetch();
     }
 
     private BooleanExpression typeFilter(LicenseLogType type) {
