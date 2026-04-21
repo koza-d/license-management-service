@@ -5,6 +5,7 @@ import koza.licensemanagementservice.domain.license.log.repository.LicenseLogRep
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
+import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository.SessionPeakInterface;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -14,11 +15,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.*;
 
@@ -143,5 +146,37 @@ public class StatAdminService {
             if (trend.getFailRate() > threshold)
                 trend.setIsSpike(true);
         }
+    }
+
+    public List<SessionPeakResponse> getSessionPeakByDays(CustomUser user, LocalDate from, LocalDate to) {
+        validAdminAuthorized(user);
+        List<SessionPeakInterface> result = sessionLogRepository.findPeakByDays(from.atStartOfDay(), to.atTime(LocalTime.MAX));
+        Map<Integer, SessionPeakInterface> resultMap = result.stream()
+                .collect(Collectors.toMap(SessionPeakInterface::getUnit, i -> i));
+
+        return fillGapsBySessionPeak(7, resultMap);
+    }
+
+    public List<SessionPeakResponse> getSessionPeakByHours(CustomUser user, LocalDate from, LocalDate to) {
+        validAdminAuthorized(user);
+
+        List<SessionPeakInterface> result = sessionLogRepository.findPeakByHours(from.atStartOfDay(), to.atTime(LocalTime.MAX));
+        Map<Integer, SessionPeakInterface> resultMap = result.stream()
+                .collect(Collectors.toMap(SessionPeakInterface::getUnit, i -> i));
+
+        return fillGapsBySessionPeak(24, resultMap);
+    }
+
+    private static List<SessionPeakResponse> fillGapsBySessionPeak(int endExclusive, Map<Integer, SessionPeakInterface> resultMap) {
+        return IntStream.range(0, endExclusive)
+                .mapToObj(unit -> {
+                    if (resultMap.containsKey(unit)) {
+                        SessionPeakInterface dbData = resultMap.get(unit);
+                        return new SessionPeakResponse(dbData.getUnit(), dbData.getAvg(), dbData.getMax());
+                    } else {
+                        return new SessionPeakResponse(unit, 0.0, 0);
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }

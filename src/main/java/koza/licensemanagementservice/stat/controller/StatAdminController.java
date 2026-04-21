@@ -4,6 +4,7 @@ package koza.licensemanagementservice.stat.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository.SessionPeakInterface;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.stat.dto.*;
 import koza.licensemanagementservice.stat.service.StatAdminService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -80,6 +82,19 @@ public class StatAdminController {
         List<VerificationAttemptTrend> verificationTrends = statAdminService.getVerificationMetrics(user, from, to);
         ApiResponse<?> response = ApiResponse.success(verificationTrends);
         return ResponseEntity.ok(response);
+    }
 
+    @GetMapping("/sessions/usage-pattern")
+    @Operation(summary = "세션 피크 타임", description = "시간별, 요일별 세션 피크 패턴 조회")
+    public ResponseEntity<ApiResponse<?>> getSessionUsagePattern(@AuthenticationPrincipal CustomUser user,
+                                                                 @RequestParam LocalDate from,
+                                                                 @RequestParam LocalDate to) {
+        List<SessionPeakResponse> sessionPeakByDays = statAdminService.getSessionPeakByDays(user, from, to);
+        List<SessionPeakResponse> sessionPeakByHours = statAdminService.getSessionPeakByHours(user, from, to);
+        ApiResponse<?> response = ApiResponse.success(Map.of(
+                "byDays", sessionPeakByDays,
+                "byHours", sessionPeakByHours
+        ));
+        return ResponseEntity.ok(response);
     }
 }
