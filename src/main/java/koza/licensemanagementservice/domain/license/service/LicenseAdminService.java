@@ -50,7 +50,7 @@ public class LicenseAdminService {
             LicenseStatus status = LicenseStatus.valueOf(request.getStatus());
             LicenseStatus beforeStatus = target.getStatus();
             target.changeStatus(status);
-            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason()));
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason(), LocalDateTime.now()));
             eventPublisher.publishEvent(new LicenseAdminStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason()));
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);

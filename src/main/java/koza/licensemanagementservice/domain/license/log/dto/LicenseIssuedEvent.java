@@ -3,6 +3,7 @@ package koza.licensemanagementservice.domain.license.log.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
@@ -11,4 +12,5 @@ public class LicenseIssuedEvent {
     private Long licenseId;
     private Long operatorId;
     private Map<String, Object> snapshot;
+    private LocalDateTime operatedAt;
 }

@@ -66,7 +66,7 @@ public class LicenseService {
                 .build();
 
         License save = licenseRepository.saveAndFlush(license);
-        eventPublisher.publishEvent(new LicenseIssuedEvent(save.getId(), user.getId(), save.toSnapshot()));
+        eventPublisher.publishEvent(new LicenseIssuedEvent(save.getId(), user.getId(), save.toSnapshot(), LocalDateTime.now()));
         return LicenseIssueResponse.from(save);
     }
 
@@ -178,7 +178,7 @@ public class LicenseService {
         license.updateMemo(request.getMemo());
         license.updateLocalVariables(request.getLocalVariables());
         Map<String, Object> after = license.toSnapshot();
-        eventPublisher.publishEvent(new LicenseModifiedEvent(licenseId, user.getId(), before, after));
+        eventPublisher.publishEvent(new LicenseModifiedEvent(licenseId, user.getId(), before, after, LocalDateTime.now()));
     }
 
     @Transactional
@@ -191,7 +191,7 @@ public class LicenseService {
             LicenseStatus beforeStatus = license.getStatus();
             String reason = request.getReason();
             license.changeStatus(status);
-            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, reason));
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, reason, LocalDateTime.now()));
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
