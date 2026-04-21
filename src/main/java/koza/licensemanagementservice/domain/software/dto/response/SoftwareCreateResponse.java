@@ -12,7 +12,7 @@ public class SoftwareCreateResponse {
     private Long id;
     private String name;
     private String latestVersion;
-    private String apiKey;
+    private String appId;
     private int limitLicense;
     private Map<String, Object> globalVariables;
     private Map<String, Object> localVariables;
@@ -22,7 +22,7 @@ public class SoftwareCreateResponse {
                 .id(software.getId())
                 .name(software.getName())
                 .latestVersion(latestVersion)
-                .apiKey(software.getApiKey())
+                .appId(software.getAppId())
                 .limitLicense(software.getLimitLicense())
                 .globalVariables(software.getGlobalVariables())
                 .localVariables(software.getLocalVariables())

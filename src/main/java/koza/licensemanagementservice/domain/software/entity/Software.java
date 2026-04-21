@@ -36,9 +36,6 @@ public class Software extends BaseEntity {
     @Column(name = "name", length = 30, nullable = false)
     private String name;
 
-    @Column(name = "api_key", length = 128, nullable = false)
-    private String apiKey;
-
     @Column(name = "app_id", length = 10, nullable = false)
     private String appId;
 
@@ -95,7 +92,6 @@ public class Software extends BaseEntity {
                 "memberId", member.getId(),
                 "versions", versions.stream().map(SoftwareVersion::getId).toList(),
                 "name", name,
-                "apiKey", apiKey,
                 "appId", appId,
                 "globalVariables", globalVariables,
                 "localVariables", localVariables,

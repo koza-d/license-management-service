@@ -42,7 +42,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
                                 member.nickname,
                                 software.name,
                                 softwareVersion.version,
-                                software.apiKey,
+                                software.appId,
                                 licenseCount(),
                                 software.limitLicense,
                                 software.globalVariables,

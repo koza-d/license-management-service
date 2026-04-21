@@ -43,14 +43,12 @@ public class SoftwareService {
     public SoftwareCreateResponse createSoftware(CustomUser user, SoftwareCreateRequest createRequest) {
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        String apiKey = SoftwareKeyGenerator.generateApiKey();
         String appId = SoftwareKeyGenerator.generateAppId();
         int limitLicense = 100; // 임시 값, 추후 수정
 
         Software software = Software.builder()
                 .name(createRequest.getName())
                 .member(member)
-                .apiKey(apiKey)
                 .appId(appId)
                 .globalVariables(createRequest.getGlobalVariables())
                 .localVariables(createRequest.getLocalVariables())

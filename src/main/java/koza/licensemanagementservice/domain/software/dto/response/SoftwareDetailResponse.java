@@ -15,7 +15,7 @@ public class SoftwareDetailResponse {
     private Long id;
     private String name;
     private String latestVersion;
-    private String apiKey;
+    private String appId;
     private int licenseCount;
     private int limitLicense;
     private int remainLicense;
@@ -32,7 +32,7 @@ public class SoftwareDetailResponse {
                 .id(software.getId())
                 .name(software.getName())
                 .latestVersion(latestVersion.isEmpty() ? "최신버전 찾을 수 없음" : latestVersion.get().getVersion())
-                .apiKey(software.getApiKey())
+                .appId(software.getAppId())
                 .licenseCount(licenseCount)
                 .limitLicense(software.getLimitLicense())
                 .remainLicense(software.getLimitLicense() - licenseCount)

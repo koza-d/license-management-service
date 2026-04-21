@@ -18,7 +18,7 @@ public class SoftwareAdminDetailResponse {
     private String ownerNickname;
     private String softwareName;
     private String latestVersion;
-    private String apiKey;
+    private String appId;
     private int licenseCount; // 보유 라이센스 수
     private int limitLicense; // 보유 제한 라이센스 수
     private Map<String, Object> globalVariables;
@@ -26,13 +26,13 @@ public class SoftwareAdminDetailResponse {
     private LocalDateTime createAt;
 
     @QueryProjection
-    public SoftwareAdminDetailResponse(Long id, String ownerEmail, String ownerNickname, String softwareName, String latestVersion, String apiKey, int licenseCount, int limitLicense, Map<String, Object> globalVariables, Map<String, Object> localVariables, LocalDateTime createAt) {
+    public SoftwareAdminDetailResponse(Long id, String ownerEmail, String ownerNickname, String softwareName, String latestVersion, String appId, int licenseCount, int limitLicense, Map<String, Object> globalVariables, Map<String, Object> localVariables, LocalDateTime createAt) {
         this.id = id;
         this.ownerEmail = ownerEmail;
         this.ownerNickname = ownerNickname;
         this.softwareName = softwareName;
         this.latestVersion = latestVersion;
-        this.apiKey = apiKey;
+        this.appId = appId;
         this.licenseCount = licenseCount;
         this.limitLicense = limitLicense;
         this.globalVariables = globalVariables;
