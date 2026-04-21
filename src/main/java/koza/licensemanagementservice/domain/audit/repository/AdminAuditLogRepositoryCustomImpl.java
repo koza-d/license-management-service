@@ -6,8 +6,8 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.audit.dto.request.AuditSearchCondition;
 import koza.licensemanagementservice.domain.audit.dto.response.AuditLogResponse;
-import koza.licensemanagementservice.audit.dto.response.QAuditLogResponse;
-import koza.licensemanagementservice.audit.dto.response.QRecentAuditResponse;
+import koza.licensemanagementservice.domain.audit.dto.response.QAuditLogResponse;
+import koza.licensemanagementservice.domain.audit.dto.response.QRecentAuditResponse;
 import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,7 +16,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
-import static koza.licensemanagementservice.audit.entity.QAdminAuditLog.adminAuditLog;
+import static koza.licensemanagementservice.domain.audit.entity.QAdminAuditLog.adminAuditLog;
 
 @RequiredArgsConstructor
 public class AdminAuditLogRepositoryCustomImpl implements AdminAuditLogRepositoryCustom {
