@@ -68,15 +68,15 @@ public class OAuthService {
             throw new BusinessException(ErrorCode.OAUTH_NOT_REGISTERED, new InvalidLoginProvider(provider));
         }
 
-        if (member.getStatus() == MemberStatus.SUSPENDED) {
+        if (member.getStatus() == MemberStatus.BANNED) {
             publisher.publishEvent(MemberLoginFailEvent.builder()
                     .memberId(member.getId())
                     .joinType(joinType)
                     .ipAddress(ip)
                     .userAgent(userAgent)
-                    .failReason("ACCOUNT_SUSPENDED")
+                    .failReason("ACCOUNT_BANNED")
                     .build());
-            throw new BusinessException(ErrorCode.MEMBER_SUSPENDED);
+            throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
         if (member.getProfileURL() == null || member.getProfileURL().isEmpty())

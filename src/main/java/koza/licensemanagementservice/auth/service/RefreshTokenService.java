@@ -25,9 +25,9 @@ public class RefreshTokenService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
-        if (member.getStatus() == MemberStatus.SUSPENDED) {
+        if (member.getStatus() == MemberStatus.BANNED) {
             refreshTokenRepository.delete(refreshToken);
-            throw new BusinessException(ErrorCode.MEMBER_SUSPENDED);
+            throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
         refreshTokenRepository.delete(refreshToken);

@@ -24,7 +24,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,15 +73,15 @@ public class MemberService {
             throw new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD);
         }
 
-        if (member.getStatus() == MemberStatus.SUSPENDED) {
+        if (member.getStatus() == MemberStatus.BANNED) {
             publisher.publishEvent(MemberLoginFailEvent.builder()
                     .memberId(member.getId())
                     .joinType(JoinType.LOCAL)
                     .ipAddress(ip)
                     .userAgent(userAgent)
-                    .failReason("ACCOUNT_SUSPENDED")
+                    .failReason("ACCOUNT_BANNED")
                     .build());
-            throw new BusinessException(ErrorCode.MEMBER_SUSPENDED);
+            throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
         publisher.publishEvent(MemberLoginSuccessEvent.builder()

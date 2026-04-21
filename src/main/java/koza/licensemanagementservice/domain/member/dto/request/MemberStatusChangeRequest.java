@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MemberStatusChangeRequest {
     @NotNull(message = "변경할 상태는 필수입니다.")
-    private MemberStatus action;
+    private MemberStatus status;
 
     private String reason;
 }

@@ -61,18 +61,18 @@ public class MemberAdminService {
         Member manager = memberRepository.findById(admin.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if (member.getStatus() == request.getAction()) {
+        if (member.getStatus() == request.getStatus()) {
             throw new BusinessException(ErrorCode.MEMBER_STATUS_SAME);
         }
 
         MemberStatus before = member.getStatus();
-        member.changeStatus(request.getAction());
+        member.changeStatus(request.getStatus());
 
         publisher.publishEvent(MemberStatusChangedEvent.builder()
                 .target(member)
                 .operator(manager)
                 .before(before)
-                .after(request.getAction())
+                .after(request.getStatus())
                 .reason(request.getReason())
                 .build());
     }

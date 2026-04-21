@@ -24,7 +24,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(404, "MEMBER_003", "회원을 찾을 수 없습니다."),
     MEMBER_STATUS_SAME(400, "MEMBER_004", "현재 상태와 동일한 상태로 변경할 수 없습니다."),
     MEMBER_GRADE_SAME(400, "MEMBER_005", "현재 등급과 동일한 등급으로 변경할 수 없습니다."),
-    MEMBER_SUSPENDED(403, "MEMBER_006", "정지된 계정입니다. 관리자에게 문의하세요."),
+    MEMBER_BANNED(403, "MEMBER_006", "정지된 계정입니다. 관리자에게 문의하세요."),
 
     // 소프트웨어 관련 예외
     SOFTWARE_NOT_FOUND(404, "SOFTWARE_001", "소프트웨어를 찾을 수 없습니다."),
