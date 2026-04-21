@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/oauth/**").permitAll()
                         .requestMatchers("/swagger-ui/*", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/verification/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/qna/my", "/api/qna/my/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/qna").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/qna/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/software/*/faqs").permitAll()

@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.qna.dto.response;
 
-import koza.licensemanagementservice.domain.qna.entity.QnaQuestion;
+import koza.licensemanagementservice.domain.qna.entity.Qna;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,15 +18,17 @@ public class QnaListResponse {
     private String nickname;
     private String title;
     private QnaStatus status;
+    private QnaPriority priority;
     private LocalDateTime createAt;
 
-    public static QnaListResponse from(QnaQuestion question) {
+    public static QnaListResponse from(Qna question) {
         return QnaListResponse.builder()
                 .qnaId(question.getId())
                 .softwareName(question.getSoftware().getName())
                 .nickname(question.getNickname())
                 .title(question.getTitle())
                 .status(question.getStatus())
+                .priority(question.getPriority())
                 .createAt(question.getCreateAt())
                 .build();
     }

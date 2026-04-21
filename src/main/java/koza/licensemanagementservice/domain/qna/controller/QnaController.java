@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaCreateRequest;
+import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaStatusUpdateRequest;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaDetailResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
@@ -43,6 +44,27 @@ public class QnaController {
                                                                   @RequestParam(required = false) QnaStatus status,
                                                                   Pageable pageable) {
         Page<QnaListResponse> questions = qnaService.getQuestionsBySoftware(softwareId, search, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(questions));
+    }
+
+    @Operation(summary = "본인 문의 목록", description = "로그인한 사용자가 작성한 문의 목록 조회")
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<?>> getMyQuestions(@AuthenticationPrincipal CustomUser user,
+                                                          @RequestParam(required = false) String search,
+                                                          @RequestParam(required = false) QnaStatus status,
+                                                          Pageable pageable) {
+        Page<QnaListResponse> questions = qnaService.getMyQuestions(user, search, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(questions));
+    }
+
+    @Operation(summary = "본인 문의 목록 (소프트웨어별)", description = "로그인한 사용자가 특정 소프트웨어에 작성한 문의 목록 조회")
+    @GetMapping("/my/software/{softwareId}")
+    public ResponseEntity<ApiResponse<?>> getMyQuestionsBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                                    @PathVariable Long softwareId,
+                                                                    @RequestParam(required = false) String search,
+                                                                    @RequestParam(required = false) QnaStatus status,
+                                                                    Pageable pageable) {
+        Page<QnaListResponse> questions = qnaService.getMyQuestionsBySoftware(user, softwareId, search, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(questions));
     }
 
@@ -85,6 +107,15 @@ public class QnaController {
                                                         @PathVariable Long qnaId,
                                                         @RequestBody @Valid QnaStatusUpdateRequest request) {
         QnaDetailResponse detail = qnaService.changeStatus(user, qnaId, request);
+        return ResponseEntity.ok(ApiResponse.success(detail));
+    }
+
+    @Operation(summary = "긴급도 변경", description = "관리자가 문의 긴급도(URGENT/NORMAL)를 변경")
+    @PatchMapping("/{qnaId}/priority")
+    public ResponseEntity<ApiResponse<?>> changePriority(@AuthenticationPrincipal CustomUser user,
+                                                          @PathVariable Long qnaId,
+                                                          @RequestBody @Valid QnaPriorityUpdateRequest request) {
+        QnaDetailResponse detail = qnaService.changePriority(user, qnaId, request);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 

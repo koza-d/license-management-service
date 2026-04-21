@@ -1,7 +1,6 @@
 package koza.licensemanagementservice.domain.qna.entity;
 
 import jakarta.persistence.*;
-import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.global.common.BaseEntity;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Getter
-public class QnaQuestion extends BaseEntity {
+public class Qna extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -45,6 +44,11 @@ public class QnaQuestion extends BaseEntity {
     @Builder.Default
     private QnaStatus status = QnaStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", length = 20, nullable = false)
+    @Builder.Default
+    private QnaPriority priority = QnaPriority.NORMAL;
+
     @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
 
@@ -68,5 +72,9 @@ public class QnaQuestion extends BaseEntity {
 
     public void changeStatus(QnaStatus status) {
         this.status = status;
+    }
+
+    public void changePriority(QnaPriority priority) {
+        this.priority = priority;
     }
 }

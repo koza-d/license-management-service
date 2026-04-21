@@ -4,10 +4,15 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
+import koza.licensemanagementservice.dashboard.dto.QPendingQnaResponse;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaListResponse;
+import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,59 +24,68 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
-import static koza.licensemanagementservice.domain.qna.entity.QQnaQuestion.qnaQuestion;
+import static koza.licensemanagementservice.domain.qna.entity.QQna.qna;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
 
 @RequiredArgsConstructor
-public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCustom {
+public class QnaRepositoryCustomImpl implements QnaRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
     public Page<QnaListResponse> findAllQuestions(String search, QnaStatus status, Pageable pageable) {
-        return findQuestions(null, search, status, pageable);
+        return findQuestions(null, null, search, status, pageable);
     }
 
     @Override
     public Page<QnaListResponse> findBySoftwareId(Long softwareId, String search, QnaStatus status, Pageable pageable) {
-        return findQuestions(softwareId, search, status, pageable);
+        return findQuestions(null, softwareId, search, status, pageable);
     }
 
-    private Page<QnaListResponse> findQuestions(Long softwareId, String search, QnaStatus status, Pageable pageable) {
+    @Override
+    public Page<QnaListResponse> findMyQuestions(Long memberId, Long softwareId, String search, QnaStatus status, Pageable pageable) {
+        return findQuestions(memberId, softwareId, search, status, pageable);
+    }
+
+    private Page<QnaListResponse> findQuestions(Long memberId, Long softwareId, String search, QnaStatus status, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
 
+        if (memberId != null) {
+            builder.and(qna.member.id.eq(memberId));
+        }
         if (softwareId != null) {
-            builder.and(qnaQuestion.software.id.eq(softwareId));
+            builder.and(qna.software.id.eq(softwareId));
         }
         if (status != null) {
-            builder.and(qnaQuestion.status.eq(status));
+            builder.and(qna.status.eq(status));
         }
         if (search != null && !search.isBlank()) {
             builder.and(
-                    qnaQuestion.software.name.containsIgnoreCase(search)
-                            .or(qnaQuestion.title.containsIgnoreCase(search))
-                            .or(qnaQuestion.content.containsIgnoreCase(search))
+                    qna.software.name.containsIgnoreCase(search)
+                            .or(qna.title.containsIgnoreCase(search))
+                            .or(qna.content.containsIgnoreCase(search))
             );
         }
 
         List<QnaListResponse> content = queryFactory
                 .select(Projections.constructor(QnaListResponse.class,
-                        qnaQuestion.id,
-                        qnaQuestion.software.name,
-                        qnaQuestion.nickname,
-                        qnaQuestion.title,
-                        qnaQuestion.status,
-                        qnaQuestion.createAt
+                        qna.id,
+                        qna.software.name,
+                        qna.nickname,
+                        qna.title,
+                        qna.status,
+                        qna.priority,
+                        qna.createAt
                 ))
-                .from(qnaQuestion)
+                .from(qna)
                 .where(builder)
-                .orderBy(qnaQuestion.createAt.desc())
+                .orderBy(toOrderSpecifiers(pageable.getSort()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         Long total = queryFactory
-                .select(qnaQuestion.count())
-                .from(qnaQuestion)
+                .select(qna.count())
+                .from(qna)
                 .where(builder)
                 .fetchOne();
 
@@ -83,12 +97,16 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
         BooleanBuilder builder = new BooleanBuilder();
 
         if (condition.getStatus() != null && !condition.getStatus().isEmpty()) {
-            builder.and(qnaQuestion.status.in(condition.getStatus()));
+            builder.and(qna.status.in(condition.getStatus()));
+        }
+
+        if (condition.getPriority() != null && !condition.getPriority().isEmpty()) {
+            builder.and(qna.priority.in(condition.getPriority()));
         }
 
         if (condition.hasAnyFieldFilter()) {
             if (condition.getTitle() != null)
-                builder.and(qnaQuestion.title.containsIgnoreCase(condition.getTitle()));
+                builder.and(qna.title.containsIgnoreCase(condition.getTitle()));
             if (condition.getAuthorEmail() != null)
                 builder.and(member.email.containsIgnoreCase(condition.getAuthorEmail()));
             if (condition.getSoftwareName() != null)
@@ -96,34 +114,35 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
         } else if (condition.hasFullTextFilter()) {
             String q = condition.getQ();
             builder.and(
-                    qnaQuestion.title.containsIgnoreCase(q)
+                    qna.title.containsIgnoreCase(q)
                             .or(member.email.containsIgnoreCase(q))
                             .or(software.name.containsIgnoreCase(q))
             );
         }
 
         if (condition.getCreatedAfter() != null)
-            builder.and(qnaQuestion.createAt.goe(condition.getCreatedAfter()));
+            builder.and(qna.createAt.goe(condition.getCreatedAfter()));
         if (condition.getCreatedBefore() != null)
-            builder.and(qnaQuestion.createAt.loe(condition.getCreatedBefore()));
+            builder.and(qna.createAt.loe(condition.getCreatedBefore()));
         if (condition.getAnsweredAfter() != null)
-            builder.and(qnaQuestion.answeredAt.goe(condition.getAnsweredAfter()));
+            builder.and(qna.answeredAt.goe(condition.getAnsweredAfter()));
         if (condition.getAnsweredBefore() != null)
-            builder.and(qnaQuestion.answeredAt.loe(condition.getAnsweredBefore()));
+            builder.and(qna.answeredAt.loe(condition.getAnsweredBefore()));
 
         List<QnaAdminListResponse> content = queryFactory
                 .select(Projections.constructor(QnaAdminListResponse.class,
-                        qnaQuestion.id,
-                        qnaQuestion.title,
+                        qna.id,
+                        qna.title,
                         member.email,
                         software.name,
-                        qnaQuestion.status,
-                        qnaQuestion.createAt,
-                        qnaQuestion.answeredAt
+                        qna.status,
+                        qna.priority,
+                        qna.createAt,
+                        qna.answeredAt
                 ))
-                .from(qnaQuestion)
-                .leftJoin(qnaQuestion.software, software)
-                .leftJoin(qnaQuestion.member, member)
+                .from(qna)
+                .leftJoin(qna.software, software)
+                .leftJoin(qna.member, member)
                 .where(builder)
                 .orderBy(toOrderSpecifiers(pageable.getSort()))
                 .offset(pageable.getOffset())
@@ -131,14 +150,39 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
                 .fetch();
 
         Long total = queryFactory
-                .select(qnaQuestion.count())
-                .from(qnaQuestion)
-                .leftJoin(qnaQuestion.software, software)
-                .leftJoin(qnaQuestion.member, member)
+                .select(qna.count())
+                .from(qna)
+                .leftJoin(qna.software, software)
+                .leftJoin(qna.member, member)
                 .where(builder)
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<PendingQnaResponse> findPendingForDashboard(int limit) {
+        // URGENT=0, NORMAL=1 → ASC 정렬 시 URGENT 먼저.
+        // 문자열 사전순에 의존하지 않아 추후 LOW/HIGH 같은 단계 추가에도 강건.
+        NumberExpression<Integer> priorityRank = new CaseBuilder()
+                .when(qna.priority.eq(QnaPriority.URGENT)).then(0)
+                .otherwise(1);
+
+        return queryFactory
+                .select(new QPendingQnaResponse(
+                        qna.id,
+                        qna.title,
+                        software.name,
+                        member.email,
+                        qna.priority,
+                        qna.createAt))
+                .from(qna)
+                .innerJoin(qna.software, software)
+                .innerJoin(qna.member, member)
+                .where(qna.status.eq(QnaStatus.PENDING))
+                .orderBy(priorityRank.asc(), qna.createAt.asc())
+                .limit(limit)
+                .fetch();
     }
 
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
@@ -149,15 +193,15 @@ public class QnaQuestionRepositoryCustomImpl implements QnaQuestionRepositoryCus
                 Order direction = order.isAscending() ? Order.ASC : Order.DESC;
                 String prop = order.getProperty();
                 if ("createdAt".equals(prop) || "createAt".equals(prop)) {
-                    orders.add(new OrderSpecifier<>(direction, qnaQuestion.createAt));
+                    orders.add(new OrderSpecifier<>(direction, qna.createAt));
                 } else if ("answeredAt".equals(prop)) {
-                    orders.add(new OrderSpecifier<>(direction, qnaQuestion.answeredAt).nullsLast());
+                    orders.add(new OrderSpecifier<>(direction, qna.answeredAt).nullsLast());
                 }
             }
         }
 
         if (orders.isEmpty()) {
-            orders.add(new OrderSpecifier<>(Order.DESC, qnaQuestion.createAt));
+            orders.add(new OrderSpecifier<>(Order.DESC, qna.createAt));
         }
         return orders.toArray(OrderSpecifier[]::new);
     }

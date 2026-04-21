@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.session.service;
 
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
@@ -9,11 +10,14 @@ import koza.licensemanagementservice.domain.session.dto.request.SessionTerminati
 import koza.licensemanagementservice.domain.session.dto.response.SessionAdminDetailResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionAdminListResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionBulkTerminationResponse;
+import koza.licensemanagementservice.domain.session.log.dto.SessionBulkTerminatedEvent;
+import koza.licensemanagementservice.domain.session.log.dto.SessionTerminatedEvent;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,6 +37,7 @@ import java.util.Optional;
 public class SessionAdminService {
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<SessionAdminListResponse> getSessions(SessionSearchCondition condition, Pageable pageable) {
@@ -64,7 +70,7 @@ public class SessionAdminService {
     }
 
     @Transactional
-    public void terminate(String sessionId, SessionTerminateRequest request) {
+    public void terminate(CustomUser user, String sessionId, SessionTerminateRequest request) {
         SessionValue session = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
 
@@ -75,13 +81,16 @@ public class SessionAdminService {
             throw new BusinessException(ErrorCode.SESSION_ALREADY_TERMINATED);
         }
 
-        terminateInternal(session.getSessionId(), license, request != null ? request.getReason() : null);
+        String reason = request != null ? request.getReason() : null;
+        terminateInternal(session.getSessionId(), license, reason);
+        eventPublisher.publishEvent(new SessionTerminatedEvent(user.getId(), session.getSessionId(), license.getId(), reason));
     }
 
     @Transactional
-    public SessionBulkTerminationResponse terminateBulk(SessionTerminationsBulkRequest request) {
+    public SessionBulkTerminationResponse terminateBulk(CustomUser user, SessionTerminationsBulkRequest request) {
         int terminated = 0;
         int failed = 0;
+        List<String> terminatedIds = new ArrayList<>();
 
         for (String sessionId : request.getIds()) {
             try {
@@ -97,11 +106,13 @@ public class SessionAdminService {
                 }
                 terminateInternal(sessionId, optLicense.get(), request.getReason());
                 terminated++;
+                terminatedIds.add(sessionId);
             } catch (Exception e) {
                 log.warn("세션 일괄 종료 실패: sessionId={}, cause={}", sessionId, e.getMessage());
                 failed++;
             }
         }
+        eventPublisher.publishEvent(new SessionBulkTerminatedEvent(user.getId(), terminatedIds, terminated, failed, request.getReason()));
         return SessionBulkTerminationResponse.builder()
                 .terminated(terminated)
                 .failed(failed)
