@@ -39,6 +39,9 @@ public class Software extends BaseEntity {
     @Column(name = "api_key", length = 128, nullable = false)
     private String apiKey;
 
+    @Column(name = "app_id", length = 10, nullable = false)
+    private String appId;
+
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "global_variables", columnDefinition = "json", nullable = false)
@@ -93,6 +96,7 @@ public class Software extends BaseEntity {
                 "versions", versions.stream().map(SoftwareVersion::getId).toList(),
                 "name", name,
                 "apiKey", apiKey,
+                "appId", appId,
                 "globalVariables", globalVariables,
                 "localVariables", localVariables,
                 "limitLicense", limitLicense

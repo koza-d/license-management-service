@@ -8,4 +8,5 @@ import lombok.Getter;
 public class VerifyRequest {
     private String publicKey;
     private String licenseKey;
+    private String appId;
 }

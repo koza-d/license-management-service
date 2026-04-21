@@ -72,6 +72,18 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     @Override
+    public List<License> findByExpiredWithoutLog(LocalDateTime now) {
+        return queryFactory
+                .selectFrom(license)
+                .where(
+                        license.expiredAt.before(now),
+                        license.expiredLoggedAt.isNull()
+                                .or(license.expiredAt.eq(license.expiredLoggedAt).not())
+                )
+                .fetch();
+    }
+
+    @Override
     public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
         List<License> content = queryFactory
                 .selectFrom(license)

@@ -1,10 +1,14 @@
 package koza.licensemanagementservice.domain.software.log.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.software.log.dto.QSoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLogType;
+import koza.licensemanagementservice.stat.dto.QSoftwareRegisterTrendResponse;
+import koza.licensemanagementservice.stat.dto.SoftwareRegisterTrendResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -60,6 +64,28 @@ public class SoftwareLogRepositoryCustomImpl implements SoftwareLogRepositoryCus
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<SoftwareRegisterTrendResponse> getSoftwareRegistrationTrends(LocalDate from, LocalDate to) {
+        StringTemplate formattedDate = Expressions.stringTemplate(
+                "DATE_FORMAT({0}, '%Y-%m-%d')",
+                softwareLog.createAt);
+
+        return queryFactory
+                .select(
+                        new QSoftwareRegisterTrendResponse(
+                                formattedDate,
+                                softwareLog.logType.when(SoftwareLogType.REGISTER).then(1L).otherwise(Expressions.nullExpression()).count()
+                        )
+                )
+                .from(softwareLog)
+                .where(
+                        createAtBetween(from, to)
+                )
+                .groupBy(formattedDate)
+                .orderBy(formattedDate.asc())
+                .fetch();
     }
 
 

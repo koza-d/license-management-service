@@ -10,6 +10,8 @@ public enum MemberLogType {
     GRADE_CHANGE("등급 변경"),
     LOGIN_SUCCESS("로그인 성공"),
     LOGIN_FAIL("로그인 실패"),
+    WITHDRAW("회원탈퇴"),
+    JOIN("회원가입")
     ;
     private final String desc;
 }

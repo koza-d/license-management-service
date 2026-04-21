@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends MemberRepositoryCustom, JpaRepository<Member, Long> {
     Optional<Member> findByEmail(String email);
 
     @Query("select m from Member m " +

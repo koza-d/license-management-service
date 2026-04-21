@@ -83,6 +83,7 @@ public class LicenseLogListener {
                 .operator(operator)
                 .logType(LicenseLogType.ISSUED)
                 .data(event.getSnapshot())
+                .operatedAt(event.getOperatedAt())
                 .build();
         logRepository.save(licenseLog);
     }
@@ -104,6 +105,7 @@ public class LicenseLogListener {
                     .operator(operator)
                     .logType(LicenseLogType.MODIFIED)
                     .data(diffValues)
+                    .operatedAt(event.getOperatedAt())
                     .build();
             logRepository.save(licenseLog);
         } catch (JsonProcessingException e) {
@@ -133,6 +135,7 @@ public class LicenseLogListener {
                 .operator(operator)
                 .logType(LicenseLogType.CHANGED_STATUS)
                 .data(diffValues)
+                .operatedAt(event.getOperatedAt())
                 .build();
         logRepository.save(licenseLog);
     }

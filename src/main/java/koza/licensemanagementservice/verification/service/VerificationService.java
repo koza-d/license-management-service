@@ -2,6 +2,8 @@ package koza.licensemanagementservice.verification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
@@ -17,12 +19,15 @@ import koza.licensemanagementservice.verification.dto.resposne.VerifyData;
 import koza.licensemanagementservice.verification.dto.resposne.VerifyResponse;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
+import koza.licensemanagementservice.verification.log.dto.VerifyFailedEvent;
+import koza.licensemanagementservice.verification.log.dto.VerifySuccessEvent;
 import koza.licensemanagementservice.verification.security.AESEncryption;
 import koza.licensemanagementservice.verification.security.ECDHExchange;
 import koza.licensemanagementservice.verification.security.HMACSignature;
 import koza.licensemanagementservice.verification.security.SessionKeyManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,77 +39,111 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationService {
+    private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
     private final SessionManager sessionManager;
     private final SessionLogRepository sessionLogRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public VerifyResponse verify(VerifyRequest request, HttpServletRequest servletRequest) throws Exception {
-        String licenseKey = request.getLicenseKey();
-        License license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
-
-        // 라이센스 만료 시
-        if (license.getExpiredAt().isBefore(LocalDateTime.now()))
-            throw new BusinessException(ErrorCode.EXPIRED_LICENSE);
-
-        String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
-
-        // 사용중인 라이센스인 경우 연결 거부
-        if (currentSessionId != null && sessionManager.isActive(currentSessionId))
-            throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
-
-
-        String clientPublicKey = request.getPublicKey();
-
-        // 서버 키쌍 생성
-        KeyPair serverKeyPair = ECDHExchange.generateServerKeyPair();
-
-        // 공유 비밀키 계산
-        byte[] sharedSecret = ECDHExchange.computeSharedSecret(serverKeyPair.getPrivate(), clientPublicKey);
-
-        // 이후 통신에 쓰일 암호화 키 ( 매 하트비트마다 초기화) + 공유 비밀키로 암호화
-        byte[] sessionKey = SessionKeyManager.generateSessionKey();
-        String encryptedSessionKey = AESEncryption.encrypt(sessionKey, ECDHExchange.deriveEncryptKey(sharedSecret));
-
-        byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
-        byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
-
-        String ipAddress = parseIpAddress(servletRequest);
         String userAgent = servletRequest.getHeader("User-Agent");
-        String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt(), sessionKey);
+        String ipAddress = parseIpAddress(servletRequest);
 
-        license.verify();
+        Software software = null;
+        License license = null;
 
-        LocalDateTime now = LocalDateTime.now();
-        Duration duration = Duration.between(now, license.getExpiredAt());
-        long remainMs = Math.max(0, duration.toMillis());
+        try {
+            String licenseKey = request.getLicenseKey();
+            String appId = request.getAppId();
+            software = softwareRepository.findByAppId(appId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SOFTWARE_NOT_FOUND));
 
-        VerifyData data = VerifyData.builder()
-                .sessionId(sessionId)
-                .exp(license.getExpiredAt())
-                .serverTime(LocalDateTime.now())
-                .remainMs(remainMs)
-                .localVariables(license.getMergeLocalVariables())
-                .globalVariables(license.getSoftware().getGlobalVariables())
-                .build();
+            license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
 
-        String dataToJson = objectMapper.writeValueAsString(data);
-        String encryptedData = AESEncryption.encrypt(dataToJson, encryptKey);
+            if (!software.getId().equals(license.getSoftware().getId()))
+                throw new BusinessException(ErrorCode.NOT_FOUND_LICENSE);
 
-        // 서명 생성 (encryptedData + timestamp 조합)
-        long timestamp = System.currentTimeMillis();
-        String signTarget = encryptedData + "." + timestamp;
-        String sig = HMACSignature.sign(signTarget, signingKey);
+            // 라이센스 만료 시
+            if (license.getExpiredAt().isBefore(LocalDateTime.now()))
+                throw new BusinessException(ErrorCode.EXPIRED_LICENSE);
 
-        return VerifyResponse.builder()
-                .serverPublicKey(ECDHExchange.exportPublicKey(serverKeyPair.getPublic()))
-                .encryptedSessionKey(encryptedSessionKey)
-                .encryptedData(encryptedData)
-                .sig(sig)
-                .ts(String.valueOf(timestamp))
-                .build();
+            String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
+
+            // 사용중인 라이센스인 경우 연결 거부
+            if (currentSessionId != null && sessionManager.isActive(currentSessionId))
+                throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
+
+
+            String clientPublicKey = request.getPublicKey();
+
+            // 서버 키쌍 생성
+            KeyPair serverKeyPair = ECDHExchange.generateServerKeyPair();
+
+            // 공유 비밀키 계산
+            byte[] sharedSecret = ECDHExchange.computeSharedSecret(serverKeyPair.getPrivate(), clientPublicKey);
+
+            // 이후 통신에 쓰일 암호화 키 ( 매 하트비트마다 초기화) + 공유 비밀키로 암호화
+            byte[] sessionKey = SessionKeyManager.generateSessionKey();
+            String encryptedSessionKey = AESEncryption.encrypt(sessionKey, ECDHExchange.deriveEncryptKey(sharedSecret));
+
+            byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
+            byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
+
+            String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt(), sessionKey);
+
+            license.verify();
+
+            LocalDateTime now = LocalDateTime.now();
+            Duration duration = Duration.between(now, license.getExpiredAt());
+            long remainMs = Math.max(0, duration.toMillis());
+
+            VerifyData data = VerifyData.builder()
+                    .sessionId(sessionId)
+                    .exp(license.getExpiredAt())
+                    .serverTime(LocalDateTime.now())
+                    .remainMs(remainMs)
+                    .localVariables(license.getMergeLocalVariables())
+                    .globalVariables(license.getSoftware().getGlobalVariables())
+                    .build();
+
+            String dataToJson = objectMapper.writeValueAsString(data);
+            String encryptedData = AESEncryption.encrypt(dataToJson, encryptKey);
+
+            // 서명 생성 (encryptedData + timestamp 조합)
+            long timestamp = System.currentTimeMillis();
+            String signTarget = encryptedData + "." + timestamp;
+            String sig = HMACSignature.sign(signTarget, signingKey);
+
+            VerifyResponse response = VerifyResponse.builder()
+                    .serverPublicKey(ECDHExchange.exportPublicKey(serverKeyPair.getPublic()))
+                    .encryptedSessionKey(encryptedSessionKey)
+                    .encryptedData(encryptedData)
+                    .sig(sig)
+                    .ts(String.valueOf(timestamp))
+                    .build();
+
+            eventPublisher.publishEvent(new VerifySuccessEvent(software.getId(), request.getAppId(), license.getId(), licenseKey, ipAddress, userAgent));
+            return response;
+        } catch (Exception e) {
+            publishFailure(request, e, software, license, ipAddress, userAgent);
+            throw e;
+        }
+    }
+
+    private void publishFailure(VerifyRequest request, Exception e, Software software, License license, String ipAddress, String userAgent) {
+        ErrorCode errorCode = e instanceof BusinessException
+                ? ((BusinessException) e).getError()
+                : ErrorCode.INTERNAL_SERVER_ERROR;
+
+        eventPublisher.publishEvent(new VerifyFailedEvent(
+                software != null ? software.getId() : null, request.getAppId(),
+                license != null ? license.getId() : null, request.getLicenseKey(),
+                errorCode.getCode(),
+                ipAddress,
+                userAgent));
     }
 
     public HeartbeatResponse heartbeat(HeartbeatRequest request) throws Exception {
