@@ -4,11 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.session.dto.request.SessionSearchCondition;
+import koza.licensemanagementservice.domain.session.repository.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminateRequest;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminationsBulkRequest;
 import koza.licensemanagementservice.domain.session.dto.response.SessionAdminDetailResponse;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminListResponse;
+import koza.licensemanagementservice.domain.session.dto.response.SessionAdminResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionBulkTerminationResponse;
 import koza.licensemanagementservice.domain.session.service.SessionAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
@@ -16,8 +16,6 @@ import koza.licensemanagementservice.global.common.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -33,9 +31,8 @@ public class SessionAdminController {
     @Operation(summary = "관리자 전체 세션 목록", description = "활성 세션 목록 조회 (필터/검색/페이지네이션)")
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getSessions(@ModelAttribute SessionSearchCondition condition,
-                                                      @PageableDefault(sort = "startedAt", direction = Sort.Direction.DESC)
                                                       Pageable pageable) {
-        Page<SessionAdminListResponse> page = sessionAdminService.getSessions(condition, pageable);
+        Page<SessionAdminResponse> page = sessionAdminService.getSessions(condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 

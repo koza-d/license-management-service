@@ -1,28 +1,30 @@
 package koza.licensemanagementservice.domain.session.dto.response;
 
 import com.querydsl.core.annotations.QueryProjection;
-import koza.licensemanagementservice.domain.session.dto.SessionValue;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class SessionAdminListResponse {
+@Setter
+public class SessionAdminResponse {
     private String sessionId;
-    private final String memberEmail;
-    private final String softwareName;
+    private final Long licenseId;
     private final String licenseKey;
     private final String licenseName;
-    private final LocalDateTime startedAt;
+    private final String memberEmail;
+    private final String softwareName;
+    private final LocalDateTime latestActiveAt;
     private String ipAddress;
 
     @QueryProjection
-    public SessionAdminListResponse(String memberEmail, String softwareName, String licenseKey, String licenseName, LocalDateTime startedAt) {
-        this.memberEmail = memberEmail;
-        this.softwareName = softwareName;
+    public SessionAdminResponse(Long licenseId, String licenseKey, String licenseName, String memberEmail, String softwareName, LocalDateTime latestActiveAt) {
+        this.licenseId = licenseId;
         this.licenseKey = licenseKey;
         this.licenseName = licenseName;
-        this.startedAt = startedAt;
+        this.memberEmail = memberEmail;
+        this.softwareName = softwareName;
+        this.latestActiveAt = latestActiveAt;
     }
 }

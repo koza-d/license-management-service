@@ -4,11 +4,11 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
-import koza.licensemanagementservice.domain.session.dto.request.SessionSearchCondition;
+import koza.licensemanagementservice.domain.session.repository.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminateRequest;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminationsBulkRequest;
 import koza.licensemanagementservice.domain.session.dto.response.SessionAdminDetailResponse;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminListResponse;
+import koza.licensemanagementservice.domain.session.dto.response.SessionAdminResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionBulkTerminationResponse;
 import koza.licensemanagementservice.domain.session.log.dto.SessionBulkTerminatedEvent;
 import koza.licensemanagementservice.domain.session.log.dto.SessionTerminatedEvent;
@@ -18,18 +18,14 @@ import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,16 +36,21 @@ public class SessionAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public Page<SessionAdminListResponse> getSessions(SessionSearchCondition condition, Pageable pageable) {
-        Pageable resolved = applySortAlias(pageable);
-        Page<License> licenses = licenseRepository.findActiveSessionLicensesByCondition(condition, resolved);
-
-        List<SessionAdminListResponse> items = licenses.stream()
-                .map(this::toListResponse)
-                .filter(Objects::nonNull)
-                .toList();
-
-        return new PageImpl<>(items, resolved, licenses.getTotalElements());
+    public Page<SessionAdminResponse> getSessions(SessionSearchCondition condition, Pageable pageable) {
+        Page<SessionAdminResponse> result = licenseRepository.findActiveSessionLicensesByCondition(condition, pageable);
+        List<SessionAdminResponse> content = result
+                .filter(response -> sessionManager.getSessionByLicenseId(response.getLicenseId()).isPresent())
+                .map(response -> {
+                    SessionValue session = sessionManager.getSessionByLicenseId(response.getLicenseId())
+                            .orElse(SessionValue.builder().sessionId("-").build());
+                    response.setSessionId(session.getSessionId());
+                    response.setIpAddress(session.getIpAddress());
+                    return response;
+                })
+                .stream().skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
+        return new PageImpl<>(content, pageable, result.getContent().size());
     }
 
     @Transactional(readOnly = true)
@@ -125,34 +126,5 @@ public class SessionAdminService {
         if (reason != null && !reason.isBlank()) {
             log.info("관리자 세션 종료: sessionId={}, licenseId={}, reason={}", sessionId, license.getId(), reason);
         }
-    }
-
-    private SessionAdminListResponse toListResponse(License license) {
-        return sessionManager.getSessionByLicenseId(license.getId())
-                .map(session -> SessionAdminListResponse.of(
-                        session,
-                        license.getSoftware().getMember().getEmail(),
-                        license.getSoftware().getName(),
-                        license.getLicenseKey(),
-                        license.getName()))
-                .orElse(null);
-    }
-
-    /**
-     * 스펙상 sort 키는 "startedAt" 이지만 License 엔티티에는 해당 컬럼이 없으므로
-     * 세션 시작 시각에 대응되는 license.latestActiveAt 로 치환한다.
-     */
-    private Pageable applySortAlias(Pageable pageable) {
-        if (pageable.getSort().isUnsorted()) {
-            return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
-                    Sort.by(Sort.Direction.DESC, "latestActiveAt"));
-        }
-
-        List<Sort.Order> translated = pageable.getSort().stream()
-                .map(o -> "startedAt".equals(o.getProperty())
-                        ? new Sort.Order(o.getDirection(), "latestActiveAt")
-                        : o)
-                .toList();
-        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(translated));
     }
 }
