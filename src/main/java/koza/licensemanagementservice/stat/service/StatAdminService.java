@@ -9,11 +9,13 @@ import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogR
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.stat.dto.*;
+import koza.licensemanagementservice.verification.log.repository.VerifyLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,6 +30,7 @@ public class StatAdminService {
     private final SoftwareLogRepository softwareLogRepository;
     private final SessionLogRepository sessionLogRepository;
     private final LicenseLogRepository licenseLogRepository;
+    private final VerifyLogRepository verifyLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
@@ -100,5 +103,45 @@ public class StatAdminService {
             licenseStatusTrends.add(response);
         }
         return licenseStatusTrends;
+    }
+
+    public List<VerificationAttemptTrend> getVerificationMetrics(CustomUser user, LocalDate from, LocalDate to) {
+        validAdminAuthorized(user);
+
+        List<VerificationAttemptTrend> verificationAttemptTrends = new ArrayList<>();
+        List<VerificationAttemptTrend> result = verifyLogRepository.getVerificationMetrics(from, to);
+        Map<LocalDate, VerificationAttemptTrend> resultMap = result.stream()
+                .collect(Collectors.toMap(VerificationAttemptTrend::getDate, r -> r));
+
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            VerificationAttemptTrend response = resultMap.getOrDefault(date,
+                    new VerificationAttemptTrend(date.toString(), 0L, 0L, 0L));
+
+            verificationAttemptTrends.add(response);
+        }
+        setSpikes(verificationAttemptTrends);
+        return verificationAttemptTrends;
+    }
+
+    public void setSpikes(List<VerificationAttemptTrend> trends) {
+        if (trends.isEmpty()) return;
+
+        double[] failRates = trends.stream()
+                .mapToDouble(VerificationAttemptTrend::getFailRate)
+                .toArray();
+
+        double mean = Arrays.stream(failRates).average().orElse(0.0);
+
+        double variance = Arrays.stream(failRates)
+                .map(x -> Math.pow(x - mean, 2))
+                .average().orElse(0.0);
+        double stdDev = Math.sqrt(variance);
+
+        double threshold = mean + (2.0 * stdDev);
+
+        for (VerificationAttemptTrend trend : trends) {
+            if (trend.getFailRate() > threshold)
+                trend.setIsSpike(true);
+        }
     }
 }

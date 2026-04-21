@@ -71,4 +71,15 @@ public class StatAdminController {
         ApiResponse<?> response = ApiResponse.success(licenseStatusTrendResponses);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/verifications/metrics")
+    @Operation(summary = "라이센스 인증 실패율 추이", description = "날짜별 라이센스 인증 실패율 통계, 이상치 감지")
+    public ResponseEntity<ApiResponse<?>> getVerificationMetrics(@AuthenticationPrincipal CustomUser user,
+                                                                 @RequestParam LocalDate from,
+                                                                 @RequestParam LocalDate to) {
+        List<VerificationAttemptTrend> verificationTrends = statAdminService.getVerificationMetrics(user, from, to);
+        ApiResponse<?> response = ApiResponse.success(verificationTrends);
+        return ResponseEntity.ok(response);
+
+    }
 }
