@@ -1,0 +1,85 @@
+name: lms
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    depends_on:
+      - app
+    networks: [internal]
+
+  app:
+    image: ${APP_IMAGE:-ghcr.io/owner/license-management-service:latest}
+    pull_policy: missing
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # t4g.micro 1GB RAM: Heap 320m, Metaspace 캡 제거(Spring 자체가 150~200m 필요).
+      JAVA_OPTS: "-Xmx320m -Xms256m -XX:+UseSerialGC -Xss512k -Duser.timezone=Asia/Seoul"
+      # 스키마 덤프가 준비되기 전까지 Hibernate 가 엔티티 기반으로 자동 생성.
+      # 향후 Flyway 마이그레이션 도입 시 "validate" 로 변경.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT:-3306}/${DB_NAME}?useSSL=true&requireSSL=true&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
+      OAUTH_GOOGLE_REDIRECT_URI: ${OAUTH_GOOGLE_REDIRECT_URI}
+      OAUTH_GITHUB_REDIRECT_URI: ${OAUTH_GITHUB_REDIRECT_URI}
+      OAUTH_NAVER_REDIRECT_URI: ${OAUTH_NAVER_REDIRECT_URI}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # jammy 이미지에는 nc 없음. Dockerfile 에서 설치한 curl 사용.
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/v3/api-docs || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --notify-keyspace-events Ex
+      --maxmemory 128mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks: [internal]
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge

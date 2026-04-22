@@ -1,0 +1,41 @@
+{
+    email {$ACME_EMAIL}
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+# DOMAIN 환경변수 예: 3.37.158.78.sslip.io (sslip.io 매직 DNS, 무료)
+# Caddy 가 이 호스트명으로 Let's Encrypt 인증서를 HTTP-01 챌린지로 자동 발급.
+# 필요 조건: 포트 80/443 인바운드 허용 (Terraform SG 에서 이미 설정됨).
+#
+# Rate limiting 은 Caddy 기본 이미지에 rate_limit 모듈이 없어서 불가.
+# 필요 시 애플리케이션 레벨(Spring Boot Bucket4j 등)에서 처리.
+
+{$DOMAIN} {
+    encode zstd gzip
+
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+
+    reverse_proxy app:8080 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        transport http {
+            response_header_timeout 30s
+            dial_timeout 5s
+        }
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}

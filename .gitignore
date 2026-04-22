@@ -35,3 +35,23 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# 환경변수
+.env
+.env.*
+!.env.example
+!deploy/.env.example
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+crash.log
+crash.*.log
+tfplan*
+
+# Docker 로컬 이미지 아카이브
+*.tar
