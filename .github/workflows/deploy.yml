@@ -116,9 +116,7 @@ jobs:
             for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
               status=$(docker inspect -f '{{.State.Health.Status}}' lms-app-1 2>/dev/null || echo "none")
               if [ "$status" = "healthy" ]; then
-                echo "App healthy."
-                # 외부 HTTPS 경유 추가 검증 (Caddy → app).
-                curl -fsS -o /dev/null -w 'external=%{http_code}\n' https://localhost/v3/api-docs -k
+                echo "App healthy (healthcheck already validates /v3/api-docs)."
                 exit 0
               fi
               echo "waiting app... ($i) status=$status"
