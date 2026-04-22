@@ -47,7 +47,7 @@ public class LicenseAdminService {
         License target = licenseRepository.findById(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
         try {
-            LicenseStatus status = LicenseStatus.valueOf(request.getStatus());
+            LicenseStatus status = request.getStatus();
             LicenseStatus beforeStatus = target.getStatus();
             target.changeStatus(status);
             eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason(), LocalDateTime.now()));

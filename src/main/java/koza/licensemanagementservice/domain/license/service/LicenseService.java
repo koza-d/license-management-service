@@ -185,9 +185,8 @@ public class LicenseService {
     public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
         License license = getLicenseOrThrow(user, licenseId);
 
-        String statusString = request.getStatus();
         try {
-            LicenseStatus status = LicenseStatus.valueOf(statusString);
+            LicenseStatus status = request.getStatus();
             LicenseStatus beforeStatus = license.getStatus();
             String reason = request.getReason();
             license.changeStatus(status);

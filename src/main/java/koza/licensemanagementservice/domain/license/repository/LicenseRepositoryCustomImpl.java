@@ -1,11 +1,11 @@
 package koza.licensemanagementservice.domain.license.repository;
 
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.QLicenseAdminSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchTarget;
 import koza.licensemanagementservice.domain.session.repository.SessionSearchCondition;
@@ -175,7 +175,8 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .leftJoin(software.member, member)
                 .where(
                         searchFilter(condition.getTarget(), condition.getSearch()),
-                        sessionFilter(condition.getHasActiveSession())
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -189,9 +190,14 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .leftJoin(software.member, member)
                 .where(
                         searchFilter(condition.getTarget(), condition.getSearch()),
-                        sessionFilter(condition.getHasActiveSession())
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
                 ).fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression statusFilter(LicenseStatus status) {
+        return status == null ? null : license.status.eq(status);
     }
 
     @Override
