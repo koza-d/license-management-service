@@ -38,7 +38,7 @@ public class LicenseAdminController {
     private final LicenseLogAdminService licenseLogAdminService;
 
     @Operation(summary = "전체 라이센스 목록 조회")
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
                                                                @ModelAttribute LicenseSearchCondition condition,
                                                                Pageable pageable) {

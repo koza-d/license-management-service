@@ -102,7 +102,7 @@ public class LicenseController {
     }
 
     @Operation(summary = "라이센스 수정", description = "라이센스 이름, 비고, 메타데이터 등 수정 API")
-    @PostMapping("/{licenseId}")
+    @PatchMapping("/{licenseId}")
     public ResponseEntity<ApiResponse<?>> updateLicense(@AuthenticationPrincipal CustomUser user,
                                                         @PathVariable("licenseId") Long licenseId,
                                                         @RequestBody @Valid LicenseUpdateRequest request) {
