@@ -27,16 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: temurin
-
-      - uses: gradle/actions/setup-gradle@v4
-
-      - name: Build jar (skip tests)
-        run: ./gradlew clean bootJar -x test --no-daemon
-
+      # Dockerfile builder 스테이지가 Gradle 빌드를 수행하므로 runner 측 빌드 스텝은 중복.
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
 
