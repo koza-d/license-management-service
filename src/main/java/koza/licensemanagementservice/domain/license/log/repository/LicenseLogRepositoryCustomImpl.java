@@ -41,6 +41,7 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
                 .from(licenseLog)
                 .leftJoin(licenseLog.operator, member)
                 .where(
+                        licenseLog.license.id.eq(licenseId),
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 )
@@ -54,6 +55,7 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
                 .from(licenseLog)
                 .leftJoin(licenseLog.operator, member)
                 .where(
+                        licenseLog.license.id.eq(licenseId),
                         typeFilter(condition.getLogType()),
                         createAtBetween(condition.getFrom(), condition.getTo())
                 ).fetchOne();
@@ -67,7 +69,10 @@ public class LicenseLogRepositoryCustomImpl implements LicenseLogRepositoryCusto
                 "DATE_FORMAT({0}, '%Y-%m-%d')",
                 licenseLog.operatedAt);
 
-        StringTemplate afterStatus = Expressions.stringTemplate("JSON_UNQUOTE(JSON_EXTRACT(data, '$.status.after'))");
+        StringTemplate afterStatus = Expressions.stringTemplate(
+                "JSON_UNQUOTE(JSON_EXTRACT({0}, '$.status.after'))",
+                licenseLog.data);
+
         return queryFactory
                 .select(
                         new QLicenseStatusTrendResponse(
