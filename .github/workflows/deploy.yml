@@ -2,8 +2,7 @@ name: Deploy
 
 on:
   push:
-    # TODO: CI 검증 후 [main, develop] 로 축소.
-    branches: [main, develop, "min/04-22"]
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
