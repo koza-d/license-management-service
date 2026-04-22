@@ -1,0 +1,138 @@
+name: Deploy
+
+on:
+  push:
+    # TODO: CI 검증 후 [main, develop] 로 축소.
+    branches: [main, develop, "min/04-22"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build ARM64 image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+      image_ref: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build jar (skip tests)
+        run: ./gradlew clean bootJar -x test --no-daemon
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & push (linux/arm64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to EC2
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy compose / Caddyfile to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/docker-compose.yml,deploy/Caddyfile,deploy/scripts/backup.sh"
+          target: "/opt/lms/"
+          strip_components: 1
+
+      - name: Remote compose up
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/lms
+
+            if [ ! -f .env ]; then
+              echo "ERROR: /opt/lms/.env not found. Create it first (see deploy/.env.example)."
+              exit 1
+            fi
+
+            # 이번 커밋 기반 태그로 고정해서 pull (latest 경합 회피)
+            export APP_IMAGE="${{ needs.build.outputs.image_ref }}"
+
+            echo "${{ secrets.GHCR_READ_TOKEN }}" \
+              | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+            APP_IMAGE="$APP_IMAGE" docker compose pull app
+            APP_IMAGE="$APP_IMAGE" docker compose up -d --remove-orphans
+            docker image prune -f
+
+            # backup 스크립트 권한
+            chmod +x /opt/lms/scripts/backup.sh || true
+
+      - name: Smoke test
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -eu
+            # 앱 8080 은 호스트에 매핑되지 않음(내부 네트워크 전용).
+            # healthcheck 가 이미 curl /v3/api-docs 를 돌리므로 healthy 여부로 판정.
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              status=$(docker inspect -f '{{.State.Health.Status}}' lms-app-1 2>/dev/null || echo "none")
+              if [ "$status" = "healthy" ]; then
+                echo "App healthy."
+                # 외부 HTTPS 경유 추가 검증 (Caddy → app).
+                curl -fsS -o /dev/null -w 'external=%{http_code}\n' https://localhost/v3/api-docs -k
+                exit 0
+              fi
+              echo "waiting app... ($i) status=$status"
+              sleep 10
+            done
+            echo "App did not become healthy."
+            docker compose -f /opt/lms/docker-compose.yml logs --tail=200 app
+            exit 1
