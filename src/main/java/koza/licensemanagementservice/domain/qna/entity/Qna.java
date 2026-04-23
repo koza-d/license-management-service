@@ -70,6 +70,10 @@ public class Qna extends BaseEntity {
         this.status = QnaStatus.CLOSED;
     }
 
+    public void updateAnswer(String answer) {
+        this.answer = answer;
+    }
+
     public void changeStatus(QnaStatus status) {
         this.status = status;
     }
