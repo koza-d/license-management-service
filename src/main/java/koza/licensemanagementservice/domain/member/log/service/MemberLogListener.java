@@ -54,6 +54,17 @@ public class MemberLogListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleRoleChanged(MemberRoleChangedEvent event) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("before", event.getBefore().name());
+        payload.put("after", event.getAfter().name());
+        payload.put("reason", event.getReason());
+        persist(event.getTarget(), event.getOperator(), MemberLogType.ROLE_CHANGE, payload);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleLoginSuccess(MemberLoginSuccessEvent event) {
         memberRepository.findById(event.getMemberId()).ifPresent(member -> {
             member.updateLastLoginAt();

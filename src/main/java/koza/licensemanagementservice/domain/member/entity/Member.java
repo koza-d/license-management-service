@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+
 @Entity
 @Table(name="members")
 @AllArgsConstructor
@@ -69,6 +70,14 @@ public class Member extends BaseEntity {
 
     public void changeStatus(MemberStatus status) {
         this.status = status;
+    }
+
+    public void changeRole(MemberRole role) {
+        this.roles = new ArrayList<>(List.of(role.getAuthority()));
+    }
+
+    public MemberRole getRole() {
+        return MemberRole.from(this.roles);
     }
 
     public void updateLastLoginAt() {

@@ -7,6 +7,7 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
+import koza.licensemanagementservice.domain.member.dto.request.MemberRoleChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
@@ -70,6 +71,15 @@ public class MemberAdminController {
                                                       @PathVariable Long memberId,
                                                       @RequestBody @Valid MemberGradeChangeRequest request) {
         memberAdminService.changeGrade(admin, memberId, request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "회원 역할 변경", description = "회원의 역할(USER/ADMIN)을 변경합니다. 본인 역할은 변경할 수 없습니다.")
+    @PatchMapping("/{memberId}/role")
+    public ResponseEntity<ApiResponse<?>> changeRole(@AuthenticationPrincipal CustomUser admin,
+                                                     @PathVariable Long memberId,
+                                                     @RequestBody @Valid MemberRoleChangeRequest request) {
+        memberAdminService.changeRole(admin, memberId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

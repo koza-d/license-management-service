@@ -4,11 +4,14 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
+import koza.licensemanagementservice.domain.member.dto.request.MemberRoleChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberGrade;
+import koza.licensemanagementservice.domain.member.entity.MemberRole;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberRoleChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLog;
@@ -96,6 +99,33 @@ public class MemberAdminService {
                 .operator(manager)
                 .before(before)
                 .after(request.getGrade())
+                .reason(request.getReason())
+                .build());
+    }
+
+    @Transactional
+    public void changeRole(CustomUser admin, Long memberId, MemberRoleChangeRequest request) {
+        if (admin.getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.MEMBER_ROLE_SELF_FORBIDDEN);
+        }
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        Member manager = memberRepository.findById(admin.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        MemberRole before = member.getRole();
+        if (before == request.getRole()) {
+            throw new BusinessException(ErrorCode.MEMBER_ROLE_SAME);
+        }
+
+        member.changeRole(request.getRole());
+
+        publisher.publishEvent(MemberRoleChangedEvent.builder()
+                .target(member)
+                .operator(manager)
+                .before(before)
+                .after(request.getRole())
                 .reason(request.getReason())
                 .build());
     }
