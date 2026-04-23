@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
+import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
@@ -71,14 +73,30 @@ public class SoftwareAdminController {
         return ResponseEntity.ok(response);
     }
 
-
-
-    @Operation(summary = "소프트웨어 상태 변경", description = "소프트웨어의 상태를 활성/정지로 변경합니다.")
-    @PatchMapping("/{softwareId}/status")
-    public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser admin,
+    @Operation(summary = "소프트웨어 밴 처리", description = "소프트웨어의 상태를 밴으로 변경합니다.")
+    @PostMapping("/{softwareId}/ban")
+    public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable Long softwareId,
-                                                       @RequestBody @Valid SoftwareStatusChangeRequest request) {
-        softwareAdminService.changeStatus(admin, softwareId, request);
+                                                       @RequestBody @Valid SoftwareBanRequest request) {
+        softwareAdminService.ban(user, softwareId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @Operation(summary = "소프트웨어 밴 해제", description = "소프트웨어의 밴 상태를 해제합니다.")
+    @PostMapping("/{softwareId}/unban")
+    public ResponseEntity<ApiResponse<?>> unban(@AuthenticationPrincipal CustomUser user,
+                                                @PathVariable Long softwareId,
+                                                @RequestBody SoftwareUnbanRequest request) {
+        softwareAdminService.unban(user, softwareId, request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+//    @Operation(summary = "소프트웨어 상태 변경", description = "소프트웨어의 상태를 활성/정지로 변경합니다.")
+//    @PatchMapping("/{softwareId}/status")
+//    public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser admin,
+//                                                       @PathVariable Long softwareId,
+//                                                       @RequestBody @Valid SoftwareStatusChangeRequest request) {
+//        softwareAdminService.changeStatus(admin, softwareId, request);
+//        return ResponseEntity.ok(ApiResponse.success(null));
+//    }
 }

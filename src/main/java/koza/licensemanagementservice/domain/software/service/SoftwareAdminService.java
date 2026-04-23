@@ -1,14 +1,13 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
+import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
-import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.repository.MemberRepository;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;
+import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
@@ -20,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
@@ -33,19 +34,38 @@ public class SoftwareAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void changeStatus(CustomUser user, Long softwareId, SoftwareStatusChangeRequest request) {
+    public void ban(CustomUser user, Long softwareId, SoftwareBanRequest request) {
         validAdminAuthorized(user);
 
         Software software = softwareRepository.findById(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOFTWARE_NOT_FOUND));
 
-        if (software.getStatus() == request.getStatus()) {
-            throw new BusinessException(ErrorCode.SOFTWARE_STATUS_SAME);
-        }
-
         SoftwareStatus beforeStatus = software.getStatus();
-        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, request.getStatus(), request.getReason()));
-        software.changeStatus(request.getStatus());
+        if (beforeStatus == SoftwareStatus.BANNED) // 이미 밴된 상태인 경우
+            throw new BusinessException(ErrorCode.SOFTWARE_BANNED);
+
+        LocalDateTime banUntil = request.getUntilDays() == 0 ? null :
+                LocalDateTime.now().plusDays(request.getUntilDays());
+        String reason = request.getReason();
+
+        software.changeStatus(SoftwareStatus.BANNED, banUntil);
+        eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
+    }
+
+    @Transactional
+    public void unban(CustomUser user, Long softwareId, SoftwareUnbanRequest request) {
+        validAdminAuthorized(user);
+
+        Software software = softwareRepository.findById(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOFTWARE_NOT_FOUND));
+
+        String reason = request.getReason();
+        SoftwareStatus status = software.getStatus();
+        if (status != SoftwareStatus.BANNED)
+            throw new BusinessException(ErrorCode.SOFTWARE_NOT_BANNED);
+
+        software.changeStatus(SoftwareStatus.INACTIVE);
+        eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, reason));
     }
 
     @Transactional(readOnly = true)
@@ -68,5 +88,4 @@ public class SoftwareAdminService {
         return softwareRepository.getSoftwareUsageStat(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
-
 }
