@@ -3,6 +3,7 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.auth.dto.CustomUser;
@@ -42,6 +43,15 @@ public class SoftwareController {
     public ResponseEntity<ApiResponse<?>> getSoftware(@AuthenticationPrincipal CustomUser user, @PathVariable("softwareId") Long id) {
         SoftwareDetailResponse detailResponse = softwareService.getSoftwareDetail(user, id);
         ApiResponse<?> response = ApiResponse.success(detailResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "소프트웨어별 라이센스 현황")
+    @GetMapping("/software/{softwareId}/stats")
+    public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                                   @PathVariable("softwareId") Long softwareId) {
+        LicenseStat stat = softwareService.getLicenseStat(user, softwareId);
+        ApiResponse<?> response= ApiResponse.success(stat);
         return ResponseEntity.ok(response);
     }
 
@@ -99,4 +109,5 @@ public class SoftwareController {
         ApiResponse<?> response = ApiResponse.success(null);
         return ResponseEntity.ok(response);
     }
+
 }

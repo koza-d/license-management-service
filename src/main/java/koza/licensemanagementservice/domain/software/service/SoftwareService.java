@@ -1,5 +1,7 @@
 package koza.licensemanagementservice.domain.software.service;
 
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
@@ -27,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +77,19 @@ public class SoftwareService {
         int licenseCount = licenseRepository.countBySoftwareId(softwareId);
 
         return SoftwareDetailResponse.of(software, licenseCount);
+    }
+
+    @Transactional(readOnly = true)
+    public LicenseStat getLicenseStat(CustomUser user, Long softwareId) {
+        getSoftwareOrElse(user.getId(), softwareId);
+
+        return LicenseStat.builder()
+                .total((long) licenseRepository.countBySoftwareId(softwareId))
+                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
+                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
+                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
+                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
+                .build();
     }
 
     @Transactional(readOnly = true)
