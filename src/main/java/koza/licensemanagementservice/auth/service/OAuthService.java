@@ -3,7 +3,6 @@ package koza.licensemanagementservice.auth.service;
 import koza.licensemanagementservice.auth.dto.*;
 import koza.licensemanagementservice.auth.dto.error.InvalidLoginProvider;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
-import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
@@ -32,7 +31,6 @@ public class OAuthService {
         SocialOAuthClient client = oAuthClientFactory.getClient(providerName);
         String accessToken = client.getAccessToken(code);
         OAuthUserInfo userInfo = client.getUserInfo(accessToken);
-        JoinType joinType = JoinType.from(client.getProvider().getName());
 
         Member member = memberRepository.findByEmail(userInfo.getEmail())
                 .orElseGet(() -> {
@@ -51,45 +49,46 @@ public class OAuthService {
                     return save;
                 });
 
-        boolean isOAuthUser = member.getProviderId() != null
-                && member.getProviderId().equals(userInfo.getId())
-                && member.getProvider() != null
-                && member.getProvider().equalsIgnoreCase(client.getProvider().getName());
+        String memberProvider = member.getProvider();
+        boolean isOAuthUser = memberProvider != null && memberProvider.equalsIgnoreCase(providerName);
 
-        if (!isOAuthUser) { // 간편 회원가입으로 가입된 메일이 아닌 경우
-            publisher.publishEvent(MemberLoginFailEvent.builder()
-                    .memberId(member.getId())
-                    .joinType(joinType)
-                    .ipAddress(ip)
-                    .userAgent(userAgent)
-                    .failReason("PROVIDER_MISMATCH")
-                    .build());
-            String provider = member.getProvider() == null || member.getProvider().isEmpty() ? "local" : member.getProvider();
+        if (!isOAuthUser) { // 선택한 로그인 소셜 방식으로 가입된 메일이 아닌 경우
+            String provider = member.getProvider() == null || member.getProvider().isEmpty() ? "LOCAL" : member.getProvider();
+
+            publishLoginFailedLogEvent(member, ip, userAgent, ErrorCode.OAUTH_NOT_REGISTERED);
             throw new BusinessException(ErrorCode.OAUTH_NOT_REGISTERED, new InvalidLoginProvider(provider));
         }
 
         if (member.getStatus() == MemberStatus.BANNED) {
-            publisher.publishEvent(MemberLoginFailEvent.builder()
-                    .memberId(member.getId())
-                    .joinType(joinType)
-                    .ipAddress(ip)
-                    .userAgent(userAgent)
-                    .failReason("ACCOUNT_BANNED")
-                    .build());
+            publishLoginFailedLogEvent(member, ip, userAgent, ErrorCode.MEMBER_BANNED);
             throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
         if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
             member.changeProfileURL(userInfo.getPicture());
 
+        publishSuccessLogEvent(ip, userAgent, member);
+
+        return jwtTokenProvider.createToken(member);
+    }
+
+    private void publishSuccessLogEvent(String ip, String userAgent, Member member) {
         publisher.publishEvent(MemberLoginSuccessEvent.builder()
                 .memberId(member.getId())
-                .joinType(joinType)
+                .provider(member.getProvider())
                 .ipAddress(ip)
                 .userAgent(userAgent)
                 .build());
+    }
 
-        return jwtTokenProvider.createToken(member);
+    private void publishLoginFailedLogEvent(Member member, String ip, String userAgent, ErrorCode errorCode) {
+        publisher.publishEvent(MemberLoginFailEvent.builder()
+                .memberId(member.getId())
+                .provider(member.getProvider())
+                .ipAddress(ip)
+                .userAgent(userAgent)
+                .failReason(errorCode.getCode())
+                .build());
     }
 
     public String getAuthURL(String providerName) {
