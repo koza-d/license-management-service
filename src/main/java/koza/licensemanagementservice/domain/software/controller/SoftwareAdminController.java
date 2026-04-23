@@ -7,8 +7,8 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareUsageResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
@@ -56,7 +56,7 @@ public class SoftwareAdminController {
     @GetMapping("/{softwareId}/usage")
     public ResponseEntity<ApiResponse<?>> getSoftwareStats(@AuthenticationPrincipal CustomUser user,
                                                            @PathVariable("softwareId") Long softwareId) {
-        SoftwareAdminStatsResponse detailResponse = softwareAdminService.getSoftwareStats(user, softwareId);
+        AdminSoftwareUsageResponse detailResponse = softwareAdminService.getSoftwareStats(user, softwareId);
         ApiResponse<?> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }

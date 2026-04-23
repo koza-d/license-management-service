@@ -6,8 +6,8 @@ import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareUsageResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
@@ -87,9 +87,9 @@ public class SoftwareAdminService {
     }
 
     @Transactional(readOnly = true)
-    public SoftwareAdminStatsResponse getSoftwareStats(CustomUser user, Long softwareId) {
+    public AdminSoftwareUsageResponse getSoftwareStats(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
-        return softwareRepository.getSoftwareUsageStat(softwareId)
+        return softwareRepository.getAdminSoftwareUsageStat(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 

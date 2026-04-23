@@ -3,14 +3,14 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
 import koza.licensemanagementservice.domain.software.dto.request.*;
+import koza.licensemanagementservice.domain.software.dto.response.*;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
+import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
+import koza.licensemanagementservice.domain.software.log.service.SoftwareLogService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareCreateResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.service.SoftwareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +29,8 @@ import java.util.List;
 @Tag(name = "소프트웨어 API", description = "소프트웨어 등록 및 관리 관련 API")
 public class SoftwareController {
     private final SoftwareService softwareService;
+    private final SoftwareLogService softwareLogService;
+
     @Operation(summary = "소프트웨어 등록")
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createSoftware(@AuthenticationPrincipal CustomUser user,
@@ -47,11 +49,31 @@ public class SoftwareController {
     }
 
     @Operation(summary = "소프트웨어별 라이센스 현황")
-    @GetMapping("/software/{softwareId}/stats")
+    @GetMapping("/{softwareId}/license-stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
-        AdminLicenseStatResponse stat = softwareService.getLicenseStat(user, softwareId);
+        LicenseStatResponse stat = softwareService.getLicenseStat(user, softwareId);
         ApiResponse<?> response= ApiResponse.success(stat);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "소프트웨어 총 사용량")
+    @GetMapping("/{softwareId}/usage")
+    public ResponseEntity<ApiResponse<?>> getSoftwareStats(@AuthenticationPrincipal CustomUser user,
+                                                           @PathVariable("softwareId") Long softwareId) {
+        SoftwareUsageResponse detailResponse = softwareService.getSoftwareStats(user, softwareId);
+        ApiResponse<?> response = ApiResponse.success(detailResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "소프트웨어 로그")
+    @GetMapping("/{softwareId}/logs")
+    public ResponseEntity<ApiResponse<?>> getSoftwareLogs(@AuthenticationPrincipal CustomUser user,
+                                                          @PathVariable("softwareId") Long softwareId,
+                                                          @ModelAttribute SoftwareLogSearchCondition condition,
+                                                          Pageable pageable) {
+        Page<SoftwareLogResponse> detailResponse = softwareLogService.getSoftwareLogs(user, softwareId, condition, pageable);
+        ApiResponse<?> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }
 

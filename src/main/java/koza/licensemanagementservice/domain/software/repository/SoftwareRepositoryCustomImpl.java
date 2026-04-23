@@ -250,7 +250,7 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
-    public Optional<SoftwareAdminStatsResponse> getSoftwareUsageStat(Long softwareId) {
+    public Optional<AdminSoftwareUsageResponse> getAdminSoftwareUsageStat(Long softwareId) {
         NumberTemplate<Long> diffSeconds = Expressions.numberTemplate(
                 Long.class,
                 "TIMESTAMPDIFF(SECOND, {0}, {1})",
@@ -260,7 +260,33 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
 
         return Optional.ofNullable(queryFactory
                 .select(
-                        new QSoftwareAdminStatsResponse(
+                        new QAdminSoftwareUsageResponse(
+                                diffSeconds.sum().coalesce(0L).longValue(),
+                                sessionLog.count(),
+                                diffSeconds.avg().coalesce(0.0).longValue()
+                        )
+                )
+                .from(sessionLog)
+                .join(sessionLog.license, license)
+                .where(
+                        license.software.id.eq(softwareId)
+                )
+                .fetchOne()
+        );
+    }
+
+    @Override
+    public Optional<SoftwareUsageResponse> getSoftwareUsageStat(Long softwareId) {
+        NumberTemplate<Long> diffSeconds = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(SECOND, {0}, {1})",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt
+        );
+
+        return Optional.ofNullable(queryFactory
+                .select(
+                        new QSoftwareUsageResponse(
                                 diffSeconds.sum().coalesce(0L).longValue(),
                                 sessionLog.count(),
                                 diffSeconds.avg().coalesce(0.0).longValue()

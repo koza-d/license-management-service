@@ -1,13 +1,12 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.dto.request.*;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
+import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import koza.licensemanagementservice.domain.software.log.dto.*;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
@@ -16,8 +15,6 @@ import koza.licensemanagementservice.domain.software.version.repository.Software
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareCreateResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,8 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
 @Service
 @RequiredArgsConstructor
@@ -80,16 +75,25 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public AdminLicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
+    public LicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
         getSoftwareOrElse(user.getId(), softwareId);
 
-        return AdminLicenseStatResponse.builder()
+        return LicenseStatResponse.builder()
                 .total((long) licenseRepository.countBySoftwareId(softwareId))
                 .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
                 .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
                 .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
                 .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
                 .build();
+    }
+
+
+    @Transactional(readOnly = true)
+    public SoftwareUsageResponse getSoftwareStats(CustomUser user, Long softwareId) {
+        getSoftwareOrElse(user.getId(), softwareId);
+
+        return softwareRepository.getSoftwareUsageStat(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
