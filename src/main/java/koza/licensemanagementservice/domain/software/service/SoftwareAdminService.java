@@ -1,7 +1,7 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
@@ -94,13 +94,13 @@ public class SoftwareAdminService {
     }
 
     @Transactional(readOnly = true)
-    public LicenseStat getLicenseStat(CustomUser user, Long softwareId) {
+    public AdminLicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
 
         softwareRepository.findById(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        return LicenseStat.builder()
+        return AdminLicenseStatResponse.builder()
                 .total((long) licenseRepository.countBySoftwareId(softwareId))
                 .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
                 .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))

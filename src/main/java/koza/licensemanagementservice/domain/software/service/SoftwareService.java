@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
@@ -80,10 +80,10 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public LicenseStat getLicenseStat(CustomUser user, Long softwareId) {
+    public AdminLicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
         getSoftwareOrElse(user.getId(), softwareId);
 
-        return LicenseStat.builder()
+        return AdminLicenseStatResponse.builder()
                 .total((long) licenseRepository.countBySoftwareId(softwareId))
                 .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
                 .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))

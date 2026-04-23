@@ -6,7 +6,6 @@ import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpd
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseAdminStatusChangedEvent;

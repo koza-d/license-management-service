@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
@@ -95,7 +95,7 @@ public class SoftwareAdminController {
     @GetMapping("/software/{softwareId}/stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
-        LicenseStat stat = softwareAdminService.getLicenseStat(user, softwareId);
+        AdminLicenseStatResponse stat = softwareAdminService.getLicenseStat(user, softwareId);
         ApiResponse<?> response= ApiResponse.success(stat);
         return ResponseEntity.ok(response);
     }
