@@ -3,10 +3,9 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareCreateRequest;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareUpdateRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareCreateResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
@@ -74,5 +73,30 @@ public class SoftwareController {
         ApiResponse<Long> response = ApiResponse.success(softwareId);
         return ResponseEntity.ok(response);
     }
-
+    @Operation(summary = "소프트웨어 활성화")
+    @PostMapping("/{softwareId}/active")
+    public ResponseEntity<ApiResponse<?>> activeSoftware(@AuthenticationPrincipal CustomUser user,
+                                                         @PathVariable("softwareId") Long id) {
+        softwareService.active(user, id);
+        ApiResponse<?> response = ApiResponse.success(null);
+        return ResponseEntity.ok(response);
+    }
+    @Operation(summary = "소프트웨어 점검")
+    @PostMapping("/{softwareId}/maintenance")
+    public ResponseEntity<ApiResponse<?>> maintenanceSoftware(@AuthenticationPrincipal CustomUser user,
+                                                         @PathVariable("softwareId") Long id,
+                                                         @RequestBody SoftwareMaintenanceRequest request) {
+        softwareService.maintenance(user, id, request);
+        ApiResponse<?> response = ApiResponse.success(null);
+        return ResponseEntity.ok(response);
+    }
+    @Operation(summary = "소프트웨어 지원중단")
+    @PostMapping("/{softwareId}/unsupported")
+    public ResponseEntity<ApiResponse<?>> unsupportedSoftware(@AuthenticationPrincipal CustomUser user,
+                                                         @PathVariable("softwareId") Long id,
+                                                         @RequestBody SoftwareUnsupportedRequest request) {
+        softwareService.unsupported(user, id, request);
+        ApiResponse<?> response = ApiResponse.success(null);
+        return ResponseEntity.ok(response);
+    }
 }

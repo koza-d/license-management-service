@@ -3,13 +3,11 @@ package koza.licensemanagementservice.domain.software.service;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareCreateRequest;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareUpdateRequest;
+import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareSimpleResponse;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareCreatedEvent;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareModifiedEvent;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareVersionChangedEvent;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
+import koza.licensemanagementservice.domain.software.log.dto.*;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.domain.software.version.repository.SoftwareVersionRepository;
@@ -26,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -128,6 +127,51 @@ public class SoftwareService {
                 software.toSnapshot())
         ); // 로그 비동기 저장
         return softwareId;
+    }
+
+    @Transactional
+    public void active(CustomUser user, Long softwareId) {
+        Software software = getSoftwareOrElse(user.getId(), softwareId);
+        SoftwareStatus beforeStatus = software.getStatus();
+
+        if (beforeStatus == SoftwareStatus.BANNED) // 밴 상태에서 변경 불가
+            throw new BusinessException(ErrorCode.SOFTWARE_BANNED);
+
+        software.changeStatus(SoftwareStatus.ACTIVE);
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.ACTIVE, ""));
+    }
+
+    @Transactional
+    public void maintenance(CustomUser user, Long softwareId, SoftwareMaintenanceRequest request) {
+        Software software = getSoftwareOrElse(user.getId(), softwareId);
+        SoftwareStatus beforeStatus = software.getStatus();
+
+        if (beforeStatus == SoftwareStatus.BANNED) // 밴 상태에서 변경 불가
+            throw new BusinessException(ErrorCode.SOFTWARE_BANNED);
+
+        if (beforeStatus != SoftwareStatus.ACTIVE) // 활성 상태인 경우만 점검 가능
+            throw new BusinessException(ErrorCode.SOFTWARE_NOT_ACTIVE);
+
+        LocalDateTime until = request.getUntilDays() == 0 ? null :
+                LocalDateTime.now().plusDays(request.getUntilDays());
+        String reason = request.getReason();
+
+        software.changeStatus(SoftwareStatus.MAINTENANCE, until);
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.MAINTENANCE, until, reason));
+    }
+
+    @Transactional
+    public void unsupported(CustomUser user, Long softwareId, SoftwareUnsupportedRequest request) {
+        Software software = getSoftwareOrElse(user.getId(), softwareId);
+        SoftwareStatus beforeStatus = software.getStatus();
+
+        if (beforeStatus == SoftwareStatus.BANNED) // 밴 상태에서 변경 불가
+            throw new BusinessException(ErrorCode.SOFTWARE_BANNED);
+
+        String reason = request.getReason();
+
+        software.changeStatus(SoftwareStatus.UNSUPPORTED);
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.UNSUPPORTED, reason));
     }
 
     private Software getSoftwareOrElse(Long memberId, Long softwareId) {
