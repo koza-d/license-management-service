@@ -4,12 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
-import koza.licensemanagementservice.domain.software.dto.request.SoftwareStatusChangeRequest;
 import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
 import koza.licensemanagementservice.domain.software.log.service.SoftwareAdminLogService;
@@ -90,6 +90,16 @@ public class SoftwareAdminController {
         softwareAdminService.unban(user, softwareId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @Operation(summary = "소프트웨어별 라이센스 현황")
+    @GetMapping("/software/{softwareId}/stats")
+    public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
+                                                                   @PathVariable("softwareId") Long softwareId) {
+        LicenseStat stat = softwareAdminService.getLicenseStat(user, softwareId);
+        ApiResponse<?> response= ApiResponse.success(stat);
+        return ResponseEntity.ok(response);
+    }
+
 
 //    @Operation(summary = "소프트웨어 상태 변경", description = "소프트웨어의 상태를 활성/정지로 변경합니다.")
 //    @PatchMapping("/{softwareId}/status")

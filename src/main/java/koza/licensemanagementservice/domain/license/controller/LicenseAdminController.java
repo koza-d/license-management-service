@@ -99,15 +99,4 @@ public class LicenseAdminController {
         return ResponseEntity.ok(response);
     }
 
-
-    @Operation(summary = "소프트웨어별 라이센스 현황")
-    @GetMapping("/software/{softwareId}/stats")
-    public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
-                                                               @PathVariable("softwareId") Long softwareId) {
-        LicenseStat stat = licenseAdminService.getLicenseStatBySoftware(user, softwareId);
-        ApiResponse<?> response= ApiResponse.success(stat);
-        return ResponseEntity.ok(response);
-    }
-
-
 }

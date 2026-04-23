@@ -1,6 +1,9 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
@@ -30,6 +33,7 @@ import static koza.licensemanagementservice.global.validation.ValidUserAuthorize
 @Transactional(readOnly = true)
 public class SoftwareAdminService {
     private final SoftwareRepository softwareRepository;
+    private final LicenseRepository licenseRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -87,5 +91,21 @@ public class SoftwareAdminService {
         validAdminAuthorized(user);
         return softwareRepository.getSoftwareUsageStat(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public LicenseStat getLicenseStat(CustomUser user, Long softwareId) {
+        validAdminAuthorized(user);
+
+        softwareRepository.findById(softwareId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        return LicenseStat.builder()
+                .total((long) licenseRepository.countBySoftwareId(softwareId))
+                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
+                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
+                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
+                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
+                .build();
     }
 }

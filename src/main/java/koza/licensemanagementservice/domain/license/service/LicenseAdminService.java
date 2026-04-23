@@ -95,20 +95,4 @@ public class LicenseAdminService {
         eventPublisher.publishEvent(new LicenseExtendEvent(user.getId(), licenseId, beforeExpiredAt, license.getExpiredAt(), periodMs));
         return LicenseAdminExtendResponse.of(license, request.getDays());
     }
-
-    @Transactional(readOnly = true)
-    public LicenseStat getLicenseStatBySoftware(CustomUser user, Long softwareId) {
-        validAdminAuthorized(user);
-
-        softwareRepository.findById(softwareId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        return LicenseStat.builder()
-                .total((long) licenseRepository.countBySoftwareId(softwareId))
-                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
-                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
-                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
-                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
-                .build();
-    }
 }
