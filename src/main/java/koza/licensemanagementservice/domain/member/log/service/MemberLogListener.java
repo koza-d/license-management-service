@@ -93,14 +93,32 @@ public class MemberLogListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleWithdrawRequested(MemberWithdrawRequestedEvent event) {
+        Member memberReference = memberRepository.getReferenceById(event.getMemberId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("reason", event.getReason());
+        payload.put("scheduledAt", event.getScheduledAt());
+        persist(memberReference, memberReference, MemberLogType.WITHDRAW_REQUESTED, payload);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleWithdrawCancelled(MemberWithdrawCancelledEvent event) {
+        Member memberReference = memberRepository.getReferenceById(event.getMemberId());
+        persist(memberReference, memberReference, MemberLogType.WITHDRAW_CANCELLED, new LinkedHashMap<>());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleWithdraw(MemberWithdrawEvent event) {
         Member memberReference = memberRepository.getReferenceById(event.getMemberId());
-        Map<String, Object> payload = Map.of(
-                "provider", event.getProvider(),
-                "finalGrade", event.getGrade(),
-                "reason", event.getReason(),
-                "registerAt", event.getRegisterAt()
-        );
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("provider", event.getProvider());
+        payload.put("finalGrade", event.getGrade());
+        payload.put("reason", event.getReason());
+        payload.put("registerAt", event.getRegisterAt());
         persist(memberReference, memberReference, MemberLogType.WITHDRAW, payload);
     }
 
