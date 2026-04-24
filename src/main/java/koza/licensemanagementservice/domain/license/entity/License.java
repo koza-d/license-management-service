@@ -56,9 +56,6 @@ public class License extends BaseEntity {
     @Column(name = "status", length = 20, nullable = false)
     private LicenseStatus status;
 
-    @Column(name = "expired_logged_at")
-    private LocalDateTime expiredLoggedAt;
-
     public void updateName(String name) {
         this.name = name;
     }
@@ -116,10 +113,6 @@ public class License extends BaseEntity {
     public void release() {
         this.hasActiveSession = false;
         this.latestActiveAt = LocalDateTime.now();
-    }
-
-    public void setExpiredLoggedAt() {
-        this.expiredLoggedAt = this.expiredAt;
     }
 
     public Map<String, Object> toSnapshot() {

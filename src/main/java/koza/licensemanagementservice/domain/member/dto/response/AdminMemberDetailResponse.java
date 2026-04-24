@@ -1,6 +1,5 @@
 package koza.licensemanagementservice.domain.member.dto.response;
 
-import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberGrade;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
@@ -19,7 +18,7 @@ public class AdminMemberDetailResponse {
     private String profileURL;
     private MemberGrade grade;
     private MemberStatus status;
-    private JoinType joinType;
+    private String provider;
     private String providerId;
     private List<String> roles;
     private LocalDateTime createdAt;
@@ -33,7 +32,7 @@ public class AdminMemberDetailResponse {
                 .profileURL(m.getProfileURL())
                 .grade(m.getGrade())
                 .status(m.getStatus())
-                .joinType(JoinType.from(m.getProvider()))
+                .provider(m.getProvider())
                 .providerId(m.getProviderId())
                 .roles(m.getRoles())
                 .createdAt(m.getCreateAt())

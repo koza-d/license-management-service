@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
-public class SoftwareStatusChangedEvent {
+public class AdminSoftwareStatusChangedEvent {
     private Long targetSoftwareId;
     private Long operatorId;
     private SoftwareStatus beforeStatus;
@@ -16,7 +16,7 @@ public class SoftwareStatusChangedEvent {
     private LocalDateTime until;
     private String reason;
 
-    public SoftwareStatusChangedEvent(Long targetSoftwareId, Long operatorId, SoftwareStatus beforeStatus, SoftwareStatus afterStatus, String reason) {
+    public AdminSoftwareStatusChangedEvent(Long targetSoftwareId, Long operatorId, SoftwareStatus beforeStatus, SoftwareStatus afterStatus, String reason) {
         this.targetSoftwareId = targetSoftwareId;
         this.operatorId = operatorId;
         this.beforeStatus = beforeStatus;

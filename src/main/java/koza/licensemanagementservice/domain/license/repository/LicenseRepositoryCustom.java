@@ -17,11 +17,10 @@ public interface LicenseRepositoryCustom {
     Optional<License> findByIdWithSoftwareAndMember(Long licenseId);
     Optional<License> findByLicenseKeyWithSoftware(String licenseKey);
     List<License> findByIdInWithSoftwareWithMember(List<Long> ids);
-    List<License> findByMemberId(Long memberId);
-    List<License> findByExpiredWithoutLog(LocalDateTime now);
     Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable);
     Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable);
     Page<LicenseAdminSummaryResponse> findByAllCondition(LicenseSearchCondition condition, Pageable pageable);
 
     Page<SessionAdminResponse> findActiveSessionLicensesByCondition(SessionSearchCondition condition, Pageable pageable);
+    List<License> bulkUpdateExpiredStatus(LocalDateTime now);
 }

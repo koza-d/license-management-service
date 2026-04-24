@@ -6,7 +6,6 @@ import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpd
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStat;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.log.dto.LicenseAdminStatusChangedEvent;
@@ -27,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -96,19 +96,20 @@ public class LicenseAdminService {
         return LicenseAdminExtendResponse.of(license, request.getDays());
     }
 
-    @Transactional(readOnly = true)
-    public LicenseStat getLicenseStatBySoftware(CustomUser user, Long softwareId) {
-        validAdminAuthorized(user);
-
-        softwareRepository.findById(softwareId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-        return LicenseStat.builder()
-                .total((long) licenseRepository.countBySoftwareId(softwareId))
-                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
-                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
-                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
-                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
-                .build();
+    /**
+     * 라이센스 만료기간이 지난 상태를 EXPIRED 로 변경하는 메서드
+     * - 스케줄러에서만 호출, 임의 호출 금지
+     */
+    @Transactional
+    public void updateExpiredLicenseStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        List<License> updateLicenses = licenseRepository.bulkUpdateExpiredStatus(now);
+        updateLicenses.forEach(license -> {
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(
+                    license.getId(), 0L,
+                    LicenseStatus.ACTIVE, LicenseStatus.EXPIRED,
+                    "[스케줄러] 라이센스 만료로 인해 상태 변경",
+                    license.getExpiredAt()));
+        });
     }
 }

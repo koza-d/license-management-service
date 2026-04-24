@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,10 @@ public class Software extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private SoftwareStatus status = SoftwareStatus.ACTIVE;
-  
+
+    @Column(name = "status_until")
+    private LocalDateTime statusUntil;
+
     public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
         versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
     }
@@ -101,5 +105,11 @@ public class Software extends BaseEntity {
 
     public void changeStatus(SoftwareStatus status) {
         this.status = status;
+        this.statusUntil = null;
+    }
+
+    public void changeStatus(SoftwareStatus status, LocalDateTime statusUntil) {
+        this.status = status;
+        this.statusUntil = statusUntil;
     }
 }

@@ -35,6 +35,8 @@ import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -218,20 +220,5 @@ public class VerificationService {
 
         license.release();
         sessionManager.releaseSession(sessionId, license, releaseType);
-    }
-
-    private String parseIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr(); // 기본 IP 가져오기
-        }
-        return ip;
     }
 }
