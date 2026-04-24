@@ -33,26 +33,30 @@ public class MemberAdminController {
     @Operation(summary = "회원 목록 조회", description = "이메일/닉네임 키워드 검색 + 상태 필터 + 페이지네이션")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminMemberSummaryResponse>>> getMembers(
+            @AuthenticationPrincipal CustomUser admin,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) MemberStatus status,
             Pageable pageable) {
-        Page<AdminMemberSummaryResponse> members = memberAdminService.getMembers(keyword, status, pageable);
+        Page<AdminMemberSummaryResponse> members = memberAdminService.getMembers(admin, keyword, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(members));
     }
 
     @Operation(summary = "회원 상세 조회")
     @GetMapping("/{memberId}")
-    public ResponseEntity<ApiResponse<AdminMemberDetailResponse>> getMemberDetail(@PathVariable Long memberId) {
-        AdminMemberDetailResponse detail = memberAdminService.getMemberDetail(memberId);
+    public ResponseEntity<ApiResponse<AdminMemberDetailResponse>> getMemberDetail(
+            @AuthenticationPrincipal CustomUser admin,
+            @PathVariable Long memberId) {
+        AdminMemberDetailResponse detail = memberAdminService.getMemberDetail(admin, memberId);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 
     @Operation(summary = "회원 로그 조회", description = "type 생략 시 전체, 지정 시 해당 타입만 반환합니다.")
     @GetMapping("/{memberId}/logs")
     public ResponseEntity<ApiResponse<List<MemberLogResponse>>> getLogs(
+            @AuthenticationPrincipal CustomUser admin,
             @PathVariable Long memberId,
             @RequestParam(required = false) MemberLogType type) {
-        List<MemberLogResponse> logs = memberAdminService.getLogs(memberId, type);
+        List<MemberLogResponse> logs = memberAdminService.getLogs(admin, memberId, type);
         return ResponseEntity.ok(ApiResponse.success(logs));
     }
 
