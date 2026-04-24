@@ -1,8 +1,13 @@
 package koza.licensemanagementservice.member.service;
 
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
+import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
+import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawCancelledEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawRequestedEvent;
 import koza.licensemanagementservice.domain.member.service.MemberService;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -18,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,10 +106,9 @@ class MemberServiceTest {
                 .build();
 
         given(memberRepository.findByEmail(request.getEmail())).willReturn(Optional.of(member));
-
         given(passwordEncoder.matches(request.getPassword(), encodePassword)).willReturn(true);
-        given(jwtTokenProvider.createToken(member).getAccessToken()).willReturn(createAccessToken);
-        given(jwtTokenProvider.createToken(member).getRefreshToken()).willReturn(createRefreshToken);
+        given(jwtTokenProvider.createToken(member))
+                .willReturn(new JwtTokenDTO(createAccessToken, createRefreshToken));
 
         // when
         JwtTokenDTO token = memberService.login(request, "127.0.0.1", "test-agent");
@@ -111,9 +116,74 @@ class MemberServiceTest {
         // then
         assertThat(token.getAccessToken()).isEqualTo(createAccessToken);
         assertThat(token.getRefreshToken()).isEqualTo(createRefreshToken);
+        assertThat(token.isWithdrawCancelled()).isFalse();
 
         verify(memberRepository).findByEmail(request.getEmail());
         verify(passwordEncoder).matches(request.getPassword(), encodePassword);
         verify(jwtTokenProvider).createToken(member);
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 요청 - 즉시 익명화하지 않고 14일 예약 상태로 전환")
+    void withdraw_schedules_grace_period() {
+        // given
+        Long memberId = 42L;
+        Member member = Member.builder().id(memberId).email("u@test.com").build();
+        CustomUser user = new CustomUser(member.getId(), member.getEmail(), null, null, java.util.Collections.emptyList());
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+        // when
+        memberService.withdraw(user, new MemberWithdrawRequest("이유"));
+
+        // then
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.PENDING_WITHDRAW);
+        assertThat(member.getWithdrawScheduledAt())
+                .isAfter(LocalDateTime.now().plusDays(MemberService.WITHDRAW_GRACE_DAYS - 1))
+                .isBefore(LocalDateTime.now().plusDays(MemberService.WITHDRAW_GRACE_DAYS + 1));
+        assertThat(member.getEmail()).isEqualTo("u@test.com"); // 아직 익명화되지 않음
+        verify(publisher).publishEvent(any(MemberWithdrawRequestedEvent.class));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 - 이미 예약 상태인 경우 재요청 불가")
+    void withdraw_fails_when_already_pending() {
+        // given
+        Long memberId = 7L;
+        Member member = Member.builder().id(memberId).email("u@test.com").build();
+        member.requestWithdraw(LocalDateTime.now().plusDays(14));
+        CustomUser user = new CustomUser(member.getId(), member.getEmail(), null, null, java.util.Collections.emptyList());
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+        // when / then
+        assertThrows(BusinessException.class,
+                () -> memberService.withdraw(user, new MemberWithdrawRequest("재요청")));
+    }
+
+    @Test
+    @DisplayName("로그인 시 PENDING_WITHDRAW 상태면 자동 복구되고 플래그가 true 로 응답")
+    void login_cancels_pending_withdraw() {
+        // given
+        MemberLoginRequest request = new MemberLoginRequest("test@test.com", "password123");
+        Member member = Member.builder()
+                .email(request.getEmail())
+                .password("encoded")
+                .build();
+        member.requestWithdraw(LocalDateTime.now().plusDays(14));
+
+        given(memberRepository.findByEmail(request.getEmail())).willReturn(Optional.of(member));
+        given(passwordEncoder.matches(request.getPassword(), "encoded")).willReturn(true);
+        given(jwtTokenProvider.createToken(member))
+                .willReturn(new JwtTokenDTO("access", "refresh"));
+
+        // when
+        JwtTokenDTO token = memberService.login(request, "127.0.0.1", "agent");
+
+        // then
+        assertThat(token.isWithdrawCancelled()).isTrue();
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+        assertThat(member.getWithdrawScheduledAt()).isNull();
+        verify(publisher).publishEvent(any(MemberWithdrawCancelledEvent.class));
     }
 }
