@@ -23,7 +23,7 @@ RUN groupadd --system app && useradd --system --gid app app \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /build/build/libs/*.jar app.jar
+COPY build/libs/*.jar app.jar
 RUN chown -R app:app /app
 USER app
 
