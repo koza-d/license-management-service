@@ -8,6 +8,7 @@ import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawCancelledEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -64,9 +65,26 @@ public class OAuthService {
             throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
+        boolean withdrawCancelled = false;
+        if (member.getStatus() == MemberStatus.PENDING_WITHDRAW) {
+            member.cancelWithdraw();
+            publisher.publishEvent(new MemberWithdrawCancelledEvent(member.getId()));
+            withdrawCancelled = true;
+        }
+
         if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
             member.changeProfileURL(userInfo.getPicture());
+      
+        boolean withdrawCancelled = false;
+        if (member.getStatus() == MemberStatus.PENDING_WITHDRAW) {
+            member.cancelWithdraw();
+            publisher.publishEvent(new MemberWithdrawCancelledEvent(member.getId()));
+            withdrawCancelled = true;
+        }
 
+        if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
+            member.changeProfileURL(userInfo.getPicture());
+      
         publishSuccessLogEvent(ip, userAgent, member);
 
         return jwtTokenProvider.createToken(member);

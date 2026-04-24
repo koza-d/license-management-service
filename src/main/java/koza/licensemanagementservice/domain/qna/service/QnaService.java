@@ -12,6 +12,7 @@ import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.qna.entity.Qna;
 import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
 import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
+import koza.licensemanagementservice.domain.qna.log.dto.QnaAnswerUpdatedEvent;
 import koza.licensemanagementservice.domain.qna.log.dto.QnaAnsweredEvent;
 import koza.licensemanagementservice.domain.qna.log.dto.QnaPriorityChangedEvent;
 import koza.licensemanagementservice.domain.qna.repository.QnaRepository;
@@ -20,6 +21,8 @@ import koza.licensemanagementservice.domain.software.repository.SoftwareReposito
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -100,24 +103,35 @@ public class QnaService {
         return QnaDetailResponse.from(question);
     }
 
-    // 6. 답변 제출 (관리자 전용)
+    // 6. 답변 제출 (관리자 전용) — 기존 답변이 없으면 신규 등록, 있으면 수정으로 자동 분기
     @Transactional
     public QnaDetailResponse submitAnswer(CustomUser user, Long qnaId, QnaAnswerRequest request) {
-        validateAdmin(user);
+        validAdminAuthorized(user);
         Qna question = findQuestion(qnaId);
-        question.submitAnswer(request.getAnswer());
         Member asker = question.getMember();
-        eventPublisher.publishEvent(new QnaAnsweredEvent(
-                user.getId(), question.getId(), question.getTitle(),
-                asker != null ? asker.getId() : null,
-                asker != null ? asker.getEmail() : null));
+        Long askerId = asker != null ? asker.getId() : null;
+        String askerEmail = asker != null ? asker.getEmail() : null;
+
+        String before = question.getAnswer();
+        if (before == null) {
+            question.submitAnswer(request.getAnswer());
+            eventPublisher.publishEvent(new QnaAnsweredEvent(
+                    user.getId(), question.getId(), question.getTitle(),
+                    askerId, askerEmail));
+        } else {
+            question.updateAnswer(request.getAnswer());
+            eventPublisher.publishEvent(new QnaAnswerUpdatedEvent(
+                    user.getId(), question.getId(), question.getTitle(),
+                    askerId, askerEmail,
+                    before, request.getAnswer()));
+        }
         return QnaDetailResponse.from(question);
     }
 
     // 7. 상태 변경 (관리자 전용)
     @Transactional
     public QnaDetailResponse changeStatus(CustomUser user, Long qnaId, QnaStatusUpdateRequest request) {
-        validateAdmin(user);
+        validAdminAuthorized(user);
         Qna question = findQuestion(qnaId);
         question.changeStatus(request.getStatus());
         return QnaDetailResponse.from(question);
@@ -126,7 +140,7 @@ public class QnaService {
     // 7-1. 긴급도 변경 (관리자 전용)
     @Transactional
     public QnaDetailResponse changePriority(CustomUser user, Long qnaId, QnaPriorityUpdateRequest request) {
-        validateAdmin(user);
+        validAdminAuthorized(user);
         Qna question = findQuestion(qnaId);
         QnaPriority before = question.getPriority();
         question.changePriority(request.getPriority());
@@ -154,12 +168,6 @@ public class QnaService {
     private void validateOwnerOrAdmin(CustomUser user, Qna question) {
         if (isAdmin(user)) return;
         if (question.getMember() == null || !question.getMember().getId().equals(user.getId())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
-    }
-
-    private void validateAdmin(CustomUser user) {
-        if (!isAdmin(user)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
     }

@@ -9,8 +9,10 @@ import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberRoleChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.qna.log.dto.QnaAnswerUpdatedEvent;
 import koza.licensemanagementservice.domain.qna.log.dto.QnaAnsweredEvent;
 import koza.licensemanagementservice.domain.qna.log.dto.QnaPriorityChangedEvent;
 import koza.licensemanagementservice.domain.session.log.dto.SessionBulkTerminatedEvent;
@@ -122,6 +124,24 @@ public class AdminAuditLogListener {
                 payload);
     }
 
+    @Async("auditLogExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onMemberRoleChanged(MemberRoleChangedEvent event) {
+        Member target = event.getTarget();
+        Member operator = event.getOperator();
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("before", event.getBefore().name());
+        payload.put("after", event.getAfter().name());
+        payload.put("reason", event.getReason());
+        save(EventCategory.MEMBER, "ROLE_CHANGED",
+                operator.getId(), operator.getEmail(),
+                TARGET_MEMBER, target.getId(), target.getEmail(),
+                String.format("회원 '%s' 역할 %s → %s",
+                        target.getEmail(), event.getBefore(), event.getAfter()),
+                payload);
+    }
+
     // ===== Software =====
 
     @Async("auditLogExecutor")
@@ -208,6 +228,23 @@ public class AdminAuditLogListener {
                 event.getOperatorId(), actorEmail,
                 TARGET_QNA, event.getQnaId(), event.getQnaTitle(),
                 String.format("문의 '%s' 답변 등록", event.getQnaTitle()),
+                payload);
+    }
+
+    @Async("auditLogExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onQnaAnswerUpdated(QnaAnswerUpdatedEvent event) {
+        String actorEmail = resolveMemberEmail(event.getOperatorId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("askerId", event.getAskerId());
+        payload.put("askerEmail", event.getAskerEmail());
+        payload.put("before", event.getBeforeAnswer());
+        payload.put("after", event.getAfterAnswer());
+        save(EventCategory.QNA, "ANSWER_UPDATED",
+                event.getOperatorId(), actorEmail,
+                TARGET_QNA, event.getQnaId(), event.getQnaTitle(),
+                String.format("문의 '%s' 답변 수정", event.getQnaTitle()),
                 payload);
     }
 

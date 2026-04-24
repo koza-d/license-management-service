@@ -4,11 +4,14 @@ import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
+import koza.licensemanagementservice.domain.member.dto.request.MemberRoleChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberGrade;
+import koza.licensemanagementservice.domain.member.entity.MemberRole;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberRoleChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLog;
@@ -18,6 +21,8 @@ import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,23 +36,27 @@ import java.util.List;
 public class MemberAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
+    private final MemberWithdrawSweeper memberWithdrawSweeper;
     private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
-    public Page<AdminMemberSummaryResponse> getMembers(String keyword, MemberStatus status, Pageable pageable) {
+    public Page<AdminMemberSummaryResponse> getMembers(CustomUser admin, String keyword, MemberStatus status, Pageable pageable) {
+        validAdminAuthorized(admin);
         return memberRepository.searchForAdmin(keyword, status, pageable)
                 .map(AdminMemberSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public AdminMemberDetailResponse getMemberDetail(Long memberId) {
+    public AdminMemberDetailResponse getMemberDetail(CustomUser admin, Long memberId) {
+        validAdminAuthorized(admin);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         return AdminMemberDetailResponse.from(member);
     }
 
     @Transactional(readOnly = true)
-    public List<MemberLogResponse> getLogs(Long memberId, MemberLogType type) {
+    public List<MemberLogResponse> getLogs(CustomUser admin, Long memberId, MemberLogType type) {
+        validAdminAuthorized(admin);
         List<MemberLog> logs = (type == null)
                 ? memberLogRepository.findByMemberIdOrderByCreateAtDesc(memberId)
                 : memberLogRepository.findByMemberIdAndLogTypeOrderByCreateAtDesc(memberId, type);
@@ -56,6 +65,7 @@ public class MemberAdminService {
 
     @Transactional
     public void changeStatus(CustomUser admin, Long memberId, MemberStatusChangeRequest request) {
+        validAdminAuthorized(admin);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         Member manager = memberRepository.findById(admin.getId())
@@ -79,6 +89,7 @@ public class MemberAdminService {
 
     @Transactional
     public void changeGrade(CustomUser admin, Long memberId, MemberGradeChangeRequest request) {
+        validAdminAuthorized(admin);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         Member manager = memberRepository.findById(admin.getId())
@@ -96,6 +107,39 @@ public class MemberAdminService {
                 .operator(manager)
                 .before(before)
                 .after(request.getGrade())
+                .reason(request.getReason())
+                .build());
+    }
+
+    public int sweepExpiredWithdraws(CustomUser admin) {
+        validAdminAuthorized(admin);
+        return memberWithdrawSweeper.sweep();
+    }
+
+    @Transactional
+    public void changeRole(CustomUser admin, Long memberId, MemberRoleChangeRequest request) {
+        validAdminAuthorized(admin);
+        if (admin.getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.MEMBER_ROLE_SELF_FORBIDDEN);
+        }
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        Member manager = memberRepository.findById(admin.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        MemberRole before = member.getRole();
+        if (before == request.getRole()) {
+            throw new BusinessException(ErrorCode.MEMBER_ROLE_SAME);
+        }
+
+        member.changeRole(request.getRole());
+
+        publisher.publishEvent(MemberRoleChangedEvent.builder()
+                .target(member)
+                .operator(manager)
+                .before(before)
+                .after(request.getRole())
                 .reason(request.getReason())
                 .build());
     }

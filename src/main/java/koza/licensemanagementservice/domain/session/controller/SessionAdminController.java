@@ -30,16 +30,18 @@ public class SessionAdminController {
 
     @Operation(summary = "관리자 전체 세션 목록", description = "활성 세션 목록 조회 (필터/검색/페이지네이션)")
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getSessions(@ModelAttribute SessionSearchCondition condition,
+    public ResponseEntity<ApiResponse<?>> getSessions(@AuthenticationPrincipal CustomUser admin,
+                                                      @ModelAttribute SessionSearchCondition condition,
                                                       Pageable pageable) {
-        Page<SessionAdminResponse> page = sessionAdminService.getSessions(condition, pageable);
+        Page<SessionAdminResponse> page = sessionAdminService.getSessions(admin, condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @Operation(summary = "관리자 세션 상세", description = "userAgent 포함 상세 정보 반환")
     @GetMapping("/{sessionId}")
-    public ResponseEntity<ApiResponse<?>> getSession(@PathVariable("sessionId") String sessionId) {
-        SessionAdminDetailResponse detail = sessionAdminService.getSession(sessionId);
+    public ResponseEntity<ApiResponse<?>> getSession(@AuthenticationPrincipal CustomUser admin,
+                                                     @PathVariable("sessionId") String sessionId) {
+        SessionAdminDetailResponse detail = sessionAdminService.getSession(admin, sessionId);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 
