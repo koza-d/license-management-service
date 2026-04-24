@@ -16,6 +16,8 @@ import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
@@ -36,7 +38,8 @@ public class SessionAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public Page<SessionAdminResponse> getSessions(SessionSearchCondition condition, Pageable pageable) {
+    public Page<SessionAdminResponse> getSessions(CustomUser admin, SessionSearchCondition condition, Pageable pageable) {
+        validAdminAuthorized(admin);
         Page<SessionAdminResponse> result = licenseRepository.findActiveSessionLicensesByCondition(condition, pageable);
         List<SessionAdminResponse> content = result
                 .filter(response -> sessionManager.getSessionByLicenseId(response.getLicenseId()).isPresent())
@@ -54,7 +57,8 @@ public class SessionAdminService {
     }
 
     @Transactional(readOnly = true)
-    public SessionAdminDetailResponse getSession(String sessionId) {
+    public SessionAdminDetailResponse getSession(CustomUser admin, String sessionId) {
+        validAdminAuthorized(admin);
         SessionValue session = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
 
@@ -72,6 +76,7 @@ public class SessionAdminService {
 
     @Transactional
     public void terminate(CustomUser user, String sessionId, SessionTerminateRequest request) {
+        validAdminAuthorized(user);
         SessionValue session = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
 
@@ -89,6 +94,7 @@ public class SessionAdminService {
 
     @Transactional
     public SessionBulkTerminationResponse terminateBulk(CustomUser user, SessionTerminationsBulkRequest request) {
+        validAdminAuthorized(user);
         int terminated = 0;
         int failed = 0;
         List<String> terminatedIds = new ArrayList<>();
