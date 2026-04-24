@@ -1,9 +1,7 @@
 package koza.licensemanagementservice.domain.member.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
-import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
-import koza.licensemanagementservice.auth.dto.SocialProvider;
+import koza.licensemanagementservice.auth.dto.*;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
@@ -17,7 +15,6 @@ import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -65,7 +62,7 @@ public class MemberService {
     }
 
     @Transactional
-    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest, HttpServletRequest servletRequest) {
+    public LoginResponse login(MemberLoginRequest memberLoginRequest, HttpServletRequest servletRequest) {
         Member member = memberRepository.findByEmail(memberLoginRequest.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD));
 
@@ -90,10 +87,7 @@ public class MemberService {
         }
 
         publishLoginSuccessLogEvent(member, ipAddress, userAgent);
-    }
-
-        JwtTokenDTO token = jwtTokenProvider.createToken(member);
-        return new JwtTokenDTO(token.getAccessToken(), token.getRefreshToken(), withdrawCancelled);
+        return new LoginResponse(jwtTokenProvider.createToken(member), withdrawCancelled);
     }
 
     private void publishLoginSuccessLogEvent(Member member, String ipAddress, String userAgent) {

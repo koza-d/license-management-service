@@ -28,7 +28,7 @@ public class OAuthService {
     private final ApplicationEventPublisher publisher;
 
     @Transactional
-    public JwtTokenDTO login(String providerName, String code, String ip, String userAgent) {
+    public LoginResponse login(String providerName, String code, String ip, String userAgent) {
         SocialOAuthClient client = oAuthClientFactory.getClient(providerName);
         String accessToken = client.getAccessToken(code);
         OAuthUserInfo userInfo = client.getUserInfo(accessToken);
@@ -75,19 +75,9 @@ public class OAuthService {
         if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
             member.changeProfileURL(userInfo.getPicture());
       
-        boolean withdrawCancelled = false;
-        if (member.getStatus() == MemberStatus.PENDING_WITHDRAW) {
-            member.cancelWithdraw();
-            publisher.publishEvent(new MemberWithdrawCancelledEvent(member.getId()));
-            withdrawCancelled = true;
-        }
-
-        if (member.getProfileURL() == null || member.getProfileURL().isEmpty())
-            member.changeProfileURL(userInfo.getPicture());
-      
         publishSuccessLogEvent(ip, userAgent, member);
 
-        return jwtTokenProvider.createToken(member);
+        return new LoginResponse(jwtTokenProvider.createToken(member), withdrawCancelled);
     }
 
     private void publishSuccessLogEvent(String ip, String userAgent, Member member) {

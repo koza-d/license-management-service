@@ -13,6 +13,8 @@ public class SessionValue {
     private String sessionId;
     private Long licenseId;
     private String ipAddress;
+
+    @Builder.Default
     private String userAgent = "Unknown";
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime expiredAt;

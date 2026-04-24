@@ -34,26 +34,28 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저 로그인 API")
     public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request, HttpServletRequest servletRequest) {
-        JwtTokenDTO token = memberService.login(request, servletRequest);
+        LoginResponse response = memberService.login(request, servletRequest);
+        JwtTokenDTO token = response.getJwtTokenDTO();
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
+        response.setJwtTokenDTO(null);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(new LoginResponse(token.isWithdrawCancelled())));
+                .body(ApiResponse.success(response));
     }
 
     @PostMapping("/logout")
@@ -77,22 +79,21 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<Void>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken) {
-        System.out.println("refreshToken = " + refreshToken);
         JwtTokenDTO token = refreshTokenService.refreshToken(refreshToken);
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.ok()
