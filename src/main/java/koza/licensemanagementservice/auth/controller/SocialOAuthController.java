@@ -3,6 +3,7 @@ package koza.licensemanagementservice.auth.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.dto.LoginResponse;
 import koza.licensemanagementservice.auth.dto.SocialProvider;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.service.OAuthService;
@@ -33,7 +34,8 @@ public class SocialOAuthController {
     @PostMapping("/{provider}/callback")
     public ResponseEntity<ApiResponse<?>> socialCallback(@RequestBody Map<String, String> body, @PathVariable("provider") String provider, HttpServletRequest httpRequest) {
         String authCode = body.get("code");
-        JwtTokenDTO token = oAuthService.login(provider, authCode, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
+        LoginResponse response = oAuthService.login(provider, authCode, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
+        JwtTokenDTO token = response.getJwtTokenDTO();
 
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
@@ -50,9 +52,10 @@ public class SocialOAuthController {
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
                 .sameSite("None")
                 .build();
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+                .body(ApiResponse.success(response));
     }
 
 }

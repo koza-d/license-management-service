@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.dashboard.service;
 
+import koza.licensemanagementservice.auth.dto.CustomUser;
 import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
 import koza.licensemanagementservice.domain.audit.repository.AdminAuditLogRepository;
 import koza.licensemanagementservice.dashboard.dto.AdminStatsResponse;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,17 +34,20 @@ public class DashboardAdminService {
     private final QnaRepository qnaRepository;
     private final AdminAuditLogRepository auditLogRepository;
 
-    public List<PendingQnaResponse> getPendingQna(int limit) {
+    public List<PendingQnaResponse> getPendingQna(CustomUser admin, int limit) {
+        validAdminAuthorized(admin);
         int safeLimit = Math.min(Math.max(limit, PENDING_QNA_MIN_LIMIT), PENDING_QNA_MAX_LIMIT);
         return qnaRepository.findPendingForDashboard(safeLimit);
     }
 
-    public List<RecentAuditResponse> getRecentAudit(int limit) {
+    public List<RecentAuditResponse> getRecentAudit(CustomUser admin, int limit) {
+        validAdminAuthorized(admin);
         int safeLimit = Math.min(Math.max(limit, RECENT_AUDIT_MIN_LIMIT), RECENT_AUDIT_MAX_LIMIT);
         return auditLogRepository.findRecent(safeLimit);
     }
 
-    public AdminStatsResponse getStats() {
+    public AdminStatsResponse getStats(CustomUser admin) {
+        validAdminAuthorized(admin);
         Long totalLicenses = licenseRepository.count();
         Long activeLicenses = licenseRepository.countByStatusEquals(LicenseStatus.ACTIVE);
         Long bannedLicenses = licenseRepository.countByStatusEquals(LicenseStatus.BANNED);

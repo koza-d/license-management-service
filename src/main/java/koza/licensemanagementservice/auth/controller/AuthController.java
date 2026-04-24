@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.dto.LoginResponse;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.service.RefreshTokenService;
@@ -32,8 +33,9 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저 로그인 API")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request, HttpServletRequest httpRequest) {
-        JwtTokenDTO token = memberService.login(request, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
+    public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request, HttpServletRequest servletRequest) {
+        LoginResponse response = memberService.login(request, servletRequest);
+        JwtTokenDTO token = response.getJwtTokenDTO();
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
                 .secure(true)        // 로컬은 false, 배포 시 true
@@ -50,9 +52,10 @@ public class AuthController {
                 .sameSite("None")
                 .build();
 
+        response.setJwtTokenDTO(null);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+                .body(ApiResponse.success(response));
     }
 
     @PostMapping("/logout")
@@ -78,7 +81,6 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<Void>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken) {
-        System.out.println("refreshToken = " + refreshToken);
         JwtTokenDTO token = refreshTokenService.refreshToken(refreshToken);
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)

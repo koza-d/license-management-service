@@ -8,6 +8,7 @@ import java.util.Map;
 @Getter
 @RequiredArgsConstructor
 public enum SocialProvider {
+    LOCAL("local", "", "", "", ""),
     GOOGLE(
             "google",
             "https://accounts.google.com/o/oauth2/auth",
