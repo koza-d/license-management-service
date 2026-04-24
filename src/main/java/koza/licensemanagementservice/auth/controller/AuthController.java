@@ -64,12 +64,14 @@ public class AuthController {
                 .httpOnly(true)
                 .path("/")
                 .maxAge(0)
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .path("/")
                 .maxAge(0)
+                .sameSite("None")
                 .build();
         refreshTokenService.logout(refreshToken);
         return ResponseEntity.ok()
