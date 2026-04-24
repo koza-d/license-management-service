@@ -65,28 +65,6 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public List<License> findByMemberId(Long memberId) {
-        return queryFactory
-                .selectFrom(license)
-                .leftJoin(license.software, software)
-                .leftJoin(software.member, member)
-                .where(member.id.eq(memberId))
-                .fetch();
-    }
-
-    @Override
-    public List<License> findByExpiredWithoutLog(LocalDateTime now) {
-        return queryFactory
-                .selectFrom(license)
-                .where(
-                        license.expiredAt.before(now),
-                        license.expiredLoggedAt.isNull()
-                                .or(license.expiredAt.eq(license.expiredLoggedAt).not())
-                )
-                .fetch();
-    }
-
-    @Override
     public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
         List<License> content = queryFactory
                 .selectFrom(license)
@@ -237,6 +215,26 @@ public class LicenseRepositoryCustomImpl implements LicenseRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public List<License> bulkUpdateExpiredStatus(LocalDateTime now) {
+        List<License> targets = queryFactory
+                .selectFrom(license)
+                .where(
+                        license.status.eq(LicenseStatus.ACTIVE),
+                        license.expiredAt.before(now)
+                )
+                .fetch();
+
+        if (!targets.isEmpty()) {
+            queryFactory
+                    .update(license)
+                    .set(license.status, LicenseStatus.EXPIRED)
+                    .where(license.in(targets))
+                    .execute();
+        }
+        return targets;
     }
 
     private BooleanExpression searchSessionCondition(SessionSearchCondition condition) {

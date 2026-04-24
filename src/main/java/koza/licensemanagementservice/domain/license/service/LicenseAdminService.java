@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -93,5 +94,22 @@ public class LicenseAdminService {
         Long periodMs = request.getDays() * 24 * 60 * 60 * 1000L;
         eventPublisher.publishEvent(new LicenseExtendEvent(user.getId(), licenseId, beforeExpiredAt, license.getExpiredAt(), periodMs));
         return LicenseAdminExtendResponse.of(license, request.getDays());
+    }
+
+    /**
+     * 라이센스 만료기간이 지난 상태를 EXPIRED 로 변경하는 메서드
+     * - 스케줄러에서만 호출, 임의 호출 금지
+     */
+    @Transactional
+    public void updateExpiredLicenseStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        List<License> updateLicenses = licenseRepository.bulkUpdateExpiredStatus(now);
+        updateLicenses.forEach(license -> {
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(
+                    license.getId(), 0L,
+                    LicenseStatus.ACTIVE, LicenseStatus.EXPIRED,
+                    "[스케줄러] 라이센스 만료로 인해 상태 변경",
+                    license.getExpiredAt()));
+        });
     }
 }
