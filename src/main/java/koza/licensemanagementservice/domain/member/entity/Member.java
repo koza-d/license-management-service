@@ -55,6 +55,9 @@ public class Member extends BaseEntity {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Column(name = "withdraw_scheduled_at")
+    private LocalDateTime withdrawScheduledAt;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
     @Builder.Default
@@ -84,10 +87,25 @@ public class Member extends BaseEntity {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    public void requestWithdraw(LocalDateTime scheduledAt) {
+        this.status = MemberStatus.PENDING_WITHDRAW;
+        this.withdrawScheduledAt = scheduledAt;
+    }
+
+    public void cancelWithdraw() {
+        this.status = MemberStatus.ACTIVE;
+        this.withdrawScheduledAt = null;
+    }
+
     public void withdraw() {
-        this.email = "#탈퇴한유저";
+        this.email = "탈퇴한유저_" + this.id;
+        this.nickname = "탈퇴한유저_" + this.id;
         this.password = null;
+        if (this.providerId != null) {
+            this.providerId = "WITHDRAWN_" + this.providerId;
+        }
         this.status = MemberStatus.WITHDRAW;
+        this.withdrawScheduledAt = null;
     }
 
     public Map<String, Object> toSnapshot() {
