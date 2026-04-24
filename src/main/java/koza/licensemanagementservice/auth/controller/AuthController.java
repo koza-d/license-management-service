@@ -36,18 +36,18 @@ public class AuthController {
         JwtTokenDTO token = memberService.login(request, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
         ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
                 .httpOnly(true)
-                .secure(false)        // 로컬은 false, 배포 시 true
+                .secure(true)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.ok()
@@ -61,12 +61,14 @@ public class AuthController {
                 .httpOnly(true)
                 .path("/")
                 .maxAge(0)
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .path("/")
                 .maxAge(0)
+                .sameSite("None")
                 .build();
         refreshTokenService.logout(refreshToken);
         return ResponseEntity.ok()
@@ -83,7 +85,7 @@ public class AuthController {
                 .secure(false)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
@@ -91,7 +93,7 @@ public class AuthController {
                 .secure(false)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.ok()

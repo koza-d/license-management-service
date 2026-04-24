@@ -40,7 +40,7 @@ public class SocialOAuthController {
                 .secure(false)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
@@ -48,7 +48,7 @@ public class SocialOAuthController {
                 .secure(false)        // 로컬은 false, 배포 시 true
                 .path("/")
                 .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
