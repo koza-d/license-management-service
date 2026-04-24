@@ -18,7 +18,7 @@ import koza.licensemanagementservice.domain.qna.log.dto.QnaPriorityChangedEvent;
 import koza.licensemanagementservice.domain.session.log.dto.SessionBulkTerminatedEvent;
 import koza.licensemanagementservice.domain.session.log.dto.SessionTerminatedEvent;
 import koza.licensemanagementservice.domain.software.entity.Software;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -146,19 +147,33 @@ public class AdminAuditLogListener {
     @Async("auditLogExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onSoftwareStatusChanged(SoftwareStatusChangedEvent event) {
-        if (event.getBeforeStatus() == event.getAfterStatus()) return;
+    public void onSoftwareStatusChanged(AdminSoftwareStatusChangedEvent event) {
+        if (event.getBeforeStatus() == event.getAfterStatus())
+            return;
+
         String actorEmail = resolveMemberEmail(event.getOperatorId());
         String label = resolveSoftwareLabel(event.getTargetSoftwareId());
+
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("before", event.getBeforeStatus().name());
         payload.put("after", event.getAfterStatus().name());
         payload.put("reason", event.getReason());
+        if (event.getUntil() != null)
+            payload.put("until", event.getUntil());
+
+        String summary = String.format("소프트웨어 '%s' 상태 %s → %s"
+                , label, event.getBeforeStatus(), event.getAfterStatus());
+
+        if (event.getUntil() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String format = event.getUntil().format(formatter);
+            summary += String.format("(until  : %s)", format);
+        }
+
         save(EventCategory.SOFTWARE, "STATUS_CHANGED",
                 event.getOperatorId(), actorEmail,
                 TARGET_SOFTWARE, event.getTargetSoftwareId(), label,
-                String.format("소프트웨어 '%s' 상태 %s → %s",
-                        label, event.getBeforeStatus(), event.getAfterStatus()),
+                summary,
                 payload);
     }
 

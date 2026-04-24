@@ -26,7 +26,7 @@ public class SoftwareVersion extends BaseEntity {
     @Column(name = "version", length = 20, nullable = false)
     private String version;
 
-    @Column(name = "file_hash", length = 64, nullable = false)
+    @Column(name = "file_hash", length = 64)
     private String fileHash;
 
     @Column(name = "is_latest")

@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.software.dto.response;
 
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,7 @@ public class SoftwareDetailResponse {
     private Long id;
     private String name;
     private String latestVersion;
+    private SoftwareStatus status;
     private String appId;
     private int licenseCount;
     private int limitLicense;
@@ -32,6 +34,7 @@ public class SoftwareDetailResponse {
                 .id(software.getId())
                 .name(software.getName())
                 .latestVersion(latestVersion.isEmpty() ? "최신버전 찾을 수 없음" : latestVersion.get().getVersion())
+                .status(software.getStatus())
                 .appId(software.getAppId())
                 .licenseCount(licenseCount)
                 .limitLicense(software.getLimitLicense())

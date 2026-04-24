@@ -4,13 +4,13 @@ import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 
 @Getter
-public class SoftwareAdminStatsResponse {
+public class AdminSoftwareUsageResponse {
     private final Long totalUsageSeconds;
     private final Long usageSessionCount;
     private final Long avgUsageSeconds;
 
     @QueryProjection
-    public SoftwareAdminStatsResponse(Long totalUsageSeconds, Long usageSessionCount, Long avgUsageSeconds) {
+    public AdminSoftwareUsageResponse(Long totalUsageSeconds, Long usageSessionCount, Long avgUsageSeconds) {
         this.totalUsageSeconds = totalUsageSeconds;
         this.usageSessionCount = usageSessionCount;
         this.avgUsageSeconds = avgUsageSeconds;

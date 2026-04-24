@@ -1,9 +1,10 @@
 package koza.licensemanagementservice.domain.member.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
+import koza.licensemanagementservice.auth.dto.SocialProvider;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
-import koza.licensemanagementservice.domain.member.entity.JoinType;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
@@ -30,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*;
+
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -47,12 +50,12 @@ public class MemberService {
                     throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
                 });
         List<String> roles = new ArrayList<>();
-        roles.add("ROLE_USER");
+        roles.add("ROLE_MEMBER");
 
         Member member = Member.builder().email(joinRequest.getEmail())
                 .nickname(joinRequest.getNickname())
                 .password(passwordEncoder.encode(joinRequest.getPassword()))
-                .provider("LOCAL")
+                .provider(SocialProvider.LOCAL.getName())
                 .roles(roles)
                 .build();
 
@@ -62,32 +65,23 @@ public class MemberService {
     }
 
     @Transactional
-    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest, String ip, String userAgent) {
+    public JwtTokenDTO login(MemberLoginRequest memberLoginRequest, HttpServletRequest servletRequest) {
         Member member = memberRepository.findByEmail(memberLoginRequest.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD));
 
+        String userAgent = servletRequest.getHeader("User-Agent");
+        String ipAddress = parseIpAddress(servletRequest);
+
         if (!passwordEncoder.matches(memberLoginRequest.getPassword(), member.getPassword())) {
-            publisher.publishEvent(MemberLoginFailEvent.builder()
-                    .memberId(member.getId())
-                    .joinType(JoinType.LOCAL)
-                    .ipAddress(ip)
-                    .userAgent(userAgent)
-                    .failReason("INCORRECT_PASSWORD")
-                    .build());
+            publishLoginFailedLogEvent(member, ipAddress, userAgent, ErrorCode.INCORRECT_EMAIL_OR_PASSWORD);
             throw new BusinessException(ErrorCode.INCORRECT_EMAIL_OR_PASSWORD);
         }
 
         if (member.getStatus() == MemberStatus.BANNED) {
-            publisher.publishEvent(MemberLoginFailEvent.builder()
-                    .memberId(member.getId())
-                    .joinType(JoinType.LOCAL)
-                    .ipAddress(ip)
-                    .userAgent(userAgent)
-                    .failReason("ACCOUNT_BANNED")
-                    .build());
+            publishLoginFailedLogEvent(member, ipAddress, userAgent, ErrorCode.MEMBER_BANNED);
             throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
-
+        
         boolean withdrawCancelled = false;
         if (member.getStatus() == MemberStatus.PENDING_WITHDRAW) {
             member.cancelWithdraw();
@@ -95,16 +89,32 @@ public class MemberService {
             withdrawCancelled = true;
         }
 
-        publisher.publishEvent(MemberLoginSuccessEvent.builder()
-                .memberId(member.getId())
-                .joinType(JoinType.LOCAL)
-                .ipAddress(ip)
-                .userAgent(userAgent)
-                .build());
+        publishLoginSuccessLogEvent(member, ipAddress, userAgent);
+    }
 
         JwtTokenDTO token = jwtTokenProvider.createToken(member);
         return new JwtTokenDTO(token.getAccessToken(), token.getRefreshToken(), withdrawCancelled);
     }
+
+    private void publishLoginSuccessLogEvent(Member member, String ipAddress, String userAgent) {
+        publisher.publishEvent(MemberLoginSuccessEvent.builder()
+                .memberId(member.getId())
+                .provider(member.getProvider())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .build());
+    }
+
+    private void publishLoginFailedLogEvent(Member member, String ipAddress, String userAgent, ErrorCode errorCode) {
+        publisher.publishEvent(MemberLoginFailEvent.builder()
+                .memberId(member.getId())
+                .provider(member.getProvider())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .failReason(errorCode.getCode())
+                .build());
+    }
+
 
 
     @Transactional

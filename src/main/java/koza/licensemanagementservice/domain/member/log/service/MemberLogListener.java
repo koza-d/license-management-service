@@ -69,7 +69,7 @@ public class MemberLogListener {
         memberRepository.findById(event.getMemberId()).ifPresent(member -> {
             member.updateLastLoginAt();
             Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("joinType", event.getJoinType().name());
+            payload.put("provider", event.getProvider());
             payload.put("ipAddress", event.getIpAddress());
             payload.put("userAgent", event.getUserAgent());
             persist(member, member, MemberLogType.LOGIN_SUCCESS, payload);
@@ -82,7 +82,7 @@ public class MemberLogListener {
     public void handleLoginFail(MemberLoginFailEvent event) {
         memberRepository.findById(event.getMemberId()).ifPresent(member -> {
             Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("joinType", event.getJoinType().name());
+            payload.put("provider", event.getProvider());
             payload.put("ipAddress", event.getIpAddress());
             payload.put("userAgent", event.getUserAgent());
             payload.put("failReason", event.getFailReason());
