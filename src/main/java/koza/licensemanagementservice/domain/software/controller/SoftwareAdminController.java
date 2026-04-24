@@ -92,7 +92,7 @@ public class SoftwareAdminController {
     }
 
     @Operation(summary = "소프트웨어별 라이센스 현황")
-    @GetMapping("/software/{softwareId}/stats")
+    @GetMapping("/{softwareId}/license-stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
         AdminLicenseStatResponse stat = softwareAdminService.getLicenseStat(user, softwareId);
