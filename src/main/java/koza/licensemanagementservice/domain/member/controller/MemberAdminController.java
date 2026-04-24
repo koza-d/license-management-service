@@ -78,6 +78,14 @@ public class MemberAdminController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    @Operation(summary = "탈퇴 유예기간 만료자 강제 익명화",
+            description = "스케줄러가 도는 새벽 4시까지 기다리지 않고 즉시 sweep을 실행합니다. 운영 보정/검증용.")
+    @PostMapping("/sweep-withdraws")
+    public ResponseEntity<ApiResponse<Integer>> sweepExpiredWithdraws(@AuthenticationPrincipal CustomUser admin) {
+        int processed = memberAdminService.sweepExpiredWithdraws(admin);
+        return ResponseEntity.ok(ApiResponse.success(processed));
+    }
+
     @Operation(summary = "회원 역할 변경", description = "회원의 역할(USER/ADMIN)을 변경합니다. 본인 역할은 변경할 수 없습니다.")
     @PatchMapping("/{memberId}/role")
     public ResponseEntity<ApiResponse<?>> changeRole(@AuthenticationPrincipal CustomUser admin,

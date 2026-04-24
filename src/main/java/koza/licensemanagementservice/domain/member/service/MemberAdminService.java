@@ -36,6 +36,7 @@ import java.util.List;
 public class MemberAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
+    private final MemberWithdrawSweeper memberWithdrawSweeper;
     private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
@@ -108,6 +109,11 @@ public class MemberAdminService {
                 .after(request.getGrade())
                 .reason(request.getReason())
                 .build());
+    }
+
+    public int sweepExpiredWithdraws(CustomUser admin) {
+        validAdminAuthorized(admin);
+        return memberWithdrawSweeper.sweep();
     }
 
     @Transactional
