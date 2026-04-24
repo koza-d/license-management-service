@@ -3,6 +3,7 @@ package koza.licensemanagementservice.auth.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.dto.LoginResponse;
 import koza.licensemanagementservice.auth.dto.SocialProvider;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.service.OAuthService;
@@ -52,7 +53,7 @@ public class SocialOAuthController {
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+                .body(ApiResponse.success(new LoginResponse(token.isWithdrawCancelled())));
     }
 
 }

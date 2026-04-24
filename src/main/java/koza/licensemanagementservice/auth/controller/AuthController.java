@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.dto.LoginResponse;
 import koza.licensemanagementservice.auth.dto.MemberLoginRequest;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.service.RefreshTokenService;
@@ -52,7 +53,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+                .body(ApiResponse.success(new LoginResponse(token.isWithdrawCancelled())));
     }
 
     @PostMapping("/logout")

@@ -9,11 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends MemberRepositoryCustom, JpaRepository<Member, Long> {
     Optional<Member> findByEmail(String email);
+
+    List<Member> findAllByStatusAndWithdrawScheduledAtBefore(MemberStatus status, LocalDateTime threshold);
 
     @Query("select m from Member m " +
             "where (:status is null or m.status = :status) " +

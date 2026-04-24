@@ -8,7 +8,8 @@ import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginFailEvent;
 import koza.licensemanagementservice.domain.member.log.dto.MemberLoginSuccessEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawCancelledEvent;
+import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawRequestedEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.member.dto.MemberInfoResponse;
 import koza.licensemanagementservice.domain.member.dto.MemberJoinRequest;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MemberService {
+    public static final int WITHDRAW_GRACE_DAYS = 14;
+
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -84,6 +88,13 @@ public class MemberService {
             throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
+        boolean withdrawCancelled = false;
+        if (member.getStatus() == MemberStatus.PENDING_WITHDRAW) {
+            member.cancelWithdraw();
+            publisher.publishEvent(new MemberWithdrawCancelledEvent(member.getId()));
+            withdrawCancelled = true;
+        }
+
         publisher.publishEvent(MemberLoginSuccessEvent.builder()
                 .memberId(member.getId())
                 .joinType(JoinType.LOCAL)
@@ -91,7 +102,8 @@ public class MemberService {
                 .userAgent(userAgent)
                 .build());
 
-        return jwtTokenProvider.createToken(member);
+        JwtTokenDTO token = jwtTokenProvider.createToken(member);
+        return new JwtTokenDTO(token.getAccessToken(), token.getRefreshToken(), withdrawCancelled);
     }
 
 
@@ -100,16 +112,16 @@ public class MemberService {
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
-        if (member.getStatus() == MemberStatus.WITHDRAW)
+        if (member.getStatus() == MemberStatus.WITHDRAW
+                || member.getStatus() == MemberStatus.PENDING_WITHDRAW)
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
-        member.withdraw();
-        publisher.publishEvent(new MemberWithdrawEvent(
+        LocalDateTime scheduledAt = LocalDateTime.now().plusDays(WITHDRAW_GRACE_DAYS);
+        member.requestWithdraw(scheduledAt);
+        publisher.publishEvent(new MemberWithdrawRequestedEvent(
                 user.getId(),
-                member.getProvider(),
-                member.getGrade(),
                 request.getReason(),
-                member.getCreateAt()
+                scheduledAt
         ));
     }
 
