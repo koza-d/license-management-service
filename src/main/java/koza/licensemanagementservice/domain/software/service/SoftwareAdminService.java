@@ -12,6 +12,7 @@ import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminS
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
 
@@ -107,5 +109,35 @@ public class SoftwareAdminService {
                 .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
                 .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
                 .build();
+    }
+
+    /**
+     * 소프트웨어 상태 유효기간이 지난 것들을 업데이트 시켜주는 메서드
+     * - 밴 기간 끝나면 활성대기상태로 변경
+     * - 점검 기간 끝나면 활성상태로 변경
+     * (추후 확장 시 handler 로 분리 필요)
+     */
+    @Transactional
+    public void processStatusUpdate() {
+        // 상태 유효기간 지난 Software
+        List<Software> statusUntilAfter = softwareRepository.findByStatusUntilBefore(LocalDateTime.now());
+        statusUntilAfter.forEach(
+                software -> {
+                    SoftwareStatus status = software.getStatus();
+                    if (status == SoftwareStatus.BANNED) {
+                        software.changeStatus(SoftwareStatus.INACTIVE);
+                        eventPublisher.publishEvent(
+                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.INACTIVE,
+                                        "[스케줄러] 정지기간이 만료돼 활성대기 상태로 변경"));
+                    }
+
+                    if (status == SoftwareStatus.MAINTENANCE) {
+                        software.changeStatus(SoftwareStatus.ACTIVE);
+                        eventPublisher.publishEvent(
+                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.ACTIVE,
+                                        "[스케줄러] 예정된 점검시간 종료로 활성 상태로 변경"));
+                    }
+                }
+        );
     }
 }
