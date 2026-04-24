@@ -32,17 +32,19 @@ public class QnaAdminController {
 
     @Operation(summary = "관리자 문의 목록", description = "status/필드 검색/페이징")
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getQuestions(@ModelAttribute QnaAdminSearchCondition condition,
+    public ResponseEntity<ApiResponse<?>> getQuestions(@AuthenticationPrincipal CustomUser admin,
+                                                        @ModelAttribute QnaAdminSearchCondition condition,
                                                         @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)
                                                         Pageable pageable) {
-        Page<QnaAdminListResponse> page = qnaAdminService.getQuestions(condition, pageable);
+        Page<QnaAdminListResponse> page = qnaAdminService.getQuestions(admin, condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
     @Operation(summary = "관리자 문의 단건 조회")
     @GetMapping("/{qnaId}")
-    public ResponseEntity<ApiResponse<?>> getQuestionDetail(@PathVariable Long qnaId) {
-        QnaDetailResponse detail = qnaService.getQuestionDetail(qnaId);
+    public ResponseEntity<ApiResponse<?>> getQuestionDetail(@AuthenticationPrincipal CustomUser admin,
+                                                             @PathVariable Long qnaId) {
+        QnaDetailResponse detail = qnaAdminService.getQuestionDetail(admin, qnaId);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 
