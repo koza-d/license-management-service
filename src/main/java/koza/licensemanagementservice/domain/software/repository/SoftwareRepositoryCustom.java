@@ -4,6 +4,7 @@ import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.SoftwareDailyUsage;
 import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,4 +23,5 @@ public interface SoftwareRepositoryCustom {
     Optional<AdminSoftwareUsageResponse> getAdminSoftwareUsageStat(Long softwareId);
 
     Optional<SoftwareUsageResponse> getSoftwareUsageStat(Long softwareId);
+    List<Software> bulkTransitionStatus(SoftwareStatus from, SoftwareStatus to, LocalDateTime now);
 }

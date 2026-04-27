@@ -301,6 +301,26 @@ public class SoftwareRepositoryCustomImpl implements SoftwareRepositoryCustom {
         );
     }
 
+    @Override
+    public List<Software> bulkTransitionStatus(SoftwareStatus from, SoftwareStatus to, LocalDateTime now) {
+        List<Software> targets = queryFactory
+                .selectFrom(software)
+                .where(
+                        software.status.eq(from),
+                        software.statusUntil.before(now)
+                )
+                .fetch();
+
+        if (!targets.isEmpty()) {
+            queryFactory
+                    .update(software)
+                    .set(software.status, to)
+                    .where(software.in(targets))
+                    .execute();
+        }
+        return targets;
+    }
+
     private BooleanExpression searchFilter(SoftwareAdminSearchTarget target, String search) {
         if (search == null || search.isEmpty())
             return null;
