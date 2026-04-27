@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
@@ -37,6 +38,7 @@ public class MemberAdminService {
     private final MemberRepository memberRepository;
     private final MemberLogRepository memberLogRepository;
     private final MemberWithdrawSweeper memberWithdrawSweeper;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ApplicationEventPublisher publisher;
 
     @Transactional(readOnly = true)
@@ -77,6 +79,9 @@ public class MemberAdminService {
 
         MemberStatus before = member.getStatus();
         member.changeStatus(request.getStatus());
+
+        if (request.getStatus() == MemberStatus.BANNED)
+            refreshTokenRepository.deleteByMemberId(memberId);
 
         publisher.publishEvent(MemberStatusChangedEvent.builder()
                 .target(member)
