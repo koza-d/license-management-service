@@ -120,23 +120,22 @@ public class SoftwareAdminService {
     @Transactional
     public void processStatusUpdate() {
         // 상태 유효기간 지난 Software
-        List<Software> statusUntilAfter = softwareRepository.findByStatusUntilBefore(LocalDateTime.now());
-        statusUntilAfter.forEach(
+        LocalDateTime now = LocalDateTime.now();
+        List<Software> bannedToInactiveSoftware = softwareRepository.bulkTransitionStatus(SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, now);
+        List<Software> maintenanceToActiveSoftware = softwareRepository.bulkTransitionStatus(SoftwareStatus.MAINTENANCE, SoftwareStatus.ACTIVE, now);
+        bannedToInactiveSoftware.forEach(
                 software -> {
-                    SoftwareStatus status = software.getStatus();
-                    if (status == SoftwareStatus.BANNED) {
-                        software.changeStatus(SoftwareStatus.INACTIVE);
                         eventPublisher.publishEvent(
-                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.INACTIVE,
+                                new SoftwareStatusChangedEvent(software.getId(), 0L, SoftwareStatus.BANNED, SoftwareStatus.INACTIVE,
                                         "[스케줄러] 정지기간이 만료돼 활성대기 상태로 변경"));
-                    }
+                }
+        );
 
-                    if (status == SoftwareStatus.MAINTENANCE) {
-                        software.changeStatus(SoftwareStatus.ACTIVE);
-                        eventPublisher.publishEvent(
-                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.ACTIVE,
-                                        "[스케줄러] 예정된 점검시간 종료로 활성 상태로 변경"));
-                    }
+        maintenanceToActiveSoftware.forEach(
+                software -> {
+                    eventPublisher.publishEvent(
+                            new SoftwareStatusChangedEvent(software.getId(), 0L, SoftwareStatus.MAINTENANCE, SoftwareStatus.ACTIVE,
+                                    "[스케줄러] 예정된 점검시간 종료로 활성 상태로 변경"));
                 }
         );
     }
