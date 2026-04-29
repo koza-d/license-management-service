@@ -39,11 +39,9 @@ public enum ErrorCode {
     DUPLICATE_VERSION(409, "VERSION_001", "이미 등록돼있는 버전입니다."),
     NOT_FOUND_LATEST_VERSION(404, "VERSION_002", "최신버전을 찾을 수 없습니다."),
 
+    // 라이센스 관련 예외
+    LICENSE_NOT_FOUND(404, "LICENSE_001", "라이센스를 찾을 수 없습니다."),
 
-    // 라이센스 인증 로직 예외
-    NOT_FOUND_LICENSE(404, "VERIFICATION_001", "존재하지 않는 라이센스 입니다."),
-    EXPIRED_LICENSE(403, "VERIFICATION_002", "만료된 라이센스 입니다."),
-    ALREADY_USE_LICENSE(409, "VERIFICATION_003", "이미 사용 중인 라이센스 입니다."),
 
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
@@ -58,7 +56,23 @@ public enum ErrorCode {
     FAQ_NOT_FOUND(404, "FAQ_001", "FAQ를 찾을 수 없습니다."),
 
     // 처리하지 못한 예외
-    INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),
+
+    // SDK 전용 예외
+    SDK_SERVER_ERROR(500, "SDK_001", "서버 내부 오류가 발생했습니다."),
+    SDK_INVALID_REQUEST(400, "SDK_002", "유효하지 않은 요청입니다."),
+    SDK_INVALID_SOFTWARE(404, "SDK_003", "유효하지 않은 소프트웨어입니다."),
+    SDK_INVALID_LICENSE(404, "SDK_004", "유효하지 않은 라이센스입니다."),
+    SDK_LICENSE_IN_USE(409, "SDK_005", "이미 사용 중인 라이센스입니다."),
+    SDK_LICENSE_BANNED(403, "SDK_006", "사용 정지된 라이센스입니다."),
+    SDK_LICENSE_EXPIRED(403, "SDK_007", "만료된 라이센스입니다."),
+    SDK_SOFTWARE_BANNED(403, "SDK_008", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
+    SDK_SOFTWARE_INACTIVE(403, "SDK_009", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+    SDK_SOFTWARE_SUSPENDED(403, "SDK_010", "일시중단된 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+    SDK_SOFTWARE_MAINTENANCE(403, "SDK_011", "소프트웨어가 점검중입니다."), // 점검 종료 일시 반환 필요
+    SDK_SOFTWARE_UNSUPPORTED(403, "SDK_012", "지원중단된 소프트웨어입니다."), // 지원중단 사유 반환 필요
+    SDK_SESSION_EXPIRED(403, "SDK_013", "만료된 세션입니다."),
+    ;
 
     private final int status;
     private final String code;

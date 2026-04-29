@@ -45,7 +45,7 @@ public class LicenseAdminService {
         validAdminAuthorized(user);
 
         License target = licenseRepository.findById(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
         try {
             LicenseStatus status = request.getStatus();
             LicenseStatus beforeStatus = target.getStatus();
@@ -69,7 +69,7 @@ public class LicenseAdminService {
         validAdminAuthorized(user);
 
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
 
         Map<String, Object> finalVars = license.getMergeLocalVariables();
 
@@ -87,7 +87,7 @@ public class LicenseAdminService {
         validAdminAuthorized(user);
 
         License license = licenseRepository.findById(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
         LocalDateTime beforeExpiredAt = license.getExpiredAt();
         license.extendPeriod(request.getDays());
 

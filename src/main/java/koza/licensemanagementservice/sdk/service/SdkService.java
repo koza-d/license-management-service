@@ -60,23 +60,33 @@ public class SdkService {
             String licenseKey = request.getLicenseKey();
             String appId = request.getAppId();
             software = softwareRepository.findByAppId(appId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.SOFTWARE_NOT_FOUND));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
 
             license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_LICENSE));
 
+            // 소프트웨어에 속한 라이센스가 아닌 경우
             if (!software.getId().equals(license.getSoftware().getId()))
-                throw new BusinessException(ErrorCode.NOT_FOUND_LICENSE);
+                throw new BusinessException(ErrorCode.SDK_INVALID_LICENSE);
 
-            // 라이센스 만료 시
-            if (license.getExpiredAt().isBefore(LocalDateTime.now()))
-                throw new BusinessException(ErrorCode.EXPIRED_LICENSE);
+            switch (software.getStatus()) {
+                case BANNED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED);
+                case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
+                case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
+                case MAINTENANCE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE);
+                case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED);
+            }
+
+            switch (license.getStatus()) {
+                case BANNED -> throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED);
+                case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
+            }
 
             String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
 
             // 사용중인 라이센스인 경우 연결 거부
             if (currentSessionId != null && sessionManager.isActive(currentSessionId))
-                throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
+                throw new BusinessException(ErrorCode.SDK_LICENSE_IN_USE);
 
 
             String clientPublicKey = request.getPublicKey();
@@ -138,7 +148,7 @@ public class SdkService {
     private void publishFailure(VerifyRequest request, Exception e, Software software, License license, String ipAddress, String userAgent) {
         ErrorCode errorCode = e instanceof BusinessException
                 ? ((BusinessException) e).getError()
-                : ErrorCode.INTERNAL_SERVER_ERROR;
+                : ErrorCode.SDK_SERVER_ERROR;
 
         eventPublisher.publishEvent(new VerifyFailedEvent(
                 software != null ? software.getId() : null, request.getAppId(),
@@ -151,7 +161,7 @@ public class SdkService {
     public HeartbeatResponse heartbeat(HeartbeatRequest request) throws Exception {
         String sessionId = request.getSessionId();
         SessionValue sessionValue = sessionManager.getSession(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
 
         byte[] currentSessionKey = sessionValue.getSessionKey();
         byte[] signingKey = SessionKeyManager.deriveSigningKey(currentSessionKey);
@@ -162,12 +172,12 @@ public class SdkService {
         long nowTs = System.currentTimeMillis();
         Long receivedTs = request.getReceivedTs();
         if (Math.abs(nowTs - receivedTs) > 30 * 1000)
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
 
         // 서명 검증 (위, 변조된 요청 검증)
         String signTarget = sessionId + "." + receivedTs;
         if (!HMACSignature.verify(signTarget, request.getReceivedSig(), signingKey))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
 
         // 새 sessionKey 재발급
         byte[] newSessionKey = SessionKeyManager.generateSessionKey();
@@ -199,7 +209,7 @@ public class SdkService {
     public void release(ReleaseRequest request) {
         String sessionId = request.getSessionId();
         SessionValue sessionValue = sessionManager.getSession(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
         processRelease(sessionId, sessionValue.getLicenseId(), ReleaseType.NORMAL);
     }
 
@@ -207,7 +217,7 @@ public class SdkService {
     @Transactional
     public void revokeExpire(String sessionId) { // 만료된 세션 처리
         SessionValue sessionValue = sessionManager.getSession(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
         processRelease(sessionId, sessionValue.getLicenseId(), ReleaseType.TIMEOUT);
     }
 
