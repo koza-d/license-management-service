@@ -1,18 +1,18 @@
 package koza.licensemanagementservice.domain.license.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseAdminExtendRequest;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseAdminStatusChangedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseAdminStatusChangedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
@@ -45,7 +45,7 @@ public class LicenseAdminService {
         validAdminAuthorized(user);
 
         License target = licenseRepository.findById(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
         try {
             LicenseStatus status = request.getStatus();
             LicenseStatus beforeStatus = target.getStatus();
@@ -58,18 +58,18 @@ public class LicenseAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseAdminSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+    public Page<AdminLicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return licenseRepository.findByAllCondition(condition, pageable);
     }
 
     @Transactional(readOnly = true)
-    public LicenseAdminDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
+    public AdminLicenseDetailResponse getLicenseDetail(CustomUser user, Long licenseId) {
         validAdminAuthorized(user);
 
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
 
         Map<String, Object> finalVars = license.getMergeLocalVariables();
 
@@ -79,21 +79,21 @@ public class LicenseAdminService {
             latestActiveAt = sessionOptional.get().getLatestActiveAt();
 
         // LicenseAdminDetailResponse.of 내부에서 license.software.versions 을 타고 들어가서 쿼리 1번이 더 나감
-        return LicenseAdminDetailResponse.of(license, latestActiveAt, finalVars);
+        return AdminLicenseDetailResponse.of(license, latestActiveAt, finalVars);
     }
 
     @Transactional
-    public LicenseAdminExtendResponse extend(CustomUser user, Long licenseId, LicenseAdminExtendRequest request) {
+    public AdminLicenseExtendResponse extend(CustomUser user, Long licenseId, AdminLicenseExtendRequest request) {
         validAdminAuthorized(user);
 
         License license = licenseRepository.findById(licenseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_LICENSE));
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
         LocalDateTime beforeExpiredAt = license.getExpiredAt();
         license.extendPeriod(request.getDays());
 
         Long periodMs = request.getDays() * 24 * 60 * 60 * 1000L;
         eventPublisher.publishEvent(new LicenseExtendEvent(user.getId(), licenseId, beforeExpiredAt, license.getExpiredAt(), periodMs));
-        return LicenseAdminExtendResponse.of(license, request.getDays());
+        return AdminLicenseExtendResponse.of(license, request.getDays());
     }
 
     /**

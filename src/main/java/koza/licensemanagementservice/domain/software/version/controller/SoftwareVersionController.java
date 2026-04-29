@@ -8,7 +8,7 @@ import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersion
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionSummaryResponse;
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionUpdateRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.version.service.SoftwareVersionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

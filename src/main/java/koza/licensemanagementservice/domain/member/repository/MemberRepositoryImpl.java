@@ -4,8 +4,8 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.member.entity.MemberGrade;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
-import koza.licensemanagementservice.stat.dto.MemberPlanDistributionResponse;
-import koza.licensemanagementservice.stat.dto.QMemberPlanDistributionResponse;
+import koza.licensemanagementservice.stat.dto.response.MemberPlanDistributionResponse;
+import koza.licensemanagementservice.stat.dto.response.QMemberPlanDistributionResponse;
 import lombok.RequiredArgsConstructor;
 
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;

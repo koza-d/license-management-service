@@ -2,14 +2,13 @@ package koza.licensemanagementservice.domain.software.log.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.entity.Software;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareCreatedEvent;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareModifiedEvent;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareVersionChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareCreatedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareModifiedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareVersionChangedEvent;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLog;
 import koza.licensemanagementservice.domain.software.log.entity.SoftwareLogType;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;

@@ -1,10 +1,10 @@
 package koza.licensemanagementservice.domain.software.log.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
+import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
-import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
+import koza.licensemanagementservice.domain.software.log.dto.condition.SoftwareLogSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;

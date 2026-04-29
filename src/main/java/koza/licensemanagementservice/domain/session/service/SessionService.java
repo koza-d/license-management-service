@@ -6,7 +6,7 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;

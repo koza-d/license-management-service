@@ -8,13 +8,16 @@ import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
-import koza.licensemanagementservice.domain.software.log.dto.*;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareCreatedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareModifiedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareVersionChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.domain.software.version.repository.SoftwareVersionRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -177,7 +180,7 @@ public class SoftwareService {
                 LocalDateTime.now().plusDays(request.getUntilDays());
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.MAINTENANCE, until);
+        software.changeStatus(SoftwareStatus.MAINTENANCE, until, reason);
         eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.MAINTENANCE, until, reason));
     }
 
@@ -191,7 +194,7 @@ public class SoftwareService {
 
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.UNSUPPORTED);
+        software.changeStatus(SoftwareStatus.UNSUPPORTED, null, reason);
         eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.UNSUPPORTED, reason));
     }
 

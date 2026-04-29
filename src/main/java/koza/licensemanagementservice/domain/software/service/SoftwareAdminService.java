@@ -1,19 +1,19 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareUsageResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareDetailResponse;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
-import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.entity.Software;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
-import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.dto.condition.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -54,7 +54,7 @@ public class SoftwareAdminService {
                 LocalDateTime.now().plusDays(request.getUntilDays());
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.BANNED, banUntil);
+        software.changeStatus(SoftwareStatus.BANNED, banUntil, reason);
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
     }
 
@@ -75,14 +75,14 @@ public class SoftwareAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SoftwareAdminSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
+    public Page<AdminSoftwareSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return softwareRepository.searchSoftwareByCondition(condition, pageable);
     }
 
     @Transactional(readOnly = true)
-    public SoftwareAdminDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
+    public AdminSoftwareDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
         return softwareRepository.findBySoftwareId(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -120,23 +120,22 @@ public class SoftwareAdminService {
     @Transactional
     public void processStatusUpdate() {
         // 상태 유효기간 지난 Software
-        List<Software> statusUntilAfter = softwareRepository.findByStatusUntilBefore(LocalDateTime.now());
-        statusUntilAfter.forEach(
+        LocalDateTime now = LocalDateTime.now();
+        List<Software> bannedToInactiveSoftware = softwareRepository.bulkTransitionStatus(SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, now);
+        List<Software> maintenanceToActiveSoftware = softwareRepository.bulkTransitionStatus(SoftwareStatus.MAINTENANCE, SoftwareStatus.ACTIVE, now);
+        bannedToInactiveSoftware.forEach(
                 software -> {
-                    SoftwareStatus status = software.getStatus();
-                    if (status == SoftwareStatus.BANNED) {
-                        software.changeStatus(SoftwareStatus.INACTIVE);
                         eventPublisher.publishEvent(
-                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.INACTIVE,
+                                new SoftwareStatusChangedEvent(software.getId(), 0L, SoftwareStatus.BANNED, SoftwareStatus.INACTIVE,
                                         "[스케줄러] 정지기간이 만료돼 활성대기 상태로 변경"));
-                    }
+                }
+        );
 
-                    if (status == SoftwareStatus.MAINTENANCE) {
-                        software.changeStatus(SoftwareStatus.ACTIVE);
-                        eventPublisher.publishEvent(
-                                new SoftwareStatusChangedEvent(software.getId(), 0L, status, SoftwareStatus.ACTIVE,
-                                        "[스케줄러] 예정된 점검시간 종료로 활성 상태로 변경"));
-                    }
+        maintenanceToActiveSoftware.forEach(
+                software -> {
+                    eventPublisher.publishEvent(
+                            new SoftwareStatusChangedEvent(software.getId(), 0L, SoftwareStatus.MAINTENANCE, SoftwareStatus.ACTIVE,
+                                    "[스케줄러] 예정된 점검시간 종료로 활성 상태로 변경"));
                 }
         );
     }

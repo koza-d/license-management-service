@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.qna.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaCreateRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;

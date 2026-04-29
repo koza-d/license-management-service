@@ -2,6 +2,8 @@ package koza.licensemanagementservice.auth.service;
 
 import jakarta.annotation.PostConstruct;
 import koza.licensemanagementservice.auth.dto.*;
+import koza.licensemanagementservice.auth.dto.user.GoogleUserInfo;
+import koza.licensemanagementservice.auth.dto.user.OAuthUserInfo;
 import koza.licensemanagementservice.auth.prop.OAuthProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor

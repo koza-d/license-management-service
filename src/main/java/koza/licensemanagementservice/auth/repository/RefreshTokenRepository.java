@@ -12,11 +12,16 @@ import java.util.Optional;
 public class RefreshTokenRepository {
     private final RedisTemplate<String, String> redisTemplate;
 
-    public void save(String refreshToken, Long memberId, long durationInSeconds) {
+    public void save(String refreshToken, Long memberId, long durationInMillis) {
         redisTemplate.opsForValue().set(
                 "RT:" + refreshToken,
                 String.valueOf(memberId),
-                Duration.ofMillis(durationInSeconds)
+                Duration.ofMillis(durationInMillis)
+        );
+        redisTemplate.opsForValue().set(
+                "RT_I:" + memberId,
+                refreshToken,
+                Duration.ofMillis(durationInMillis)
         );
     }
 
@@ -26,9 +31,28 @@ public class RefreshTokenRepository {
         return Optional.ofNullable(value).map(Long::valueOf);
     }
 
+    // 사용자 ID로 토큰 찾기
+    public Optional<String> findByMemberId(Long memberId) {
+        String value = redisTemplate.opsForValue().get("RT_I:" + memberId);
+        return Optional.ofNullable(value);
+    }
+
+    // 사용자 ID로 토큰 제거
+    public void deleteByMemberId(Long memberId) {
+        Optional<String> refreshTokenOpt = findByMemberId(memberId);
+        if (refreshTokenOpt.isPresent()) {
+            redisTemplate.delete("RT_I:" + memberId);
+            redisTemplate.delete("RT:" + refreshTokenOpt.get());
+        }
+    }
+
     // 로그아웃 시 토큰 삭제
     public void delete(String refreshToken) {
-        redisTemplate.delete("RT:" + refreshToken);
+        Optional<Long> memberIdOpt = findMemberIdByToken(refreshToken);
+        if (memberIdOpt.isPresent()) {
+            redisTemplate.delete("RT:" + refreshToken);
+            redisTemplate.delete("RT_I:" + memberIdOpt.get());
+        }
     }
 
 }

@@ -1,8 +1,8 @@
 package koza.licensemanagementservice.domain.qna.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
-import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
+import koza.licensemanagementservice.domain.qna.dto.response.AdminQnaSummaryResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaDetailResponse;
 import koza.licensemanagementservice.domain.qna.repository.QnaRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class QnaAdminService {
     private final QnaService qnaService;
 
     @Transactional(readOnly = true)
-    public Page<QnaAdminListResponse> getQuestions(CustomUser admin, QnaAdminSearchCondition condition, Pageable pageable) {
+    public Page<AdminQnaSummaryResponse> getQuestions(CustomUser admin, QnaAdminSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(admin);
         condition.validateDateRanges();
         return qnaRepository.findByAdminCondition(condition, pageable);

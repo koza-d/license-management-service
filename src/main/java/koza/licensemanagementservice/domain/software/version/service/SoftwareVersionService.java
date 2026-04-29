@@ -8,7 +8,7 @@ import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersion
 import koza.licensemanagementservice.domain.software.version.dto.SoftwareVersionUpdateRequest;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;

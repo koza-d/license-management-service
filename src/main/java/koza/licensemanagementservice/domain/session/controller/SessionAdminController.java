@@ -3,12 +3,12 @@ package koza.licensemanagementservice.domain.session.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.session.repository.SessionSearchCondition;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.session.dto.response.AdminSessionResponse;
+import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminateRequest;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminationsBulkRequest;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminDetailResponse;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminResponse;
+import koza.licensemanagementservice.domain.session.dto.response.AdminSessionDetailResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionBulkTerminationResponse;
 import koza.licensemanagementservice.domain.session.service.SessionAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
@@ -33,7 +33,7 @@ public class SessionAdminController {
     public ResponseEntity<ApiResponse<?>> getSessions(@AuthenticationPrincipal CustomUser admin,
                                                       @ModelAttribute SessionSearchCondition condition,
                                                       Pageable pageable) {
-        Page<SessionAdminResponse> page = sessionAdminService.getSessions(admin, condition, pageable);
+        Page<AdminSessionResponse> page = sessionAdminService.getSessions(admin, condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 
@@ -41,7 +41,7 @@ public class SessionAdminController {
     @GetMapping("/{sessionId}")
     public ResponseEntity<ApiResponse<?>> getSession(@AuthenticationPrincipal CustomUser admin,
                                                      @PathVariable("sessionId") String sessionId) {
-        SessionAdminDetailResponse detail = sessionAdminService.getSession(admin, sessionId);
+        AdminSessionDetailResponse detail = sessionAdminService.getSession(admin, sessionId);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 

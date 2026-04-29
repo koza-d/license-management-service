@@ -1,12 +1,11 @@
 package koza.licensemanagementservice.domain.software.log.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareLogResponse;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
-import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
+import koza.licensemanagementservice.domain.software.log.dto.condition.SoftwareLogSearchCondition;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
-import koza.licensemanagementservice.global.validation.ValidUserAuthorized;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
