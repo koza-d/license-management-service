@@ -54,7 +54,7 @@ public class SoftwareAdminService {
                 LocalDateTime.now().plusDays(request.getUntilDays());
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.BANNED, banUntil);
+        software.changeStatus(SoftwareStatus.BANNED, banUntil, reason);
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
     }
 

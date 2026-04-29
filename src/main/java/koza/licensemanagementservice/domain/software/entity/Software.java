@@ -61,6 +61,9 @@ public class Software extends BaseEntity {
     @Column(name = "status_until")
     private LocalDateTime statusUntil;
 
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
     public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
         versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
     }
@@ -104,12 +107,16 @@ public class Software extends BaseEntity {
     }
 
     public void changeStatus(SoftwareStatus status) {
-        this.status = status;
-        this.statusUntil = null;
+        changeStatus(status, null, "");
     }
 
     public void changeStatus(SoftwareStatus status, LocalDateTime statusUntil) {
+        changeStatus(status, statusUntil, "");
+    }
+
+    public void changeStatus(SoftwareStatus status, LocalDateTime statusUntil, String statusReason) {
         this.status = status;
         this.statusUntil = statusUntil;
+        this.statusReason = statusReason;
     }
 }

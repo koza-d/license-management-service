@@ -180,7 +180,7 @@ public class SoftwareService {
                 LocalDateTime.now().plusDays(request.getUntilDays());
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.MAINTENANCE, until);
+        software.changeStatus(SoftwareStatus.MAINTENANCE, until, reason);
         eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.MAINTENANCE, until, reason));
     }
 
@@ -194,7 +194,7 @@ public class SoftwareService {
 
         String reason = request.getReason();
 
-        software.changeStatus(SoftwareStatus.UNSUPPORTED);
+        software.changeStatus(SoftwareStatus.UNSUPPORTED, null, reason);
         eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.UNSUPPORTED, reason));
     }
 
