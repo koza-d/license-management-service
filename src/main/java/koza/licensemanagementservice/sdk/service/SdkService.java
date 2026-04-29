@@ -123,7 +123,7 @@ public class SdkService {
                             )
                     ));
 
-            if (StringUtils.hasText(clientVersion.getFileHash()))
+            if (StringUtils.hasText(clientVersion.getFileHash()) && !clientVersion.getFileHash().equals(fileHash))
                 throw new BusinessException(ErrorCode.SDK_INVALID_FILE_HASH);
 
 
