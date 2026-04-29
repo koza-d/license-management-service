@@ -15,4 +15,6 @@ public class VerifyData {
         private Long remainMs;
         private Map<String, Object> localVariables;
         private Map<String, Object> globalVariables;
+        private String latestVersion;
+        private String downloadURL;
 }

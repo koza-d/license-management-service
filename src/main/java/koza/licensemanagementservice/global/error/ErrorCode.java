@@ -63,15 +63,21 @@ public enum ErrorCode {
     SDK_INVALID_REQUEST(400, "SDK_002", "유효하지 않은 요청입니다."),
     SDK_INVALID_SOFTWARE(404, "SDK_003", "유효하지 않은 소프트웨어입니다."),
     SDK_INVALID_LICENSE(404, "SDK_004", "유효하지 않은 라이센스입니다."),
-    SDK_LICENSE_IN_USE(409, "SDK_005", "이미 사용 중인 라이센스입니다."),
-    SDK_LICENSE_BANNED(403, "SDK_006", "사용 정지된 라이센스입니다."),
-    SDK_LICENSE_EXPIRED(403, "SDK_007", "만료된 라이센스입니다."),
-    SDK_SOFTWARE_BANNED(403, "SDK_008", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
-    SDK_SOFTWARE_INACTIVE(403, "SDK_009", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
-    SDK_SOFTWARE_SUSPENDED(403, "SDK_010", "일시중단된 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
-    SDK_SOFTWARE_MAINTENANCE(403, "SDK_011", "소프트웨어가 점검중입니다."), // 점검 종료 일시 반환 필요
-    SDK_SOFTWARE_UNSUPPORTED(403, "SDK_012", "지원중단된 소프트웨어입니다."), // 지원중단 사유 반환 필요
-    SDK_SESSION_EXPIRED(403, "SDK_013", "만료된 세션입니다."),
+    SDK_INVALID_FILE_HASH(400, "SDK_005", "유효하지 않은 해시값입니다."),
+    SDK_NOT_AVAILABLE_VERSION(400, "SDK_006", "사용 불가능한 버전입니다."),
+
+    SDK_LICENSE_IN_USE(409, "SDK_101", "이미 사용 중인 라이센스입니다."),
+    SDK_LICENSE_BANNED(403, "SDK_102", "사용 정지된 라이센스입니다."),
+    SDK_LICENSE_EXPIRED(403, "SDK_103", "만료된 라이센스입니다."),
+
+    SDK_SOFTWARE_BANNED(403, "SDK_201", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
+    SDK_SOFTWARE_INACTIVE(403, "SDK_202", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+    SDK_SOFTWARE_SUSPENDED(403, "SDK_203", "일시중단된 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+    SDK_SOFTWARE_MAINTENANCE(403, "SDK_204", "소프트웨어가 점검중입니다."), // 점검 종료 일시 반환 필요
+    SDK_SOFTWARE_UNSUPPORTED(403, "SDK_205", "지원중단된 소프트웨어입니다."), // 지원중단 사유 반환 필요
+
+    SDK_SESSION_EXPIRED(403, "SDK_301", "만료된 세션입니다."),
+
     ;
 
     private final int status;

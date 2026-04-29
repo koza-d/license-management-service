@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
@@ -30,10 +31,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*;
 
@@ -59,6 +62,8 @@ public class SdkService {
         try {
             String licenseKey = request.getLicenseKey();
             String appId = request.getAppId();
+            String fileHash = request.getFileHash();
+
             software = softwareRepository.findByAppId(appId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
 
@@ -81,6 +86,28 @@ public class SdkService {
                 case BANNED -> throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED);
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
             }
+
+            // 소프트웨어의 최신 버전 정보
+            SoftwareVersion latestVersion = software.getVersions().stream()
+                    .filter(SoftwareVersion::isLatest)
+                    .findAny()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
+
+            // 클라이언트 버전 정보 검증
+            SoftwareVersion clientVersion = software.getVersions().stream()
+                    // 사용 불가능한 버전인 경우
+                    .filter(v -> v.getVersion().equals(request.getClientVersion()) && v.isAvailable())
+                    .findAny()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_NOT_AVAILABLE_VERSION,
+                            Map.of(
+                                    "latestVersion", latestVersion.getVersion(),
+                                    "downloadURL", latestVersion.getDownloadURL()
+                            )
+                    ));
+
+            if (StringUtils.hasText(clientVersion.getFileHash()))
+                throw new BusinessException(ErrorCode.SDK_INVALID_FILE_HASH);
+
 
             String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
 
@@ -119,6 +146,8 @@ public class SdkService {
                     .remainMs(remainMs)
                     .localVariables(license.getMergeLocalVariables())
                     .globalVariables(license.getSoftware().getGlobalVariables())
+                    .latestVersion(latestVersion.getVersion())
+                    .downloadURL(latestVersion.getDownloadURL())
                     .build();
 
             String dataToJson = objectMapper.writeValueAsString(data);

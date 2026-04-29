@@ -9,4 +9,6 @@ public class VerifyRequest {
     private String publicKey;
     private String licenseKey;
     private String appId;
+    private String clientVersion;
+    private String fileHash;
 }
