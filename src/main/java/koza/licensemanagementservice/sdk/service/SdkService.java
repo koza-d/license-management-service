@@ -75,15 +75,33 @@ public class SdkService {
                 throw new BusinessException(ErrorCode.SDK_INVALID_LICENSE);
 
             switch (software.getStatus()) {
-                case BANNED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED);
+                case BANNED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED,
+                        Map.of(
+                                "until", software.getStatusUntil(),
+                                "reason", software.getStatusReason()
+                        ));
                 case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
                 case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
-                case MAINTENANCE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE);
-                case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED);
+                case MAINTENANCE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE,
+                        Map.of(
+                                "until", software.getStatusUntil(),
+                                "reason", software.getStatusReason()
+                        ));
+                case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
+                        Map.of(
+                                "reason", software.getStatusReason()
+                        ));
             }
 
             switch (license.getStatus()) {
-                case BANNED -> throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED);
+                case BANNED -> {
+                    LocalDateTime temp = LocalDateTime.now().plusDays(7);
+                    throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED,
+                            Map.of(
+                                    "until", temp,
+                                    "reason", "사유"
+                            ));
+                }
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
             }
 
