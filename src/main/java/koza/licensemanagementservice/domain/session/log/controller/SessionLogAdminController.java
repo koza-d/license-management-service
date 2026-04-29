@@ -2,9 +2,9 @@ package koza.licensemanagementservice.domain.session.log.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.session.log.dto.SessionHistoryResponse;
-import koza.licensemanagementservice.domain.session.log.repository.SessionLogSearchCondition;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.session.log.dto.response.SessionHistoryResponse;
+import koza.licensemanagementservice.domain.session.log.dto.condition.SessionLogSearchCondition;
 import koza.licensemanagementservice.domain.session.log.service.SessionLogAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 
 @Controller
 @RequiredArgsConstructor

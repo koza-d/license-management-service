@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.member.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
@@ -11,9 +11,9 @@ import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberGrade;
 import koza.licensemanagementservice.domain.member.entity.MemberRole;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
-import koza.licensemanagementservice.domain.member.log.dto.MemberGradeChangedEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberRoleChangedEvent;
-import koza.licensemanagementservice.domain.member.log.dto.MemberStatusChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.event.MemberGradeChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.event.MemberRoleChangedEvent;
+import koza.licensemanagementservice.domain.member.log.dto.event.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLog;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLogType;

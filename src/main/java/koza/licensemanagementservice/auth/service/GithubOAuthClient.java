@@ -1,8 +1,8 @@
 package koza.licensemanagementservice.auth.service;
 
 import jakarta.annotation.PostConstruct;
-import koza.licensemanagementservice.auth.dto.GitHubUserInfo;
-import koza.licensemanagementservice.auth.dto.OAuthUserInfo;
+import koza.licensemanagementservice.auth.dto.user.GitHubUserInfo;
+import koza.licensemanagementservice.auth.dto.user.OAuthUserInfo;
 import koza.licensemanagementservice.auth.dto.SocialProvider;
 import koza.licensemanagementservice.auth.prop.OAuthProperties;
 import lombok.RequiredArgsConstructor;

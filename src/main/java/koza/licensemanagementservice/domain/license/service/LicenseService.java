@@ -1,6 +1,5 @@
 package koza.licensemanagementservice.domain.license.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseExtendRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseIssueRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
@@ -9,10 +8,10 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailRe
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseBulkExtendEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseBulkExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseIssuedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseModifiedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
@@ -20,7 +19,7 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;

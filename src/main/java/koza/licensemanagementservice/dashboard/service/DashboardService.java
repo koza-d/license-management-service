@@ -1,11 +1,11 @@
 package koza.licensemanagementservice.dashboard.service;
 
-import koza.licensemanagementservice.dashboard.dto.DashboardStatsResponse;
-import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.response.DashboardStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.response.SoftwareStatsResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.session.log.dto.DailyUsageResponse;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.session.log.dto.response.DailyUsageResponse;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

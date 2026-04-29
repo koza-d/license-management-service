@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.domain.session.dto.request.TerminateBulkRequest;
 import koza.licensemanagementservice.domain.session.dto.response.SessionResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.session.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

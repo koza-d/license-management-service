@@ -1,19 +1,19 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareUsageResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareDetailResponse;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
-import koza.licensemanagementservice.domain.software.log.dto.AdminSoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.log.dto.event.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.entity.Software;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareStatusChangedEvent;
-import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
+import koza.licensemanagementservice.domain.software.log.dto.event.SoftwareStatusChangedEvent;
+import koza.licensemanagementservice.domain.software.dto.condition.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -75,14 +75,14 @@ public class SoftwareAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SoftwareAdminSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
+    public Page<AdminSoftwareSummaryResponse> getSoftwareList(CustomUser user, SoftwareAdminSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return softwareRepository.searchSoftwareByCondition(condition, pageable);
     }
 
     @Transactional(readOnly = true)
-    public SoftwareAdminDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
+    public AdminSoftwareDetailResponse getSoftwareDetail(CustomUser user, Long softwareId) {
         validAdminAuthorized(user);
         return softwareRepository.findBySoftwareId(softwareId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));

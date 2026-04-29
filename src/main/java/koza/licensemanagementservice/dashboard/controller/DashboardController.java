@@ -2,11 +2,11 @@ package koza.licensemanagementservice.dashboard.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.dashboard.dto.DashboardStatsResponse;
-import koza.licensemanagementservice.dashboard.dto.SoftwareStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.response.DashboardStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.response.SoftwareStatsResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardService;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

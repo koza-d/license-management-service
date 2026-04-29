@@ -4,8 +4,8 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.domain.member.log.entity.MemberLogType;
-import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
-import koza.licensemanagementservice.stat.dto.QMemberTrendResponse;
+import koza.licensemanagementservice.stat.dto.response.MemberTrendResponse;
+import koza.licensemanagementservice.stat.dto.response.QMemberTrendResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;

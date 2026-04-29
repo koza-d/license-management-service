@@ -1,15 +1,15 @@
 package koza.licensemanagementservice.domain.audit.repository;
 
-import koza.licensemanagementservice.domain.audit.dto.request.AuditSearchCondition;
-import koza.licensemanagementservice.domain.audit.dto.response.AuditLogResponse;
-import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
+import koza.licensemanagementservice.domain.audit.dto.condition.AuditSearchCondition;
+import koza.licensemanagementservice.domain.audit.dto.response.AdminAuditLogResponse;
+import koza.licensemanagementservice.domain.audit.dto.response.AdminRecentAuditResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface AdminAuditLogRepositoryCustom {
-    List<RecentAuditResponse> findRecent(int limit);
+    List<AdminRecentAuditResponse> findRecent(int limit);
 
-    Page<AuditLogResponse> search(AuditSearchCondition condition, Pageable pageable);
+    Page<AdminAuditLogResponse> search(AuditSearchCondition condition, Pageable pageable);
 }

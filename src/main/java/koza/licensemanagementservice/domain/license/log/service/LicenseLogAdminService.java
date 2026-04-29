@@ -1,17 +1,11 @@
 package koza.licensemanagementservice.domain.license.log.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendLogResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
-import koza.licensemanagementservice.domain.license.log.entity.LicenseLog;
-import koza.licensemanagementservice.domain.license.log.entity.LicenseLogType;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExtendLogResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.repository.LicenseExtendLogRepository;
 import koza.licensemanagementservice.domain.license.log.repository.LicenseLogRepository;
-import koza.licensemanagementservice.domain.license.log.repository.LicenseLogSearchCondition;
-import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.license.log.dto.condition.LicenseLogSearchCondition;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;

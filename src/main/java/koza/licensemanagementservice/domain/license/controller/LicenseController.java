@@ -13,7 +13,7 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueRes
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.domain.license.service.LicenseService;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

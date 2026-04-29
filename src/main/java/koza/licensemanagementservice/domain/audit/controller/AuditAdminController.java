@@ -2,9 +2,9 @@ package koza.licensemanagementservice.domain.audit.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.audit.dto.request.AuditSearchCondition;
-import koza.licensemanagementservice.domain.audit.dto.response.AuditLogResponse;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.audit.dto.condition.AuditSearchCondition;
+import koza.licensemanagementservice.domain.audit.dto.response.AdminAuditLogResponse;
 import koza.licensemanagementservice.domain.audit.service.AuditAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.global.common.PageResponse;
@@ -31,7 +31,7 @@ public class AuditAdminController {
             @AuthenticationPrincipal CustomUser admin,
             @ModelAttribute AuditSearchCondition condition,
             Pageable pageable) {
-        Page<AuditLogResponse> page = auditAdminService.search(admin, condition, pageable);
+        Page<AdminAuditLogResponse> page = auditAdminService.search(admin, condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 }

@@ -6,7 +6,7 @@ import jakarta.annotation.PostConstruct;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
