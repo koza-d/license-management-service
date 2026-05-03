@@ -2,8 +2,12 @@ package koza.licensemanagementservice.domain.license.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
+import koza.licensemanagementservice.dashboard.dto.response.QExpiringLicenseResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
 import koza.licensemanagementservice.domain.license.dto.response.QAdminLicenseSummaryResponse;
+import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatusCount;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
@@ -256,6 +260,78 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                 .or(software.name.containsIgnoreCase(search))
                 .or(license.name.containsIgnoreCase(search))
                 .or(license.licenseKey.containsIgnoreCase(search));
+    }
+
+    @Override
+    public List<LicenseStatusCount> countLicensesByStatusForMember(Long memberId) {
+        return queryFactory
+                .select(new QLicenseStatusCount(license.status, license.count()))
+                .from(license)
+                .join(license.software, software)
+                .where(software.member.id.eq(memberId))
+                .groupBy(license.status)
+                .fetch();
+    }
+
+    @Override
+    public long countActiveSessionLicensesByMember(Long memberId) {
+        Long count = queryFactory
+                .select(license.count())
+                .from(license)
+                .join(license.software, software)
+                .where(software.member.id.eq(memberId)
+                        .and(license.hasActiveSession.isTrue()))
+                .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public long countExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, LocalDateTime threshold) {
+        Long count = queryFactory
+                .select(license.count())
+                .from(license)
+                .join(license.software, software)
+                .where(software.member.id.eq(memberId)
+                        .and(license.status.eq(LicenseStatus.ACTIVE))
+                        .and(license.expiredAt.goe(now))
+                        .and(license.expiredAt.loe(threshold)))
+                .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public List<ExpiringLicenseResponse> findExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, int limit) {
+        return queryFactory
+                .select(new QExpiringLicenseResponse(
+                        license.id,
+                        license.name,
+                        license.licenseKey,
+                        member.nickname,
+                        software.name,
+                        license.expiredAt
+                ))
+                .from(license)
+                .join(license.software, software)
+                .join(software.member, member)
+                .where(software.member.id.eq(memberId)
+                        .and(license.status.eq(LicenseStatus.ACTIVE))
+                        .and(license.expiredAt.goe(now)))
+                .orderBy(license.expiredAt.asc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public List<License> findActiveSessionLicensesByMember(Long memberId, int limit) {
+        return queryFactory
+                .selectFrom(license)
+                .join(license.software, software).fetchJoin()
+                .join(software.member, member).fetchJoin()
+                .where(software.member.id.eq(memberId)
+                        .and(license.hasActiveSession.isTrue()))
+                .orderBy(license.latestActiveAt.desc())
+                .limit(limit)
+                .fetch();
     }
 
     private BooleanExpression sessionFilter(Boolean hasActiveSession) {

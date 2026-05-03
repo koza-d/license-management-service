@@ -25,4 +25,8 @@ public interface SoftwareRepositoryCustom {
 
     Optional<SoftwareUsageResponse> getSoftwareUsageStat(Long softwareId);
     List<Software> bulkTransitionStatus(SoftwareStatus from, SoftwareStatus to, LocalDateTime now);
+
+    long countByMemberId(Long memberId);
+    List<koza.licensemanagementservice.dashboard.dto.response.SoftwareUsageResponse> findSoftwareUsageByMember(
+            Long memberId, LocalDateTime since, int limit);
 }
