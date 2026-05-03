@@ -1,9 +1,14 @@
 package koza.licensemanagementservice.domain.session.log.repository;
 
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.DateTemplate;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.domain.session.log.dto.response.DailyUsageResponse;
+import koza.licensemanagementservice.domain.session.log.dto.response.QDailyUsageResponse;
 import koza.licensemanagementservice.domain.session.log.dto.response.QSessionHistoryResponse;
 import koza.licensemanagementservice.domain.session.log.dto.condition.SessionLogSearchCondition;
 import koza.licensemanagementservice.domain.session.log.dto.response.SessionHistoryResponse;
@@ -15,6 +20,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
@@ -94,6 +100,34 @@ public class SessionLogRepositoryImpl implements SessionLogRepositoryCustom {
                 .leftJoin(software.member, member)
                 .groupBy(software)
                 .orderBy(usageMinute.sum().desc())
+                .fetch();
+    }
+
+    @Override
+    public List<DailyUsageResponse> findDailyUsage(Long licenseId, LocalDateTime startDate) {
+        NumberTemplate<Long> diffMinutes = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(MINUTE, {0}, {1})",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt
+        );
+
+        DateTemplate<java.sql.Date> dateOnly = Expressions.dateTemplate(
+                java.sql.Date.class,
+                "DATE({0})",
+                sessionLog.verifyAt
+        );
+
+        return queryFactory
+                .select(new QDailyUsageResponse(dateOnly, diffMinutes.sum()))
+                .from(sessionLog)
+                .where(
+                        sessionLog.license.id.eq(licenseId),
+                        sessionLog.verifyAt.goe(startDate),
+                        sessionLog.releaseAt.isNotNull()
+                )
+                .groupBy(dateOnly)
+                .orderBy(new OrderSpecifier<>(Order.ASC, dateOnly))
                 .fetch();
     }
 
