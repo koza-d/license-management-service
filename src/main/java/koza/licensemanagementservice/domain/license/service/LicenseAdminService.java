@@ -112,4 +112,21 @@ public class LicenseAdminService {
                     license.getExpiredAt()));
         });
     }
+
+    /**
+     * 라이센스 정지기간 만료 시 상태 변경
+     * - 밴 기간 끝나면 활성 상태로 변경
+     * (추후 확장 시 handler 로 분리 필요)
+     */
+    @Transactional
+    public void processStatusUpdate() {
+        List<License> bannedToActiveLicenses = licenseRepository.bulkTransitionStatus(LicenseStatus.BANNED, LicenseStatus.ACTIVE, LocalDateTime.now());
+        bannedToActiveLicenses.forEach(license -> {
+            eventPublisher.publishEvent(new LicenseStatusChangedEvent(
+                    license.getId(), 0L,
+                    LicenseStatus.BANNED, LicenseStatus.ACTIVE,
+                    "[스케줄러] 라이센스 정지기간 만료로 인한 상태 변경",
+                    license.getExpiredAt()));
+        });
+    }
 }
