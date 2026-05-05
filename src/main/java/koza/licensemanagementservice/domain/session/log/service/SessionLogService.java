@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +27,7 @@ public class SessionLogService {
     public List<DailyUsageResponse> getDailyUsageTime(CustomUser user, Long licenseId, int range) {
         getLicenseOrThrow(user, licenseId);
         LocalDateTime startDate = LocalDateTime.now().minusDays(range);
-        return logRepository.findDailyUsage(licenseId, startDate)
-                .stream().map(DailyUsageResponse::from).collect(Collectors.toList());
+        return logRepository.findDailyUsage(licenseId, startDate);
    }
 
    public Page<SessionHistoryResponse> getLicenseUsageHistory(CustomUser user, Long licenseId, Pageable pageable) {
