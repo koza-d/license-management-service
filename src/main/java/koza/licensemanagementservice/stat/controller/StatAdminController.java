@@ -3,10 +3,10 @@ package koza.licensemanagementservice.stat.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository.SessionPeakInterface;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.stat.dto.*;
+import koza.licensemanagementservice.stat.dto.response.*;
 import koza.licensemanagementservice.stat.service.StatAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

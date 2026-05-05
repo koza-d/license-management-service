@@ -2,10 +2,10 @@ package koza.licensemanagementservice.dashboard.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.audit.dto.response.RecentAuditResponse;
-import koza.licensemanagementservice.dashboard.dto.AdminStatsResponse;
-import koza.licensemanagementservice.dashboard.dto.PendingQnaResponse;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.audit.dto.response.AdminRecentAuditResponse;
+import koza.licensemanagementservice.dashboard.dto.response.AdminStatsResponse;
+import koza.licensemanagementservice.dashboard.dto.response.PendingQnaResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class DashboardAdminController {
     public ResponseEntity<ApiResponse<?>> getRecentAudit(
             @AuthenticationPrincipal CustomUser admin,
             @RequestParam(defaultValue = "20") int limit) {
-        List<RecentAuditResponse> items = dashboardAdminService.getRecentAudit(admin, limit);
+        List<AdminRecentAuditResponse> items = dashboardAdminService.getRecentAudit(admin, limit);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 }

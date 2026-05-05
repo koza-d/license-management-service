@@ -33,7 +33,7 @@ public class SessionRepositoryImpl implements SessionRepository {
 
         Boolean isSave = redisTemplate.opsForValue().setIfAbsent(lockKey, sessionId, ttl);
         if (!Boolean.TRUE.equals(isSave))
-            throw new BusinessException(ErrorCode.ALREADY_USE_LICENSE);
+            throw new BusinessException(ErrorCode.SDK_LICENSE_IN_USE);
 
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.opsForValue().set(licenseKey, sessionId);

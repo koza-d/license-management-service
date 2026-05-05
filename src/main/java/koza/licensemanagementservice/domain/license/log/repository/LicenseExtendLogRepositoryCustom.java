@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.license.log.repository;
 
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendLogResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExtendLogResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

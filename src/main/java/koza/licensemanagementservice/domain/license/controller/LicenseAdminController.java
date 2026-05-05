@@ -3,17 +3,17 @@ package koza.licensemanagementservice.domain.license.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import koza.licensemanagementservice.auth.dto.CustomUser;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseAdminExtendRequest;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminDetailResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminExtendResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseAdminSummaryResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseExtendLogResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
-import koza.licensemanagementservice.domain.license.log.repository.LicenseLogSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExtendLogResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseLogResponse;
+import koza.licensemanagementservice.domain.license.log.dto.condition.LicenseLogSearchCondition;
 import koza.licensemanagementservice.domain.license.log.service.LicenseLogAdminService;
-import koza.licensemanagementservice.domain.license.repository.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.service.LicenseAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class LicenseAdminController {
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
                                                                @ModelAttribute LicenseSearchCondition condition,
                                                                Pageable pageable) {
-        Page<LicenseAdminSummaryResponse> summaryResponses = licenseAdminService.getLicenseSummaryAll(user, condition, pageable);
+        Page<AdminLicenseSummaryResponse> summaryResponses = licenseAdminService.getLicenseSummaryAll(user, condition, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }
@@ -50,8 +50,8 @@ public class LicenseAdminController {
     @GetMapping("/{licenseId}")
     public ResponseEntity<ApiResponse<?>> getLicenseDetail(@AuthenticationPrincipal CustomUser user,
                                                            @PathVariable("licenseId") Long licenseId) {
-        LicenseAdminDetailResponse detailResponse = licenseAdminService.getLicenseDetail(user, licenseId);
-        ApiResponse<LicenseAdminDetailResponse> response = ApiResponse.success(detailResponse);
+        AdminLicenseDetailResponse detailResponse = licenseAdminService.getLicenseDetail(user, licenseId);
+        ApiResponse<AdminLicenseDetailResponse> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }
 
@@ -59,8 +59,8 @@ public class LicenseAdminController {
     @PostMapping("/{licenseId}/extend")
     public ResponseEntity<ApiResponse<?>> extendLicense(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseAdminExtendRequest request) {
-        LicenseAdminExtendResponse extendResponse = licenseAdminService.extend(user, licenseId, request);
+                                                       @RequestBody AdminLicenseExtendRequest request) {
+        AdminLicenseExtendResponse extendResponse = licenseAdminService.extend(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success(extendResponse);
         return ResponseEntity.ok(response);
     }

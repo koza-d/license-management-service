@@ -1,7 +1,8 @@
 package koza.licensemanagementservice.domain.license.log.repository;
 
-import koza.licensemanagementservice.domain.license.log.dto.LicenseLogResponse;
-import koza.licensemanagementservice.stat.dto.LicenseStatusTrendResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseLogResponse;
+import koza.licensemanagementservice.domain.license.log.dto.condition.LicenseLogSearchCondition;
+import koza.licensemanagementservice.stat.dto.response.LicenseStatusTrendResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

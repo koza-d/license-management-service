@@ -56,6 +56,12 @@ public class License extends BaseEntity {
     @Column(name = "status", length = 20, nullable = false)
     private LicenseStatus status;
 
+    @Column(name = "status_until")
+    private LocalDateTime statusUntil;
+
+    @Column(name = "status_reason", length = 100)
+    private String statusReason;
+
     public void updateName(String name) {
         this.name = name;
     }
@@ -65,7 +71,12 @@ public class License extends BaseEntity {
     }
 
     public void changeStatus(LicenseStatus status) {
+        changeStatus(status, null, null);
+    }
+    public void changeStatus(LicenseStatus status, LocalDateTime until, String reason) {
         this.status = status;
+        this.statusUntil = until;
+        this.statusReason = reason;
     }
 
     /**

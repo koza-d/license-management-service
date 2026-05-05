@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.stat.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.log.repository.LicenseLogRepository;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
@@ -11,7 +11,8 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.global.util.FillGaps;
 import koza.licensemanagementservice.stat.dto.*;
-import koza.licensemanagementservice.verification.log.repository.VerifyLogRepository;
+import koza.licensemanagementservice.stat.dto.response.*;
+import koza.licensemanagementservice.sdk.log.repository.SdkLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class StatAdminService {
     private final SoftwareLogRepository softwareLogRepository;
     private final SessionLogRepository sessionLogRepository;
     private final LicenseLogRepository licenseLogRepository;
-    private final VerifyLogRepository verifyLogRepository;
+    private final SdkLogRepository sdkLogRepository;
 
     public List<MemberTrendResponse> getMemberTrend(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
@@ -83,7 +84,7 @@ public class StatAdminService {
     public List<VerificationAttemptTrend> getVerificationMetrics(CustomUser user, LocalDate from, LocalDate to) {
         validAdminAuthorized(user);
 
-        List<VerificationAttemptTrend> result = verifyLogRepository.getVerificationMetrics(from, to);
+        List<VerificationAttemptTrend> result = sdkLogRepository.getVerificationMetrics(from, to);
 
         List<VerificationAttemptTrend> trends = FillGaps.fillDateGaps(from, to, result,
                 VerificationAttemptTrend::getDate,

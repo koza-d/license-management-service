@@ -18,7 +18,7 @@ public class SoftwareScheduler {
      * - 밴 기간 끝나면 활성대기상태로 변경
      * - 점검 기간 끝나면 활성상태로 변경
      */
-    @Scheduled(cron = "0 0/5 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void scheduleStatusUpdate() {
         log.info("[소프트웨어 스케줄러] 상태 만료시간이 지난 상태를 업데이트 합니다.");
         softwareAdminService.processStatusUpdate();

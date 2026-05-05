@@ -3,17 +3,14 @@ package koza.licensemanagementservice.domain.license.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseIssueRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.domain.license.service.LicenseService;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -112,13 +109,24 @@ public class LicenseController {
 
     }
 
-    @Operation(summary = "라이센스 상태 변경", description = "라이센스 상태 변경 API")
-    @PatchMapping("/{licenseId}/status")
-    public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
+    @Operation(summary = "라이센스 정지", description = "라이센스 정지 API")
+    @PostMapping("/{licenseId}/ban")
+    public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseStatusUpdateRequest request) {
+                                                       @RequestBody LicenseBannedRequest request) {
 
-        licenseService.changeStatus(user, licenseId, request);
+        licenseService.ban(user, licenseId, request);
+        ApiResponse<?> response = ApiResponse.success("success");
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "라이센스 활성화", description = "라이센스 활성 API")
+    @PostMapping("/{licenseId}/active")
+    public ResponseEntity<ApiResponse<?>> active(@AuthenticationPrincipal CustomUser user,
+                                                       @PathVariable("licenseId") Long licenseId,
+                                                       @RequestBody LicenseActiveRequest request) {
+
+        licenseService.active(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
         return ResponseEntity.ok(response);
     }

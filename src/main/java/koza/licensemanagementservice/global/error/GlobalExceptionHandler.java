@@ -40,21 +40,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(error.getStatus()).body(response);
     }
 
-    // 낙관적 락 충돌 (동시 수정)
-    @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ResponseEntity<ApiResponse<?>> handleOptimisticLock(OptimisticLockingFailureException e) {
-        ApiResponse<?> response = ApiResponse.fail("COMMON_006", "다른 사용자가 동시에 수정 중입니다. 다시 시도해주세요.");
-        return ResponseEntity.status(409).body(response);
-    }
-
-    // 존재하지 않는 경로/정적 리소스
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleNoResource(NoResourceFoundException e) {
-        ErrorCode error = ErrorCode.NOT_FOUND;
-        ApiResponse<?> response = ApiResponse.fail(error.getCode(), error.getMessage());
-        return ResponseEntity.status(error.getStatus()).body(response);
-    }
-
     // 처리되지 않은 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception e) {

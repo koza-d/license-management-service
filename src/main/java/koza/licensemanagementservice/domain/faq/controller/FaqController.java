@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.faq.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.faq.dto.request.FaqCreateRequest;
 import koza.licensemanagementservice.domain.faq.dto.request.FaqUpdateRequest;
 import koza.licensemanagementservice.domain.faq.dto.response.FaqResponse;

@@ -26,11 +26,10 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
         if (member.getStatus() == MemberStatus.BANNED) {
-            refreshTokenRepository.delete(refreshToken);
+            refreshTokenRepository.deleteByMemberId(memberId);
             throw new BusinessException(ErrorCode.MEMBER_BANNED);
         }
 
-        refreshTokenRepository.delete(refreshToken);
         return jwtTokenProvider.createToken(member);
     }
 

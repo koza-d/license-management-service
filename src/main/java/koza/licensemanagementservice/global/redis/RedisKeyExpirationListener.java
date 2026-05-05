@@ -1,7 +1,7 @@
 package koza.licensemanagementservice.global.redis;
 
 import koza.licensemanagementservice.domain.session.repository.SessionRepositoryImpl;
-import koza.licensemanagementservice.verification.service.VerificationService;
+import koza.licensemanagementservice.sdk.service.SdkService;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RedisKeyExpirationListener extends KeyExpirationEventMessageListener {
-    private final VerificationService verificationService;
-    public RedisKeyExpirationListener(RedisMessageListenerContainer listenerContainer, VerificationService verificationService) {
+    private final SdkService sdkService;
+    public RedisKeyExpirationListener(RedisMessageListenerContainer listenerContainer, SdkService sdkService) {
         super(listenerContainer);
-        this.verificationService = verificationService;
+        this.sdkService = sdkService;
     }
 
     @Override
@@ -21,7 +21,7 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
 
         if (expiredKey.startsWith(SessionRepositoryImpl.SESSION_TRIGGER_PREFIX)) {
             String sessionId = expiredKey.split(":")[1];
-            verificationService.revokeExpire(sessionId);
+            sdkService.revokeExpire(sessionId);
         }
     }
 }

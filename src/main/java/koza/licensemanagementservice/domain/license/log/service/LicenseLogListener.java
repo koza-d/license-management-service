@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.license.log.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.log.dto.*;
+import koza.licensemanagementservice.domain.license.log.dto.event.*;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseExtendLog;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLog;
 import koza.licensemanagementservice.domain.license.log.entity.LicenseLogType;

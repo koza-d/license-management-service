@@ -3,17 +3,17 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareSummaryResponse;
 import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareUsageResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminDetailResponse;
-import koza.licensemanagementservice.domain.software.dto.response.SoftwareAdminSummaryResponse;
-import koza.licensemanagementservice.domain.software.log.dto.SoftwareLogResponse;
-import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogSearchCondition;
+import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareDetailResponse;
+import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareLogResponse;
+import koza.licensemanagementservice.domain.software.log.dto.condition.SoftwareLogSearchCondition;
 import koza.licensemanagementservice.domain.software.log.service.SoftwareAdminLogService;
-import koza.licensemanagementservice.domain.software.repository.SoftwareAdminSearchCondition;
+import koza.licensemanagementservice.domain.software.dto.condition.SoftwareAdminSearchCondition;
 import koza.licensemanagementservice.domain.software.service.SoftwareAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class SoftwareAdminController {
     public ResponseEntity<ApiResponse<?>> getSoftwareList(@AuthenticationPrincipal CustomUser user,
                                                           @ModelAttribute SoftwareAdminSearchCondition condition,
                                                           @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<SoftwareAdminSummaryResponse> list = softwareAdminService.getSoftwareList(user, condition, pageable);
+        Page<AdminSoftwareSummaryResponse> list = softwareAdminService.getSoftwareList(user, condition, pageable);
         ApiResponse<?> response = ApiResponse.success(list);
         return ResponseEntity.ok(response);
     }
@@ -47,7 +47,7 @@ public class SoftwareAdminController {
     @GetMapping("/{softwareId}")
     public ResponseEntity<ApiResponse<?>> getSoftwareDetail(@AuthenticationPrincipal CustomUser user,
                                                           @PathVariable("softwareId") Long softwareId) {
-        SoftwareAdminDetailResponse detailResponse = softwareAdminService.getSoftwareDetail(user, softwareId);
+        AdminSoftwareDetailResponse detailResponse = softwareAdminService.getSoftwareDetail(user, softwareId);
         ApiResponse<?> response = ApiResponse.success(detailResponse);
         return ResponseEntity.ok(response);
     }

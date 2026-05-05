@@ -1,17 +1,17 @@
 package koza.licensemanagementservice.domain.session.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
-import koza.licensemanagementservice.domain.session.repository.SessionSearchCondition;
+import koza.licensemanagementservice.domain.session.dto.response.AdminSessionResponse;
+import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminateRequest;
 import koza.licensemanagementservice.domain.session.dto.request.SessionTerminationsBulkRequest;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminDetailResponse;
-import koza.licensemanagementservice.domain.session.dto.response.SessionAdminResponse;
+import koza.licensemanagementservice.domain.session.dto.response.AdminSessionDetailResponse;
 import koza.licensemanagementservice.domain.session.dto.response.SessionBulkTerminationResponse;
-import koza.licensemanagementservice.domain.session.log.dto.SessionBulkTerminatedEvent;
-import koza.licensemanagementservice.domain.session.log.dto.SessionTerminatedEvent;
+import koza.licensemanagementservice.domain.session.log.dto.event.SessionBulkTerminatedEvent;
+import koza.licensemanagementservice.domain.session.log.dto.event.SessionTerminatedEvent;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -38,10 +38,10 @@ public class SessionAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public Page<SessionAdminResponse> getSessions(CustomUser admin, SessionSearchCondition condition, Pageable pageable) {
+    public Page<AdminSessionResponse> getSessions(CustomUser admin, SessionSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(admin);
-        Page<SessionAdminResponse> result = licenseRepository.findActiveSessionLicensesByCondition(condition, pageable);
-        List<SessionAdminResponse> content = result
+        Page<AdminSessionResponse> result = licenseRepository.findActiveSessionLicensesByCondition(condition, pageable);
+        List<AdminSessionResponse> content = result
                 .filter(response -> sessionManager.getSessionByLicenseId(response.getLicenseId()).isPresent())
                 .map(response -> {
                     SessionValue session = sessionManager.getSessionByLicenseId(response.getLicenseId())
@@ -57,7 +57,7 @@ public class SessionAdminService {
     }
 
     @Transactional(readOnly = true)
-    public SessionAdminDetailResponse getSession(CustomUser admin, String sessionId) {
+    public AdminSessionDetailResponse getSession(CustomUser admin, String sessionId) {
         validAdminAuthorized(admin);
         SessionValue session = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
@@ -65,7 +65,7 @@ public class SessionAdminService {
         License license = licenseRepository.findByIdWithSoftwareAndMember(session.getLicenseId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SESSION_NOT_FOUND));
 
-        return SessionAdminDetailResponse.of(
+        return AdminSessionDetailResponse.of(
                 session,
                 license.getSoftware().getMember().getEmail(),
                 license.getSoftware().getName(),

@@ -6,7 +6,7 @@ import jakarta.annotation.PostConstruct;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
 import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
-    public static final Long ACCESS_TOKEN_EXPIRY = 1000L * 60 * 60; // 1시간
+    public static final Long ACCESS_TOKEN_EXPIRY = 1000L * 60 * 15; // 15분
     public static final Long REFRESH_TOKEN_EXPIRY = 14 * 24 * 60 * 60 * 1000L; // 14일
     
     @Value("${jwt.secret}")
@@ -63,6 +63,7 @@ public class JwtTokenProvider {
                 .signWith(key) // 추후 다른 키 권장
                 .compact();
 
+        refreshTokenRepository.deleteByMemberId(member.getId());
         refreshTokenRepository.save(refreshToken, member.getId(), REFRESH_TOKEN_EXPIRY);
         return new JwtTokenDTO(accessToken, refreshToken);
     }

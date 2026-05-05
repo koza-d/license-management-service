@@ -1,18 +1,14 @@
 package koza.licensemanagementservice.domain.license.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseIssueRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseBulkExtendEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseIssuedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseModifiedEvent;
-import koza.licensemanagementservice.domain.license.log.dto.LicenseStatusChangedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseBulkExtendEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseIssuedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseModifiedEvent;
+import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
@@ -20,7 +16,7 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import lombok.RequiredArgsConstructor;
@@ -182,18 +178,26 @@ public class LicenseService {
     }
 
     @Transactional
-    public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
+    public void ban(CustomUser user, Long licenseId, LicenseBannedRequest request) {
         License license = getLicenseOrThrow(user, licenseId);
+        LicenseStatus beforeStatus = license.getStatus();
 
-        try {
-            LicenseStatus status = request.getStatus();
-            LicenseStatus beforeStatus = license.getStatus();
-            String reason = request.getReason();
-            license.changeStatus(status);
-            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, reason, LocalDateTime.now()));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        LocalDateTime now = LocalDateTime.now();
+        int bannedDays = request.getDays();
+        LocalDateTime until = bannedDays == 0 ? null : now.plusDays(bannedDays);
+
+        license.changeStatus(LicenseStatus.BANNED, until, request.getReason());
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, request.getReason(), now));
+    }
+
+    @Transactional
+    public void active(CustomUser user, Long licenseId, LicenseActiveRequest request) {
+        License license = getLicenseOrThrow(user, licenseId);
+        LicenseStatus beforeStatus = license.getStatus();
+        LocalDateTime now = LocalDateTime.now();
+
+        license.changeStatus(LicenseStatus.ACTIVE);
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.ACTIVE, request.getReason(), now));
     }
 
     private License getLicenseOrThrow(CustomUser user, Long licenseId) {

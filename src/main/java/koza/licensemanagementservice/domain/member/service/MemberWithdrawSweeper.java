@@ -2,7 +2,7 @@ package koza.licensemanagementservice.domain.member.service;
 
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
-import koza.licensemanagementservice.domain.member.log.dto.MemberWithdrawEvent;
+import koza.licensemanagementservice.domain.member.log.dto.event.MemberWithdrawEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;

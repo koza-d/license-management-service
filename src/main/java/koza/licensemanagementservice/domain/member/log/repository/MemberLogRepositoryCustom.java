@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.member.log.repository;
 
-import koza.licensemanagementservice.stat.dto.MemberTrendResponse;
+import koza.licensemanagementservice.stat.dto.response.MemberTrendResponse;
 
 import java.time.LocalDate;
 import java.util.List;

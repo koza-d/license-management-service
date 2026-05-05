@@ -3,11 +3,11 @@ package koza.licensemanagementservice.domain.qna.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAdminSearchCondition;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;
-import koza.licensemanagementservice.domain.qna.dto.response.QnaAdminListResponse;
+import koza.licensemanagementservice.domain.qna.dto.response.AdminQnaSummaryResponse;
 import koza.licensemanagementservice.domain.qna.dto.response.QnaDetailResponse;
 import koza.licensemanagementservice.domain.qna.service.QnaAdminService;
 import koza.licensemanagementservice.domain.qna.service.QnaService;
@@ -36,7 +36,7 @@ public class QnaAdminController {
                                                         @ModelAttribute QnaAdminSearchCondition condition,
                                                         @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC)
                                                         Pageable pageable) {
-        Page<QnaAdminListResponse> page = qnaAdminService.getQuestions(admin, condition, pageable);
+        Page<AdminQnaSummaryResponse> page = qnaAdminService.getQuestions(admin, condition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page)));
     }
 

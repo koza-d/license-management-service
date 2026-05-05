@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.qna.service;
 
-import koza.licensemanagementservice.auth.dto.CustomUser;
+import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaAnswerRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaCreateRequest;
 import koza.licensemanagementservice.domain.qna.dto.request.QnaPriorityUpdateRequest;

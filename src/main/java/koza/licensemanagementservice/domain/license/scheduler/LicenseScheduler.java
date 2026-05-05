@@ -19,4 +19,14 @@ public class LicenseScheduler {
         licenseAdminService.updateExpiredLicenseStatus();
     }
 
+    /**
+     * 라이센스 상태 유효기간 관리 스케줄러
+     * - 밴 기간 끝나면 활성대기상태로 변경
+     */
+    @Scheduled(cron = "0 * * * * *")
+    public void scheduleStatusUpdate() {
+        log.info("[라이센스 스케줄러] 상태 만료시간이 지난 상태를 업데이트 합니다.");
+        licenseAdminService.processStatusUpdate();
+    }
+
 }
