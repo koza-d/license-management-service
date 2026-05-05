@@ -6,6 +6,7 @@ import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSum
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.session.dto.response.AdminSessionResponse;
 import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public interface LicenseRepositoryCustom {
 
     Page<AdminSessionResponse> findActiveSessionLicensesByCondition(SessionSearchCondition condition, Pageable pageable);
     List<License> bulkUpdateExpiredStatus(LocalDateTime now);
+    List<License> bulkTransitionStatus(LicenseStatus from, LicenseStatus to, LocalDateTime now);
 
     List<LicenseStatusCount> countLicensesByStatusForMember(Long memberId);
     long countActiveSessionLicensesByMember(Long memberId);

@@ -1,9 +1,6 @@
 package koza.licensemanagementservice.domain.license.service;
 
-import koza.licensemanagementservice.domain.license.dto.request.LicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseIssueRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
@@ -181,18 +178,26 @@ public class LicenseService {
     }
 
     @Transactional
-    public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
+    public void ban(CustomUser user, Long licenseId, LicenseBannedRequest request) {
         License license = getLicenseOrThrow(user, licenseId);
+        LicenseStatus beforeStatus = license.getStatus();
 
-        try {
-            LicenseStatus status = request.getStatus();
-            LicenseStatus beforeStatus = license.getStatus();
-            String reason = request.getReason();
-            license.changeStatus(status);
-            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, reason, LocalDateTime.now()));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        LocalDateTime now = LocalDateTime.now();
+        int bannedDays = request.getDays();
+        LocalDateTime until = bannedDays == 0 ? null : now.plusDays(bannedDays);
+
+        license.changeStatus(LicenseStatus.BANNED, until, request.getReason());
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, request.getReason(), now));
+    }
+
+    @Transactional
+    public void active(CustomUser user, Long licenseId, LicenseActiveRequest request) {
+        License license = getLicenseOrThrow(user, licenseId);
+        LicenseStatus beforeStatus = license.getStatus();
+        LocalDateTime now = LocalDateTime.now();
+
+        license.changeStatus(LicenseStatus.ACTIVE);
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.ACTIVE, request.getReason(), now));
     }
 
     private License getLicenseOrThrow(CustomUser user, Long licenseId) {

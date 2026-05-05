@@ -16,6 +16,7 @@ import koza.licensemanagementservice.domain.session.dto.response.AdminSessionRes
 import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.response.QAdminSessionResponse;
 import koza.licensemanagementservice.domain.session.repository.SessionSearchTarget;
+import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -235,6 +236,26 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
             queryFactory
                     .update(license)
                     .set(license.status, LicenseStatus.EXPIRED)
+                    .where(license.in(targets))
+                    .execute();
+        }
+        return targets;
+    }
+
+    @Override
+    public List<License> bulkTransitionStatus(LicenseStatus from, LicenseStatus to, LocalDateTime now) {
+        List<License> targets = queryFactory
+                .selectFrom(license)
+                .where(
+                        license.status.eq(from),
+                        license.statusUntil.before(now)
+                )
+                .fetch();
+
+        if (!targets.isEmpty()) {
+            queryFactory
+                    .update(license)
+                    .set(license.status, to)
                     .where(license.in(targets))
                     .execute();
         }
