@@ -71,7 +71,12 @@ public class License extends BaseEntity {
     }
 
     public void changeStatus(LicenseStatus status) {
+        changeStatus(status, null, null);
+    }
+    public void changeStatus(LicenseStatus status, LocalDateTime until, String reason) {
         this.status = status;
+        this.statusUntil = until;
+        this.statusReason = reason;
     }
 
     /**
