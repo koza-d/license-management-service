@@ -304,6 +304,57 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
     }
 
     @Override
+    public long countByMemberId(Long memberId) {
+        Long count = queryFactory
+                .select(software.count())
+                .from(software)
+                .where(software.member.id.eq(memberId))
+                .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public List<koza.licensemanagementservice.dashboard.dto.response.SoftwareUsageResponse> findSoftwareUsageByMember(
+            Long memberId, LocalDateTime since, int limit) {
+        NumberTemplate<Long> diffMinutes = Expressions.numberTemplate(
+                Long.class,
+                "TIMESTAMPDIFF(MINUTE, {0}, {1})",
+                sessionLog.verifyAt,
+                sessionLog.releaseAt
+        );
+
+        return queryFactory
+                .select(new koza.licensemanagementservice.dashboard.dto.response.QSoftwareUsageResponse(
+                        software.id,
+                        software.name,
+                        diffMinutes.sum(),
+                        ExpressionUtils.as(
+                                JPAExpressions.select(license.count())
+                                        .from(license)
+                                        .where(license.software.id.eq(software.id)
+                                                .and(license.hasActiveSession.isTrue())),
+                                "activeSessionCount"
+                        ),
+                        ExpressionUtils.as(
+                                JPAExpressions.select(license.count())
+                                        .from(license)
+                                        .where(license.software.id.eq(software.id)),
+                                "licenseCount"
+                        )
+                ))
+                .from(software)
+                .join(license).on(license.software.id.eq(software.id))
+                .join(sessionLog).on(sessionLog.license.id.eq(license.id)
+                        .and(sessionLog.verifyAt.goe(since))
+                        .and(sessionLog.releaseAt.isNotNull()))
+                .where(software.member.id.eq(memberId))
+                .groupBy(software.id, software.name)
+                .orderBy(diffMinutes.sum().desc())
+                .limit(limit)
+                .fetch();
+    }
+
+    @Override
     public List<Software> bulkTransitionStatus(SoftwareStatus from, SoftwareStatus to, LocalDateTime now) {
         List<Software> targets = queryFactory
                 .selectFrom(software)
