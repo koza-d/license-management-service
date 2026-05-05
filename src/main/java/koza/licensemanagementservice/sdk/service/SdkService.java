@@ -95,11 +95,10 @@ public class SdkService {
 
             switch (license.getStatus()) {
                 case BANNED -> {
-                    LocalDateTime temp = LocalDateTime.now().plusDays(7);
                     throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED,
                             Map.of(
-                                    "until", temp,
-                                    "reason", "사유"
+                                    "until", license.getStatusUntil(),
+                                    "reason", license.getStatusReason()
                             ));
                 }
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
