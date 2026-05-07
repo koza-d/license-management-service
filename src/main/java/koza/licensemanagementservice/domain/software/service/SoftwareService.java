@@ -180,8 +180,7 @@ public class SoftwareService {
         if (beforeStatus != SoftwareStatus.ACTIVE) // 활성 상태인 경우만 점검 가능
             throw new BusinessException(ErrorCode.SOFTWARE_NOT_ACTIVE);
 
-        LocalDateTime until = request.getUntilDays() == 0 ? null :
-                LocalDateTime.now().plusDays(request.getUntilDays());
+        LocalDateTime until = request.getUntilAt();
         String reason = request.getReason();
 
 
