@@ -18,6 +18,8 @@ public class SoftwareDetailResponse {
     private String latestVersion;
     private SoftwareStatus status;
     private String appId;
+    private LocalDateTime statusUntil;
+    private String statusReason;
     private int licenseCount;
     private int limitLicense;
     private int remainLicense;
@@ -36,6 +38,8 @@ public class SoftwareDetailResponse {
                 .latestVersion(latestVersion.isEmpty() ? "최신버전 찾을 수 없음" : latestVersion.get().getVersion())
                 .status(software.getStatus())
                 .appId(software.getAppId())
+                .statusUntil(software.getStatusUntil())
+                .statusReason(software.getStatusReason())
                 .licenseCount(licenseCount)
                 .limitLicense(software.getLimitLicense())
                 .remainLicense(software.getLimitLicense() - licenseCount)
