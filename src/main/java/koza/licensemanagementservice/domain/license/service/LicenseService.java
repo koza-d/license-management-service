@@ -187,7 +187,7 @@ public class LicenseService {
         LocalDateTime until = bannedDays == 0 ? null : now.plusDays(bannedDays);
 
         license.changeStatus(LicenseStatus.BANNED, until, request.getReason());
-        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, request.getReason(), now));
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, until, request.getReason(), now));
     }
 
     @Transactional
