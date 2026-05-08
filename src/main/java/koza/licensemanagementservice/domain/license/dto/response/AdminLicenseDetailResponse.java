@@ -28,6 +28,8 @@ public class AdminLicenseDetailResponse {
     private Map<String, Object> modifiedVariables; // 라이센스 층에서 수정된 지역변수
     private Map<String, Object> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
     private String status;
+    private LocalDateTime statusUntil;
+    private String statusReason;
     private LocalDateTime createAt;
 
     public static AdminLicenseDetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, Object> finalVariables) {
@@ -50,6 +52,8 @@ public class AdminLicenseDetailResponse {
                 .expiredAt(license.getExpiredAt())
                 .remainingMs(remainingMs)
                 .status(license.getStatus().name())
+                .statusUntil(license.getStatusUntil())
+                .statusReason(license.getStatusReason())
                 .defaultVariables(software.getLocalVariables())
                 .modifiedVariables(license.getRawLocalVariables())
                 .finalVariables(finalVariables)
