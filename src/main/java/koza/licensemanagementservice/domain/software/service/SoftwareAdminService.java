@@ -2,8 +2,11 @@ package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
+import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
+import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareSummaryResponse;
@@ -36,6 +39,7 @@ import static koza.licensemanagementservice.global.validation.ValidUserAuthorize
 public class SoftwareAdminService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
+    private final SessionManager sessionManager;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -55,6 +59,17 @@ public class SoftwareAdminService {
         String reason = request.getReason();
 
         software.changeStatus(SoftwareStatus.BANNED, banUntil, reason);
+
+        List<License> activeSessions = licenseRepository.findBySoftwareIdAndHasActiveSessionIsTrue(softwareId);
+        for (License license : activeSessions) {
+            // 접속중인 세션 강제종료
+            license.release();
+            sessionManager.getSessionByLicenseId(license.getId())
+                    .ifPresent(
+                            session -> sessionManager.releaseSession(session.getSessionId(), license, ReleaseType.MAINTENANCE_CLOSE)
+                    );
+        }
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
     }
 
@@ -71,6 +86,7 @@ public class SoftwareAdminService {
             throw new BusinessException(ErrorCode.SOFTWARE_NOT_BANNED);
 
         software.changeStatus(SoftwareStatus.INACTIVE);
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, reason));
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, reason));
     }
 

@@ -12,6 +12,7 @@ public class SoftwareVersionDetailResponse {
     private Long versionId;
     private String version;
     private String fileHash;
+    private boolean isLatest;
     private boolean isAvailable;
     private String downloadURL;
     private String memo;
@@ -23,6 +24,7 @@ public class SoftwareVersionDetailResponse {
                 .versionId(version.getId())
                 .version(version.getVersion())
                 .fileHash(version.getFileHash())
+                .isLatest(version.isLatest())
                 .isAvailable(version.isAvailable())
                 .downloadURL(version.getDownloadURL())
                 .memo(version.getMemo())

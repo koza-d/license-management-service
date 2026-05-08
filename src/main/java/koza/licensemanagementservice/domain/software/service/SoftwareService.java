@@ -1,10 +1,13 @@
 package koza.licensemanagementservice.domain.software.service;
 
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
+import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
+import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.entity.SoftwareStatus;
@@ -37,6 +40,7 @@ public class SoftwareService {
     private final LicenseRepository licenseRepository;
     private final MemberRepository memberRepository;
     private final SoftwareVersionRepository versionRepository;
+    private final SessionManager sessionManager;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -176,11 +180,21 @@ public class SoftwareService {
         if (beforeStatus != SoftwareStatus.ACTIVE) // 활성 상태인 경우만 점검 가능
             throw new BusinessException(ErrorCode.SOFTWARE_NOT_ACTIVE);
 
-        LocalDateTime until = request.getUntilDays() == 0 ? null :
-                LocalDateTime.now().plusDays(request.getUntilDays());
+        LocalDateTime until = request.getUntilAt();
         String reason = request.getReason();
 
+
         software.changeStatus(SoftwareStatus.MAINTENANCE, until, reason);
+        List<License> activeSessions = licenseRepository.findBySoftwareIdAndHasActiveSessionIsTrue(softwareId);
+        for (License license : activeSessions) {
+            // 접속중인 세션 강제종료
+            license.release();
+            sessionManager.getSessionByLicenseId(license.getId())
+                    .ifPresent(
+                            session -> sessionManager.releaseSession(session.getSessionId(), license, ReleaseType.MAINTENANCE_CLOSE)
+                    );
+        }
+
         eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.MAINTENANCE, until, reason));
     }
 

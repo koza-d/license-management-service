@@ -13,6 +13,16 @@ public class LicenseStatusChangedEvent {
     private Long operatorId;
     private LicenseStatus beforeStatus;
     private LicenseStatus afterStatus;
+    private LocalDateTime until;
     private String reason;
     private LocalDateTime operatedAt;
+
+    public LicenseStatusChangedEvent(Long targetId, Long operatorId, LicenseStatus beforeStatus, LicenseStatus afterStatus, String reason, LocalDateTime operatedAt) {
+        this.targetId = targetId;
+        this.operatorId = operatorId;
+        this.beforeStatus = beforeStatus;
+        this.afterStatus = afterStatus;
+        this.reason = reason;
+        this.operatedAt = operatedAt;
+    }
 }

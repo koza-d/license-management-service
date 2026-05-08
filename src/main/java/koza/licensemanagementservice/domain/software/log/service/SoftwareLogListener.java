@@ -107,19 +107,18 @@ public class SoftwareLogListener {
         if (event.getBeforeStatus() == event.getAfterStatus())
             return;
 
-        Map<String, Object> diffValues = Map.of(
-                "status", Map.of(
-                        "before", event.getBeforeStatus(),
-                        "after", event.getAfterStatus()
-                ),
-                "reason", event.getReason() == null ? "" : event.getReason()
-        );
+        Map<String, Object> data = new HashMap<>();
+        data.put("before", event.getBeforeStatus());
+        data.put("after", event.getAfterStatus());
+        data.put("reason", event.getReason());
+        if (event.getUntil() != null)
+            data.put("until", event.getUntil());
 
         SoftwareLog softwareLog = SoftwareLog.builder()
                 .software(targetSoftware)
                 .operator(operator)
                 .logType(SoftwareLogType.CHANGE_STATUS)
-                .data(diffValues)
+                .data(data)
                 .build();
         softwareLogRepository.save(softwareLog);
 

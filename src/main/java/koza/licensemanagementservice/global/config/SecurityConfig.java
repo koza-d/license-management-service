@@ -69,7 +69,6 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("http://localhost:3000", "https://license-management-frontend-seven.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // httpOnly Cookie 필수
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

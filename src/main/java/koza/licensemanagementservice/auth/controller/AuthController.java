@@ -5,25 +5,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.JwtTokenDTO;
+import koza.licensemanagementservice.auth.dto.request.TokenRequest;
 import koza.licensemanagementservice.auth.dto.response.LoginResponse;
 import koza.licensemanagementservice.auth.dto.request.MemberLoginRequest;
-import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
 import koza.licensemanagementservice.auth.service.RefreshTokenService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
-
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "/api/auth")
 @Tag(name = "인증 API", description = "로그인 및 인증 관련 API")
@@ -34,72 +29,23 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "유저 로그인 API")
     public ResponseEntity<ApiResponse<?>> login(@RequestBody @Valid MemberLoginRequest request, HttpServletRequest servletRequest) {
-        LoginResponse response = memberService.login(request, servletRequest);
-        JwtTokenDTO token = response.getJwtTokenDTO();
-        ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
-                .httpOnly(true)
-                .secure(true)        // 로컬은 false, 배포 시 true
-                .path("/")
-                .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("None")
-                .build();
-
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)        // 로컬은 false, 배포 시 true
-                .path("/")
-                .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("None")
-                .build();
-
-        response.setJwtTokenDTO(null);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(response));
+        LoginResponse loginResponse = memberService.login(request, servletRequest);
+        ApiResponse<?> response = ApiResponse.success(loginResponse);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@CookieValue(name = "refreshToken") String refreshToken) {
-        ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0)
-                .sameSite("None")
-                .build();
-
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .path("/")
-                .maxAge(0)
-                .sameSite("None")
-                .build();
-        refreshTokenService.logout(refreshToken);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+    @Operation(summary = "로그아웃", description = "유저 로그아웃 API")
+    public ResponseEntity<ApiResponse<?>> logout(@RequestBody @Valid TokenRequest request) {
+        refreshTokenService.logout(request.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<Void>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken) {
-        JwtTokenDTO token = refreshTokenService.refreshToken(refreshToken);
-        ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", token.getAccessToken())
-                .httpOnly(true)
-                .secure(true)        // 로컬은 false, 배포 시 true
-                .path("/")
-                .maxAge(Duration.ofMillis(JwtTokenProvider.ACCESS_TOKEN_EXPIRY))
-                .sameSite("None")
-                .build();
-
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
-                .httpOnly(true)
-                .secure(true)        // 로컬은 false, 배포 시 true
-                .path("/")
-                .maxAge(Duration.ofMillis(JwtTokenProvider.REFRESH_TOKEN_EXPIRY))
-                .sameSite("None")
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString(), refreshTokenCookie.toString())
-                .body(ApiResponse.success(null));
+    @Operation(summary = "토큰 갱신", description = "리프레시 토큰으로 액세스 토큰 재발급")
+    public ResponseEntity<ApiResponse<?>> refreshToken(@RequestBody @Valid TokenRequest request) {
+        JwtTokenDTO token = refreshTokenService.refreshToken(request.getRefreshToken());
+        ApiResponse<JwtTokenDTO> response = ApiResponse.success(token);
+        return ResponseEntity.ok(response);
     }
 }

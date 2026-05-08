@@ -5,7 +5,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.request.LicenseBanRequest;
+import koza.licensemanagementservice.domain.license.dto.request.LicenseUnbanRequest;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
@@ -65,14 +66,22 @@ public class LicenseAdminController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "라이센스 상태 변경", description = "라이센스 상태 변경 API")
-    @PatchMapping("/{licenseId}/status")
-    public ResponseEntity<ApiResponse<?>> changeStatus(@AuthenticationPrincipal CustomUser user,
-                                                       @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseStatusUpdateRequest request) {
-        licenseAdminService.changeStatus(user, licenseId, request);
-        ApiResponse<?> response = ApiResponse.success("success");
-        return ResponseEntity.ok(response);
+    @Operation(summary = "라이센스 밴 처리")
+    @PostMapping("/{licenseId}/ban")
+    public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
+                                              @PathVariable("licenseId") Long licenseId,
+                                              @RequestBody LicenseBanRequest request) {
+        licenseAdminService.ban(user, licenseId, request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "라이센스 밴 해제")
+    @PostMapping("/{licenseId}/unban")
+    public ResponseEntity<ApiResponse<?>> unban(@AuthenticationPrincipal CustomUser user,
+                                                @PathVariable("licenseId") Long licenseId,
+                                                @RequestBody LicenseUnbanRequest request) {
+        licenseAdminService.unban(user, licenseId, request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "연장 로그 목록 조회")

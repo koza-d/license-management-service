@@ -2,7 +2,8 @@ package koza.licensemanagementservice.domain.license.service;
 
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseStatusUpdateRequest;
+import koza.licensemanagementservice.domain.license.dto.request.LicenseBanRequest;
+import koza.licensemanagementservice.domain.license.dto.request.LicenseUnbanRequest;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
@@ -14,6 +15,7 @@ import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusC
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
+import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -41,20 +43,49 @@ public class LicenseAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void changeStatus(CustomUser user, Long licenseId, LicenseStatusUpdateRequest request) {
+    public void ban(CustomUser user, Long licenseId, LicenseBanRequest request) {
         validAdminAuthorized(user);
 
-        License target = licenseRepository.findById(licenseId)
+        License license = licenseRepository.findById(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
-        try {
-            LicenseStatus status = request.getStatus();
-            LicenseStatus beforeStatus = target.getStatus();
-            target.changeStatus(status);
-            eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason(), LocalDateTime.now()));
-            eventPublisher.publishEvent(new LicenseAdminStatusChangedEvent(licenseId, user.getId(), beforeStatus, status, request.getReason()));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+
+        LicenseStatus beforeStatus = license.getStatus();
+        if (beforeStatus == LicenseStatus.BANNED)
+            throw new BusinessException(ErrorCode.LICENSE_BANNED);
+
+        LocalDateTime banUntil = request.getUntilDays() == 0 ? null :
+                LocalDateTime.now().plusDays(request.getUntilDays());
+        String reason = request.getReason();
+
+        license.changeStatus(LicenseStatus.BANNED, banUntil, reason);
+
+        if (license.hasActiveSession()) {
+            license.release();
+            sessionManager.getSessionByLicenseId(licenseId)
+                    .ifPresent(session -> sessionManager.releaseSession(
+                            session.getSessionId(), license, ReleaseType.FORCE_CLOSE));
         }
+
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, banUntil, reason, LocalDateTime.now()));
+        eventPublisher.publishEvent(new LicenseAdminStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.BANNED, banUntil, reason));
+    }
+
+    @Transactional
+    public void unban(CustomUser user, Long licenseId, LicenseUnbanRequest request) {
+        validAdminAuthorized(user);
+
+        License license = licenseRepository.findById(licenseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
+
+        LicenseStatus beforeStatus = license.getStatus();
+        if (beforeStatus != LicenseStatus.BANNED)
+            throw new BusinessException(ErrorCode.LICENSE_NOT_BANNED);
+
+        String reason = request.getReason();
+        license.changeStatus(LicenseStatus.ACTIVE);
+
+        eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), LicenseStatus.BANNED, LicenseStatus.ACTIVE, reason, LocalDateTime.now()));
+        eventPublisher.publishEvent(new LicenseAdminStatusChangedEvent(licenseId, user.getId(), LicenseStatus.BANNED, LicenseStatus.ACTIVE, reason));
     }
 
     @Transactional(readOnly = true)

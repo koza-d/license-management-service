@@ -174,6 +174,8 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
                                 software.id,
                                 software.name,
                                 softwareVersion.version,
+                                software.status,
+                                software.statusUntil,
                                 licenseCount(),
                                 activeSessionCount(),
                                 software.createAt

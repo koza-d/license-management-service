@@ -8,18 +8,23 @@ import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailRe
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseIssueResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
+import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExtendLogResponse;
+import koza.licensemanagementservice.domain.license.log.service.LicenseLogService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.domain.license.service.LicenseService;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +35,7 @@ import java.util.stream.Collectors;
 @Tag(name = "라이센스 API", description = "라이센스 관련 API")
 public class LicenseController {
     private final LicenseService licenseService;
+    private final LicenseLogService licenseLogService;
 
 
     @Operation(summary = "라이센스 발급", description = "라이센스 발급 API")
@@ -58,7 +64,7 @@ public class LicenseController {
                                                                @RequestParam(required = false, name = "expireWithin") Integer expireWithin,
                                                                Pageable pageable) {
         Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, expireWithin, pageable);
-        ApiResponse<?> response= ApiResponse.success(summaryResponses);
+        ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
     }
 
@@ -70,7 +76,7 @@ public class LicenseController {
                                                                       @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
                                                                       Pageable pageable) {
         Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, search, hasActiveSession, pageable);
-        ApiResponse<?> response= ApiResponse.success(summaryResponses);
+        ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
 
     }
@@ -88,7 +94,7 @@ public class LicenseController {
     @Operation(summary = "라이센스 연장 전 확인용", description = "선택한 연장할 라이센스 확인용 API")
     @GetMapping("/bulk-extend/preview")
     public ResponseEntity<ApiResponse<?>> getPreviewExtendLicense(@AuthenticationPrincipal CustomUser user,
-                                                                        @RequestParam(name = "ids") String request) {
+                                                                  @RequestParam(name = "ids") String request) {
         List<Long> ids = Arrays.stream(request.split(","))
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
@@ -112,8 +118,8 @@ public class LicenseController {
     @Operation(summary = "라이센스 정지", description = "라이센스 정지 API")
     @PostMapping("/{licenseId}/ban")
     public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
-                                                       @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseBannedRequest request) {
+                                              @PathVariable("licenseId") Long licenseId,
+                                              @RequestBody LicenseBannedRequest request) {
 
         licenseService.ban(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
@@ -123,12 +129,23 @@ public class LicenseController {
     @Operation(summary = "라이센스 활성화", description = "라이센스 활성 API")
     @PostMapping("/{licenseId}/active")
     public ResponseEntity<ApiResponse<?>> active(@AuthenticationPrincipal CustomUser user,
-                                                       @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody LicenseActiveRequest request) {
+                                                 @PathVariable("licenseId") Long licenseId,
+                                                 @RequestBody LicenseActiveRequest request) {
 
         licenseService.active(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "연장 로그 목록 조회")
+    @GetMapping("/{licenseId}/logs/extend")
+    public ResponseEntity<ApiResponse<?>> getLicenseExtendLogs(@AuthenticationPrincipal CustomUser user,
+                                                               @PathVariable("licenseId") Long licenseId,
+                                                               @RequestParam(value = "from", required = false) LocalDate from,
+                                                               @RequestParam(value = "to", required = false) LocalDate to,
+                                                               @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<LicenseExtendLogResponse> logResponses = licenseLogService.getLicenseExtendLogs(user, licenseId, from, to, pageable);
+        return ResponseEntity.ok(ApiResponse.success(logResponses));
     }
 
 }

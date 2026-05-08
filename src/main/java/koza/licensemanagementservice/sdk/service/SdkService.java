@@ -36,7 +36,9 @@ import org.springframework.util.StringUtils;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*;
 
@@ -74,19 +76,26 @@ public class SdkService {
             if (!software.getId().equals(license.getSoftware().getId()))
                 throw new BusinessException(ErrorCode.SDK_INVALID_LICENSE);
 
+
             switch (software.getStatus()) {
-                case BANNED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED,
-                        Map.of(
-                                "until", software.getStatusUntil(),
-                                "reason", software.getStatusReason()
-                        ));
+                case BANNED -> {
+                    HashMap<Object, Object> data = new HashMap<>();
+                    if (software.getStatusUntil() != null)
+                        data.put("until", software.getStatusUntil());
+                    data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
+
+                    throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED, data);
+                }
                 case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
                 case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
-                case MAINTENANCE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE,
-                        Map.of(
-                                "until", software.getStatusUntil(),
-                                "reason", software.getStatusReason()
-                        ));
+                case MAINTENANCE -> {
+                    HashMap<Object, Object> data = new HashMap<>();
+                    if (software.getStatusUntil() != null)
+                        data.put("until", software.getStatusUntil());
+                    data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
+
+                    throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE, data);
+                }
                 case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
                         Map.of(
                                 "reason", software.getStatusReason()
@@ -95,11 +104,12 @@ public class SdkService {
 
             switch (license.getStatus()) {
                 case BANNED -> {
-                    throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED,
-                            Map.of(
-                                    "until", license.getStatusUntil(),
-                                    "reason", license.getStatusReason()
-                            ));
+                    HashMap<Object, Object> data = new HashMap<>();
+                    if (license.getStatusUntil() != null)
+                        data.put("until", license.getStatusUntil());
+                    data.put("reason", Optional.ofNullable(license.getStatusReason()).orElse("-"));
+
+                    throw new BusinessException(ErrorCode.SDK_LICENSE_BANNED, data);
                 }
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
             }
@@ -117,8 +127,8 @@ public class SdkService {
                     .findAny()
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_NOT_AVAILABLE_VERSION,
                             Map.of(
-                                    "latestVersion", latestVersion.getVersion(),
-                                    "downloadURL", latestVersion.getDownloadURL()
+                                    "latestVersion", Optional.ofNullable(latestVersion.getVersion()).orElse(""),
+                                    "downloadURL", Optional.ofNullable(latestVersion.getDownloadURL()).orElse("")
                             )
                     ));
 
