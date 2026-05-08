@@ -61,11 +61,20 @@ public class AdminAuditLogListener {
         payload.put("before", event.getBeforeStatus().name());
         payload.put("after", event.getAfterStatus().name());
         payload.put("reason", event.getReason());
+        if (event.getUntil() != null)
+            payload.put("until", event.getUntil());
+
+        String summary = String.format("라이센스 '%s' 상태 %s → %s",
+                label, event.getBeforeStatus(), event.getAfterStatus());
+        if (event.getUntil() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            summary += String.format("(until : %s)", event.getUntil().format(formatter));
+        }
+
         save(EventCategory.LICENSE, "STATUS_CHANGED",
                 event.getOperatorId(), actorEmail,
                 TARGET_LICENSE, event.getTargetId(), label,
-                String.format("라이센스 '%s' 상태 %s → %s",
-                        label, event.getBeforeStatus(), event.getAfterStatus()),
+                summary,
                 payload);
     }
 
