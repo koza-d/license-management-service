@@ -43,7 +43,7 @@ public class SessionLogController {
     @GetMapping("/licenses/{licenseId}")
     public ResponseEntity<ApiResponse<?>> getLicenseUsageHistory(@AuthenticationPrincipal CustomUser user,
                                                                  @PathVariable(name = "licenseId") Long licenseId,
-                                                                 @PageableDefault(sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                                 @PageableDefault(sort = "verifyAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<SessionHistoryResponse> responses = logService.getLicenseUsageHistory(user, licenseId, pageable);
         ApiResponse<?> response = ApiResponse.success(responses);
         return ResponseEntity.ok(response);

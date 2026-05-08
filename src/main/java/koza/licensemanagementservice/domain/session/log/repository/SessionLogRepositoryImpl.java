@@ -59,7 +59,7 @@ public class SessionLogRepositoryImpl implements SessionLogRepositoryCustom {
                         sessionLog.license.id.eq(licenseId),
                         verifyAtBetween(condition.getFrom(), condition.getTo())
                 )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), sessionLog, "id", Set.of("id", "createAt")))
+                .orderBy(getOrderSpecifiers(pageable.getSort(), sessionLog, "verifyAt", Set.of("id", "createAt", "verifyAt")))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
