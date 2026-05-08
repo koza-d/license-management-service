@@ -69,6 +69,7 @@ public class SoftwareAdminService {
                             session -> sessionManager.releaseSession(session.getSessionId(), license, ReleaseType.MAINTENANCE_CLOSE)
                     );
         }
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), beforeStatus, SoftwareStatus.BANNED, banUntil, reason));
     }
 
@@ -85,6 +86,7 @@ public class SoftwareAdminService {
             throw new BusinessException(ErrorCode.SOFTWARE_NOT_BANNED);
 
         software.changeStatus(SoftwareStatus.INACTIVE);
+        eventPublisher.publishEvent(new SoftwareStatusChangedEvent(softwareId, user.getId(), SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, reason));
         eventPublisher.publishEvent(new AdminSoftwareStatusChangedEvent(softwareId, user.getId(), SoftwareStatus.BANNED, SoftwareStatus.INACTIVE, reason));
     }
 
