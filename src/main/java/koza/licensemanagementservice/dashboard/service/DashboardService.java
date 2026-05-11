@@ -86,7 +86,6 @@ public class DashboardService {
             SessionValue sv = session.get();
             result.add(new ActiveSessionResponse(
                     sv.getSessionId(),
-                    license.getSoftware().getMember().getNickname(),
                     license.getId(),
                     license.getName(),
                     license.getLicenseKey(),

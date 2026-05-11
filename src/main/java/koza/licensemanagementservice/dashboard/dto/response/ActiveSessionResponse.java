@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ActiveSessionResponse {
     private String sessionId;
-    private String memberNickname;
     private Long licenseId;
     private String licenseName;
     private String licenseKey;
