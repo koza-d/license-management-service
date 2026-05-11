@@ -43,7 +43,7 @@ public class SoftwareVersion extends BaseEntity {
 
     public void updateVersionInfo(SoftwareVersionUpdateRequest request) {
         if (request.getVersion() != null) this.version = request.getVersion();
-        if (request.getFileHash() != null) this.fileHash = request.getFileHash();
+        if (request.getFileHash() != null) this.fileHash = request.getFileHash().toUpperCase();
         if (request.getAvailable() != null) this.isAvailable = request.getAvailable();
         if (request.getDownloadURL() != null) this.downloadURL = request.getDownloadURL();
         if (request.getMemo() != null) this.memo = request.getMemo();

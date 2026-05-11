@@ -37,7 +37,7 @@ public class SoftwareVersionService {
         SoftwareVersion version = SoftwareVersion.builder()
                 .software(software)
                 .version(request.getVersion())
-                .fileHash(request.getFileHash())
+                .fileHash(request.getFileHash().toUpperCase())
                 .isAvailable(request.isAvailable())
                 .downloadURL(request.getDownloadURL())
                 .memo(request.getMemo())
