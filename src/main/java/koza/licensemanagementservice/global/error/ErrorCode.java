@@ -65,7 +65,7 @@ public enum ErrorCode {
     SDK_INVALID_REQUEST(400, "SDK_002", "유효하지 않은 요청입니다."),
     SDK_INVALID_SOFTWARE(404, "SDK_003", "유효하지 않은 소프트웨어입니다."),
     SDK_INVALID_LICENSE(404, "SDK_004", "유효하지 않은 라이센스입니다."),
-    SDK_INVALID_FILE_HASH(400, "SDK_005", "유효하지 않은 해시값입니다."),
+    SDK_INVALID_FILE_HASH(400, "SDK_005", "변조된 파일입니다."),
     SDK_NOT_AVAILABLE_VERSION(400, "SDK_006", "사용 불가능한 버전입니다."),
 
     SDK_LICENSE_IN_USE(409, "SDK_101", "이미 사용 중인 라이센스입니다."),
