@@ -12,18 +12,24 @@ import koza.licensemanagementservice.domain.license.repository.LicenseRepository
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.sdk.dto.request.HeartbeatRequest;
+import koza.licensemanagementservice.sdk.dto.request.InitRequest;
 import koza.licensemanagementservice.sdk.dto.request.ReleaseRequest;
 import koza.licensemanagementservice.sdk.dto.request.VerifyRequest;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatData;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatResponse;
+import koza.licensemanagementservice.sdk.dto.resposne.InitResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyData;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyResponse;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
+import koza.licensemanagementservice.sdk.log.dto.InitFailedEvent;
+import koza.licensemanagementservice.sdk.log.dto.InitSuccessEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifyFailedEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifySuccessEvent;
 import koza.licensemanagementservice.sdk.security.AESEncryption;
 import koza.licensemanagementservice.sdk.security.ECDHExchange;
+import koza.licensemanagementservice.sdk.security.Ed25519KeyProvider;
+import koza.licensemanagementservice.sdk.security.Ed25519Signer;
 import koza.licensemanagementservice.sdk.security.HMACSignature;
 import koza.licensemanagementservice.sdk.security.SessionKeyManager;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +57,75 @@ public class SdkService {
     private final SessionManager sessionManager;
     private final SessionLogRepository sessionLogRepository;
     private final ObjectMapper objectMapper;
+    private final Ed25519KeyProvider ed25519KeyProvider;
     private final ApplicationEventPublisher eventPublisher;
+
+    public InitResponse init(InitRequest request, HttpServletRequest servletRequest) throws Exception {
+        String userAgent = servletRequest.getHeader("User-Agent");
+        String ipAddress = parseIpAddress(servletRequest);
+        Software software = null;
+
+        try {
+            String appId = request.getAppId();
+
+            software = softwareRepository.findByAppId(appId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
+
+            validateSoftwareStatus(software);
+
+            SoftwareVersion latestVersion = software.getVersions().stream()
+                    .filter(SoftwareVersion::isLatest)
+                    .findAny()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
+
+            SoftwareVersion clientVersion = software.getVersions().stream()
+                    .filter(v -> v.getVersion().equals(request.getClientVersion()) && v.isAvailable())
+                    .findAny()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_NOT_AVAILABLE_VERSION,
+                            Map.of(
+                                    "latestVersion", Optional.ofNullable(latestVersion.getVersion()).orElse(""),
+                                    "downloadURL", Optional.ofNullable(latestVersion.getDownloadURL()).orElse("")
+                            )
+                    ));
+
+            if (StringUtils.hasText(clientVersion.getFileHash()) && !clientVersion.getFileHash().equals(request.getFileHash())) {
+                throw new BusinessException(ErrorCode.SDK_INVALID_FILE_HASH);
+            }
+
+            String downloadURL = Optional.ofNullable(latestVersion.getDownloadURL()).orElse("");
+
+            long timestamp = System.currentTimeMillis();
+            String dataToSign = String.join(".",
+                    appId,
+                    latestVersion.getVersion(),
+                    downloadURL,
+                    String.valueOf(timestamp));
+            String sig = Ed25519Signer.sign(dataToSign, ed25519KeyProvider.getPrivateKey());
+
+            InitResponse response = InitResponse.builder()
+                    .softwareName(software.getName())
+                    .latestVersion(latestVersion.getVersion())
+                    .clientVersion(request.getClientVersion())
+                    .downloadURL(downloadURL)
+                    .sig(sig)
+                    .ts(String.valueOf(timestamp))
+                    .build();
+
+            eventPublisher.publishEvent(new InitSuccessEvent(software.getId(), appId, request.getClientVersion(), ipAddress, userAgent));
+            return response;
+        } catch (Exception e) {
+            ErrorCode errorCode = e instanceof BusinessException
+                    ? ((BusinessException) e).getError()
+                    : ErrorCode.SDK_SERVER_ERROR;
+            eventPublisher.publishEvent(new InitFailedEvent(
+                    software != null ? software.getId() : null,
+                    request.getAppId(),
+                    request.getClientVersion(),
+                    errorCode.getCode(),
+                    ipAddress, userAgent));
+            throw e;
+        }
+    }
 
     @Transactional
     public VerifyResponse verify(VerifyRequest request, HttpServletRequest servletRequest) throws Exception {
@@ -77,30 +151,7 @@ public class SdkService {
                 throw new BusinessException(ErrorCode.SDK_INVALID_LICENSE);
 
 
-            switch (software.getStatus()) {
-                case BANNED -> {
-                    HashMap<Object, Object> data = new HashMap<>();
-                    if (software.getStatusUntil() != null)
-                        data.put("until", software.getStatusUntil());
-                    data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
-
-                    throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED, data);
-                }
-                case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
-                case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
-                case MAINTENANCE -> {
-                    HashMap<Object, Object> data = new HashMap<>();
-                    if (software.getStatusUntil() != null)
-                        data.put("until", software.getStatusUntil());
-                    data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
-
-                    throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE, data);
-                }
-                case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
-                        Map.of(
-                                "reason", software.getStatusReason()
-                        ));
-            }
+            validateSoftwareStatus(software);
 
             switch (license.getStatus()) {
                 case BANNED -> {
@@ -114,15 +165,12 @@ public class SdkService {
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
             }
 
-            // 소프트웨어의 최신 버전 정보
             SoftwareVersion latestVersion = software.getVersions().stream()
                     .filter(SoftwareVersion::isLatest)
                     .findAny()
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
 
-            // 클라이언트 버전 정보 검증
             SoftwareVersion clientVersion = software.getVersions().stream()
-                    // 사용 불가능한 버전인 경우
                     .filter(v -> v.getVersion().equals(request.getClientVersion()) && v.isAvailable())
                     .findAny()
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_NOT_AVAILABLE_VERSION,
@@ -286,5 +334,28 @@ public class SdkService {
 
         license.release();
         sessionManager.releaseSession(sessionId, license, releaseType);
+    }
+
+    private void validateSoftwareStatus(Software software) {
+        switch (software.getStatus()) {
+            case BANNED -> {
+                HashMap<Object, Object> data = new HashMap<>();
+                if (software.getStatusUntil() != null)
+                    data.put("until", software.getStatusUntil());
+                data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
+                throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED, data);
+            }
+            case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
+            case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
+            case MAINTENANCE -> {
+                HashMap<Object, Object> data = new HashMap<>();
+                if (software.getStatusUntil() != null)
+                    data.put("until", software.getStatusUntil());
+                data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
+                throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE, data);
+            }
+            case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
+                    Map.of("reason", software.getStatusReason()));
+        }
     }
 }

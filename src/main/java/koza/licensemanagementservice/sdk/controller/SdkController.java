@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.sdk.dto.request.HeartbeatRequest;
+import koza.licensemanagementservice.sdk.dto.request.InitRequest;
 import koza.licensemanagementservice.sdk.dto.request.ReleaseRequest;
 import koza.licensemanagementservice.sdk.dto.request.VerifyRequest;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatResponse;
+import koza.licensemanagementservice.sdk.dto.resposne.InitResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyResponse;
 import koza.licensemanagementservice.sdk.service.SdkService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Tag(name = "인증 API", description = "클라이언트에서 비로그인 상태로 사용하는 라이센스 인증 관련 API")
 public class SdkController {
     private final SdkService sdkService;
+
+    @Operation(summary = "소프트웨어 초기화", description = "소프트웨어 유효성 검증 및 기본 정보를 반환하는 API. 프로그램 실행 시 호출.")
+    @PostMapping("/init")
+    public ResponseEntity<ApiResponse<?>> init(@RequestBody InitRequest request,
+                                               HttpServletRequest servletRequest) throws Exception {
+        InitResponse initResponse = sdkService.init(request, servletRequest);
+        ApiResponse<InitResponse> response = ApiResponse.success(initResponse);
+        return ResponseEntity.ok(response);
+    }
 
     @Operation(summary = "라이센스 인증", description = "세션이 생성되는 기능이 있으며, 프로그램 최초 실행 시 호출하는 라이센스 인증 API")
     @PostMapping("/verify")

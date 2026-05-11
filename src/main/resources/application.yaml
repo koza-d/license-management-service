@@ -39,6 +39,10 @@ oauth:
 jwt:
   secret: ${JWT_SECRET_KEY}
 
+sdk:
+  signing:
+    ed25519-private-key: ${ED25519_PRIVATE_KEY}
+
 logging:
   level:
     org:
