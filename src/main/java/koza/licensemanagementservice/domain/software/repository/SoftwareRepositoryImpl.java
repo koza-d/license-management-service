@@ -55,10 +55,7 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
                 )
                 .from(software)
                 .leftJoin(software.member, member)
-                .leftJoin(softwareVersion).on(
-                        softwareVersion.software.eq(software),
-                        softwareVersion.isLatest.isTrue()
-                )
+                .leftJoin(software.latestVersion, softwareVersion)
                 .where(
                         software.id.eq(softwareId)
                 )
@@ -182,10 +179,7 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
                         )
                 )
                 .from(software)
-                .leftJoin(softwareVersion).on(
-                        softwareVersion.software.eq(software),
-                        softwareVersion.isLatest.isTrue()
-                )
+                .leftJoin(software.latestVersion, softwareVersion)
                 .where(
                         software.member.id.eq(memberId),
                         containsName(search),
@@ -222,10 +216,7 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
                         )
                 )
                 .from(software)
-                .leftJoin(softwareVersion).on(
-                        softwareVersion.software.eq(software),
-                        softwareVersion.isLatest.isTrue()
-                )
+                .leftJoin(software.latestVersion, softwareVersion)
                 .leftJoin(software.member, member)
                 .where(
                         searchFilter(condition.getTarget(), condition.getSearch()),
@@ -240,10 +231,7 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
         Long total = queryFactory
                 .select(software.count())
                 .from(software)
-                .leftJoin(softwareVersion).on(
-                        softwareVersion.software.eq(software),
-                        softwareVersion.isLatest.isTrue()
-                )
+                .leftJoin(software.latestVersion, softwareVersion)
                 .leftJoin(software.member, member)
                 .where(
                         searchFilter(condition.getTarget(), condition.getSearch()),

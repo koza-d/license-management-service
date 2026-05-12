@@ -34,6 +34,10 @@ public class Software extends BaseEntity {
     @OneToMany(mappedBy = "software", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SoftwareVersion> versions;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "latest_version_id")
+    private SoftwareVersion latestVersion;
+
     @Column(name = "name", length = 30, nullable = false)
     private String name;
 
@@ -64,8 +68,8 @@ public class Software extends BaseEntity {
     @Column(name = "status_reason", length = 500)
     private String statusReason;
 
-    public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
-        versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
+    public void changeLatestVersion(SoftwareVersion latestVersion) {
+        this.latestVersion = latestVersion;
     }
 
     public void addVersion(SoftwareVersion version) {

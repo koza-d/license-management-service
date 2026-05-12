@@ -8,7 +8,6 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 
 @Getter
 @Builder
@@ -28,14 +27,12 @@ public class SoftwareDetailResponse {
     private LocalDateTime createAt;
 
     public static SoftwareDetailResponse of(Software software, int licenseCount) {
-        Optional<SoftwareVersion> latestVersion = software.getVersions().stream()
-                .filter(SoftwareVersion::isLatest)
-                .findAny();
+        SoftwareVersion latestVersion = software.getLatestVersion();
 
         return SoftwareDetailResponse.builder()
                 .id(software.getId())
                 .name(software.getName())
-                .latestVersion(latestVersion.isEmpty() ? "최신버전 찾을 수 없음" : latestVersion.get().getVersion())
+                .latestVersion(latestVersion != null ? latestVersion.getVersion() : "최신버전 찾을 수 없음")
                 .status(software.getStatus())
                 .appId(software.getAppId())
                 .statusUntil(software.getStatusUntil())

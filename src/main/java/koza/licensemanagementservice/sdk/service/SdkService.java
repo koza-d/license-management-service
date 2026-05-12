@@ -73,10 +73,9 @@ public class SdkService {
 
             validateSoftwareStatus(software);
 
-            SoftwareVersion latestVersion = software.getVersions().stream()
-                    .filter(SoftwareVersion::isLatest)
-                    .findAny()
-                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
+            SoftwareVersion latestVersion = software.getLatestVersion();
+            if (latestVersion == null)
+                throw new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE);
 
             SoftwareVersion clientVersion = software.getVersions().stream()
                     .filter(v -> v.getVersion().equals(request.getClientVersion()) && v.isAvailable())
@@ -165,10 +164,9 @@ public class SdkService {
                 case EXPIRED -> throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
             }
 
-            SoftwareVersion latestVersion = software.getVersions().stream()
-                    .filter(SoftwareVersion::isLatest)
-                    .findAny()
-                    .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
+            SoftwareVersion latestVersion = software.getLatestVersion();
+            if (latestVersion == null)
+                throw new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE);
 
             SoftwareVersion clientVersion = software.getVersions().stream()
                     .filter(v -> v.getVersion().equals(request.getClientVersion()) && v.isAvailable())

@@ -51,18 +51,19 @@ public class SoftwareVersionService {
         SoftwareVersion version = versionRepository.findById(versionId) // 추후 WithSoftware 로 변경
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        if (!user.getId().equals(version.getSoftware().getMember().getId()))
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        Software software = getSoftwareOrThrow(version.getSoftware().getId(), user.getId());
 
-        return SoftwareVersionDetailResponse.from(version);
+        Long latestVersionId = software.getLatestVersion() != null ? software.getLatestVersion().getId() : null;
+        return SoftwareVersionDetailResponse.of(version, latestVersionId);
     }
 
     @Transactional(readOnly = true)
     public List<SoftwareVersionSummaryResponse> getVersions(CustomUser user, Long softwareId) {
-        getSoftwareOrThrow(softwareId, user.getId());
+        Software software = getSoftwareOrThrow(softwareId, user.getId());
+        Long latestVersionId = software.getLatestVersion() != null ? software.getLatestVersion().getId() : null;
 
         return versionRepository.findBySoftwareId(softwareId).stream()
-                .map(SoftwareVersionSummaryResponse::from)
+                .map(v -> SoftwareVersionSummaryResponse.of(v, latestVersionId))
                 .sorted(Comparator.reverseOrder()).toList();
 
     }

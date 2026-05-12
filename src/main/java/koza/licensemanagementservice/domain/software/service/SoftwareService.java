@@ -63,10 +63,10 @@ public class SoftwareService {
         SoftwareVersion version = SoftwareVersion.builder()
                 .version(createRequest.getLatestVersion())
                 .isAvailable(true)
-                .isLatest(true)
                 .build();
 
         software.addVersion(version);
+        software.changeLatestVersion(version);
         Software save = softwareRepository.save(software);
         eventPublisher.publishEvent(new SoftwareCreatedEvent(save.getId(), user.getId(), save.toSnapshot()));
         return SoftwareCreateResponse.of(save, version.getVersion());
@@ -133,11 +133,11 @@ public class SoftwareService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        SoftwareVersion beforeLatestVersion = versions.stream().filter(SoftwareVersion::isLatest).findFirst()
-                .orElseGet(() -> versions.get(0));
+        SoftwareVersion beforeLatestVersion = software.getLatestVersion() != null
+                ? software.getLatestVersion()
+                : versions.get(0);
 
-        // 변경 로직
-        software.changeLatestVersion(latestVersion.getVersion(), versions);
+        software.changeLatestVersion(latestVersion);
         software.updateInfo(updateRequest.getName());
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
