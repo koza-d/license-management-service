@@ -89,7 +89,7 @@ public class SessionManager {
             log.warn("세션 해제 중 세션을 찾을 수 없습니다. sessionId = {} ", sessionId);
             return;
         }
-
+        license.release();
         sessionRepository.delete(session.getSessionId());
         SessionLog log = SessionLog.builder()
                 .sessionId(session.getSessionId())

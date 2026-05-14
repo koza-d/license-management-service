@@ -330,7 +330,6 @@ public class SdkService {
         });
         if (license == null) return;
 
-        license.release();
         sessionManager.releaseSession(sessionId, license, releaseType);
     }
 

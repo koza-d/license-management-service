@@ -63,7 +63,6 @@ public class SoftwareAdminService {
         List<License> activeSessions = licenseRepository.findBySoftwareIdAndHasActiveSessionIsTrue(softwareId);
         for (License license : activeSessions) {
             // 접속중인 세션 강제종료
-            license.release();
             sessionManager.getSessionByLicenseId(license.getId())
                     .ifPresent(
                             session -> sessionManager.releaseSession(session.getSessionId(), license, ReleaseType.MAINTENANCE_CLOSE)

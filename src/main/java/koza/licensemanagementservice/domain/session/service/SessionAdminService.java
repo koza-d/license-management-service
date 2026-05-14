@@ -127,7 +127,6 @@ public class SessionAdminService {
     }
 
     private void terminateInternal(String sessionId, License license, String reason) {
-        license.release();
         sessionManager.releaseSession(sessionId, license, ReleaseType.FORCE_CLOSE);
         if (reason != null && !reason.isBlank()) {
             log.info("관리자 세션 종료: sessionId={}, licenseId={}, reason={}", sessionId, license.getId(), reason);

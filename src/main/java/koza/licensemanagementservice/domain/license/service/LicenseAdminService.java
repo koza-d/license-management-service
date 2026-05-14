@@ -60,7 +60,6 @@ public class LicenseAdminService {
         license.changeStatus(LicenseStatus.BANNED, banUntil, reason);
 
         if (license.hasActiveSession()) {
-            license.release();
             sessionManager.getSessionByLicenseId(licenseId)
                     .ifPresent(session -> sessionManager.releaseSession(
                             session.getSessionId(), license, ReleaseType.FORCE_CLOSE));

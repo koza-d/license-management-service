@@ -84,7 +84,6 @@ public class SessionService {
         if (license == null)
             return;
 
-        license.release();
         sessionManager.releaseSession(sessionId, license, ReleaseType.FORCE_CLOSE);
     }
 
