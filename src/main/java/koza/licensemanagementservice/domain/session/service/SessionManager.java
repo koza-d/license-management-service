@@ -75,7 +75,7 @@ public class SessionManager {
                     .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
             session.setLatestActiveAt(LocalDateTime.now());
             session.setSessionKey(sessionKey);
-            sessionRepository.save(sessionId, session, SESSION_TTL);
+            sessionRepository.update(sessionId, session, SESSION_TTL);
         }
     }
 
