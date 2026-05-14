@@ -121,9 +121,10 @@ public class License extends BaseEntity {
         this.latestActiveAt = LocalDateTime.now();
     }
 
-    public void release() {
+    public void release(Map<String, String> changedLocalVariables) {
         this.hasActiveSession = false;
         this.latestActiveAt = LocalDateTime.now();
+        this.getRawLocalVariables().putAll(changedLocalVariables);
     }
 
     public Map<String, Object> toSnapshot() {

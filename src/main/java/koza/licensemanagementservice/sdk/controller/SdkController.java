@@ -4,10 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import koza.licensemanagementservice.global.common.ApiResponse;
-import koza.licensemanagementservice.sdk.dto.request.HeartbeatRequest;
-import koza.licensemanagementservice.sdk.dto.request.InitRequest;
-import koza.licensemanagementservice.sdk.dto.request.ReleaseRequest;
-import koza.licensemanagementservice.sdk.dto.request.VerifyRequest;
+import koza.licensemanagementservice.sdk.dto.request.*;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.InitResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyResponse;
@@ -15,6 +12,7 @@ import koza.licensemanagementservice.sdk.service.SdkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,4 +57,10 @@ public class SdkController {
         return ResponseEntity.ok(ApiResponse.success("success"));
     }
 
+    @Operation(summary = "라이센스 LocalVariables 수정", description = "라이센스의 LocalVariables를 수정하는 API")
+    @PatchMapping("/lv")
+    public ResponseEntity<ApiResponse<?>> changeLocalVariables(@RequestBody ChangeLocalVariablesRequest request) throws Exception {
+        sdkService.changeLocalVariable(request);
+        return ResponseEntity.ok(ApiResponse.success("success"));
+    }
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 @Component
 public interface SessionRepository {
     void save(String sessionId, SessionValue sessionValue, Duration ttl);
+    void update(String sessionId, SessionValue sessionValue, Duration ttl);
     Optional<SessionValue> findById(String sessionId);
     String findSessionIdByLicenseId(Long licenseId);
     boolean hasSession(String sessionId);

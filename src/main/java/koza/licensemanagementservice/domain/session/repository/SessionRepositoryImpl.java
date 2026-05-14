@@ -41,6 +41,14 @@ public class SessionRepositoryImpl implements SessionRepository {
         redisTemplate.delete(lockKey);
     }
 
+    public void update(String sessionId, SessionValue sessionValue, Duration ttl) {
+        String value = toJson(sessionValue);
+        String sessionKey = getSessionKeyFormat(sessionId);
+        String triggerKey = getTriggerKeyFormat(sessionId);
+        redisTemplate.opsForValue().set(sessionKey, value);
+        redisTemplate.expire(triggerKey, ttl);
+    }
+
     public Optional<SessionValue> findById(String sessionId) {
         String sessionKey = getSessionKeyFormat(sessionId);
         String json = redisTemplate.opsForValue().get(sessionKey);

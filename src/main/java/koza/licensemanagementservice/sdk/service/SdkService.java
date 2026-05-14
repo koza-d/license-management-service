@@ -11,10 +11,7 @@ import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
-import koza.licensemanagementservice.sdk.dto.request.HeartbeatRequest;
-import koza.licensemanagementservice.sdk.dto.request.InitRequest;
-import koza.licensemanagementservice.sdk.dto.request.ReleaseRequest;
-import koza.licensemanagementservice.sdk.dto.request.VerifyRequest;
+import koza.licensemanagementservice.sdk.dto.request.*;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatData;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.InitResponse;
@@ -305,6 +302,39 @@ public class SdkService {
                 .sig(sig)
                 .ts(String.valueOf(timestamp))
                 .build();
+    }
+
+    public void changeLocalVariable(ChangeLocalVariablesRequest request) throws Exception {
+        String sessionId = request.getSessionId();
+        SessionValue sessionValue = sessionManager.getSession(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
+
+        String key = request.getKey();
+        String value = request.getValue();
+
+        byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionValue.getSessionKey());
+        String signTarget = sessionId + "." + key + "." + value;
+        if (!HMACSignature.verify(signTarget, request.getReceivedSig(), signingKey))
+            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
+
+        int maxKeyLength = 50;
+        int maxValueLength = 500;
+        int maxVariableCount = 30;
+        if (key == null || value == null)
+            throw new BusinessException(ErrorCode.SDK_VARIABLE_NULL);
+
+        if (key.length() > maxKeyLength)
+            throw new BusinessException(ErrorCode.SDK_VARIABLE_KEY_MAX);
+
+        if (value.length() > maxValueLength)
+            throw new BusinessException(ErrorCode.SDK_VARIABLE_VALUE_MAX);
+
+        Map<String, String> variables = sessionValue.getChangedLocalVariables();
+        if (variables.size() >= maxVariableCount)
+            throw new BusinessException(ErrorCode.SDK_VARIABLE_COUNT_MAX);
+
+        variables.put(key, value);
+        sessionManager.updateSession(sessionId, sessionValue);
     }
 
     @Transactional

@@ -79,6 +79,10 @@ public class SessionManager {
         }
     }
 
+    public void updateSession(String sessionId, SessionValue sessionValue) {
+        sessionRepository.update(sessionId, sessionValue, SESSION_TTL);
+    }
+
     public boolean isActive(String sessionId) {
         return sessionRepository.hasSession(sessionId);
     }
@@ -89,7 +93,7 @@ public class SessionManager {
             log.warn("세션 해제 중 세션을 찾을 수 없습니다. sessionId = {} ", sessionId);
             return;
         }
-        license.release();
+        license.release(session.getChangedLocalVariables());
         sessionRepository.delete(session.getSessionId());
         SessionLog log = SessionLog.builder()
                 .sessionId(session.getSessionId())

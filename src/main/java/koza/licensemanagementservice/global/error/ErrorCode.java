@@ -80,6 +80,10 @@ public enum ErrorCode {
 
     SDK_SESSION_EXPIRED(403, "SDK_301", "만료된 세션입니다."),
 
+    SDK_VARIABLE_NULL(400, "SDK_401", "로컬변수의 키 또는 값이 지정되지 않았습니다."),
+    SDK_VARIABLE_KEY_MAX(400, "SDK_402", "로컬변수의 키가 제한된 크기를 초과했습니다."),
+    SDK_VARIABLE_VALUE_MAX(400, "SDK_403", "로컬변수의 값이 제한된 크기를 초과했습니다."),
+    SDK_VARIABLE_COUNT_MAX(400, "SDK_404", "설정할 수 있는 로컬변수의 개수가 초과했습니다.")
     ;
 
     private final int status;
