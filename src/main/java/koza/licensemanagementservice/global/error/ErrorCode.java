@@ -57,6 +57,10 @@ public enum ErrorCode {
     // FAQ 예외
     FAQ_NOT_FOUND(404, "FAQ_001", "FAQ를 찾을 수 없습니다."),
 
+    // 결제 관련 예외
+    PAYMENT_METHOD_DUPLICATE(409, "PAYMENT_001", "이미 등록된 결제수단입니다."),
+    PAYMENT_METHOD_CANNOT_DELETE_DEFAULT(400, "PAYMENT_002", "기본값으로 설정된 결제수단이라 삭제할 수 없습니다."),
+
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),
 

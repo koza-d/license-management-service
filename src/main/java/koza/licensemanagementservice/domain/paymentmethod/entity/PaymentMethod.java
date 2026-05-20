@@ -42,7 +42,19 @@ public class PaymentMethod extends BaseEntity {
     @Column(name = "authenticated_at")
     private LocalDateTime authenticatedAt;
 
-    @Column(name = "active")
-    private boolean active;
+    @Column(name = "is_default")
+    private boolean isDefault;
+
+    @Column(name = "is_active")
+    private boolean isActive;
+
+
+    public void setDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
+
+    public void delete() {
+        this.isActive = false;
+    }
 
 }

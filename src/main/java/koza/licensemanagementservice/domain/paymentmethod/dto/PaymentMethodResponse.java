@@ -14,6 +14,8 @@ public class PaymentMethodResponse {
     private String cardCompany;
     private String cardNumberMasked;
     private LocalDateTime authenticatedAt;
+    private boolean isDefault;
+    private boolean isActive;
 
     public static PaymentMethodResponse of(PaymentMethod entity) {
         return PaymentMethodResponse.builder()
@@ -22,6 +24,8 @@ public class PaymentMethodResponse {
                 .cardCompany(entity.getCardCompany())
                 .cardNumberMasked(entity.getCardNumberMasked())
                 .authenticatedAt(entity.getAuthenticatedAt())
+                .isDefault(entity.isDefault())
+                .isActive(entity.isActive())
                 .build();
     }
 }

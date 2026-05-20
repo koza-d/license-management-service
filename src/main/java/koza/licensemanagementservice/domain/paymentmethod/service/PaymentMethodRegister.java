@@ -26,7 +26,7 @@ public class PaymentMethodRegister {
                 .cardCompany(registerDTO.getCardCompany())
                 .cardNumberMasked(registerDTO.getCardNumberMasked())
                 .authenticatedAt(registerDTO.getAuthenticatedAt())
-                .active(true)
+                .isActive(true)
                 .build();
         paymentMethodRepository.save(paymentMethod);
         return PaymentMethodResponse.of(paymentMethod);
