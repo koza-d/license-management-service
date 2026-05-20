@@ -39,6 +39,9 @@ oauth:
 jwt:
   secret: ${JWT_SECRET_KEY}
 
+encrypt:
+  secret-key: ${ENCRYPT_SECRET_KEY:01234567890123456789012345678901}  # 32바이트
+
 sdk:
   signing:
     ed25519-private-key: ${ED25519_PRIVATE_KEY}
