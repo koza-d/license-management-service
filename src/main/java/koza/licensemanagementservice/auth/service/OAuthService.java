@@ -44,6 +44,7 @@ public class OAuthService {
                             .profileURL(userInfo.getPicture())
                             .provider(client.getProvider().getName())
                             .providerId(userInfo.getId())
+                            .paymentKey(UUID.randomUUID().toString().replace("-", ""))
                             .roles(roles)
                             .build();
                     Member save = memberRepository.save(saveMember);

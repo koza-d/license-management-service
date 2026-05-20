@@ -6,6 +6,7 @@ import koza.licensemanagementservice.auth.dto.request.MemberLoginRequest;
 import koza.licensemanagementservice.auth.dto.response.LoginResponse;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
+import koza.licensemanagementservice.domain.member.dto.response.MemberPaymentKeyResponse;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberJoinEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberLoginFailEvent;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*;
@@ -56,6 +58,7 @@ public class MemberService {
                 .nickname(joinRequest.getNickname())
                 .password(passwordEncoder.encode(joinRequest.getPassword()))
                 .provider(SocialProvider.LOCAL.getName())
+                .paymentKey(UUID.randomUUID().toString().replace("-", ""))
                 .roles(roles)
                 .build();
 
@@ -145,5 +148,13 @@ public class MemberService {
                         .collect(Collectors.toList())
                 )
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public MemberPaymentKeyResponse getPaymentKey(CustomUser user) {
+        Member member = memberRepository.findById(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        return new MemberPaymentKeyResponse(member.getPaymentKey());
     }
 }

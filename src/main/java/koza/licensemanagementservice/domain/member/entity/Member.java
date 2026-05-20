@@ -58,6 +58,9 @@ public class Member extends BaseEntity {
     @Column(name = "withdraw_scheduled_at")
     private LocalDateTime withdrawScheduledAt;
 
+    @Column(name = "payment_key", length = 32, nullable = false)
+    private String paymentKey;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
     @Builder.Default

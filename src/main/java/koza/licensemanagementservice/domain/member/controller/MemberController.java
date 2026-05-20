@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
+import koza.licensemanagementservice.domain.member.dto.response.MemberPaymentKeyResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.MemberInfoResponse;
@@ -36,6 +37,13 @@ public class MemberController {
     public ResponseEntity<ApiResponse<?>> info(@AuthenticationPrincipal CustomUser user) {
         MemberInfoResponse infoResponse = memberService.userInfo(user);
         ApiResponse<MemberInfoResponse> response = ApiResponse.success(infoResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/payment-key")
+    public ResponseEntity<ApiResponse<?>> paymentKey(@AuthenticationPrincipal CustomUser user) {
+        MemberPaymentKeyResponse paymentKey = memberService.getPaymentKey(user);
+        ApiResponse<?> response = ApiResponse.success(paymentKey);
         return ResponseEntity.ok(response);
     }
 
