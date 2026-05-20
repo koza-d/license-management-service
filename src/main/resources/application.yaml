@@ -42,6 +42,9 @@ jwt:
 encrypt:
   secret-key: ${ENCRYPT_SECRET_KEY:01234567890123456789012345678901}  # 32바이트
 
+toss:
+  secret-key: ${TOSS_SECRET_KEY:test_sk_docs_Ovk5rk1EwkEbP0W43n07xlzm}
+
 sdk:
   signing:
     ed25519-private-key: ${ED25519_PRIVATE_KEY}
