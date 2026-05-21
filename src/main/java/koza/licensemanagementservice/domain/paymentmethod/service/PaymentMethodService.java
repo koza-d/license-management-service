@@ -37,7 +37,7 @@ public class PaymentMethodService {
 
         TossBillingResponse response = tossBillingService.issueBillingKey(request);
 
-        Optional<PaymentMethod> existPaymentMethod = paymentMethodRepository.findByMemberIdAndCardCompanyAndCardNumberMaskedAndActiveTrue(member.getId(), response.getCardCompany(), response.getCardNumber());
+        Optional<PaymentMethod> existPaymentMethod = paymentMethodRepository.findByMemberIdAndCardCompanyAndCardNumberMaskedAndIsActiveIsTrue(member.getId(), response.getCardCompany(), response.getCardNumber());
         if (existPaymentMethod.isPresent())
             throw new BusinessException(ErrorCode.PAYMENT_METHOD_DUPLICATE);
 
