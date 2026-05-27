@@ -60,6 +60,15 @@ public enum ErrorCode {
     // 결제 관련 예외
     PAYMENT_METHOD_DUPLICATE(409, "PAYMENT_001", "이미 등록된 결제수단입니다."),
     PAYMENT_METHOD_CANNOT_DELETE_DEFAULT(400, "PAYMENT_002", "기본값으로 설정된 결제수단이라 삭제할 수 없습니다."),
+    PAYMENT_METHOD_NOT_FOUND(400, "PAYMENT_003", "등록된 결제수단을 찾을 수 없습니다."),
+    PAYMENT_METHOD_NOT_ACTIVE(400, "PAYMENT_004", "설정된 결제수단이 사용할 수 없는 상태입니다."),
+
+    // 구독 관련 예외
+    SUBSCRIPTION_RENEWAL_TARGET_NOT_FOUND(404, "SUBSCRIPTION_001", "갱신할 구독을 찾을 수 없습니다."),
+    SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성 중인 구독이 있습니다."),
+    SUBSCRIPTION_PAYMENT_PENDING(409, "SUBSCRIPTION_003", "결제가 처리 중입니다. 잠시 후 다시 확인해주세요. 문제가 지속되면 문의 바랍니다."),
+    SUBSCRIPTION_RENEWAL_PAYMENT_SUCCESS(409, "SUBSCRIPTION_004", "구독 갱신 결제가 이미 처리됐습니다."),
+    SUBSCRIPTION_RENEWAL_EARLY(400, "SUBSCRIPTION_005", "구독 갱신은 구독 종료 7일전부터 가능합니다."),
 
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),
