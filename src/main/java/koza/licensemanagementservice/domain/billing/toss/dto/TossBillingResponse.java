@@ -16,8 +16,6 @@ public class TossBillingResponse {
     private OffsetDateTime authenticatedAt;
     private String method;
     private String billingKey;
-    private String cardCompany;
-    private String cardNumber; // 마스킹된 값
     private CardInfo card;
 
     @Getter @NoArgsConstructor

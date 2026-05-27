@@ -33,8 +33,8 @@ public class PaymentMethod extends BaseEntity {
     @Column(name = "card_owner_type", length = 20, nullable = false)
     private String cardOwnerType;
 
-    @Column(name = "card_company", length = 20, nullable = false)
-    private String cardCompany;
+    @Column(name = "card_issuer_code", length = 20, nullable = false)
+    private String cardIssuerCode;
 
     @Column(name = "card_number_masked", length = 30, nullable = false)
     private String cardNumberMasked;

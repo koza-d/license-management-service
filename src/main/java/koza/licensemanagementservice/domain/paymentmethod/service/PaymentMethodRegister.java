@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class PaymentMethodRegister {
@@ -18,15 +20,25 @@ public class PaymentMethodRegister {
 
     @Transactional
     public PaymentMethodResponse register(Member member, RegisterPaymentMethodDTO registerDTO) {
+        boolean isDefault = true;
+        List<PaymentMethod> paymentMethods = paymentMethodRepository.findByMemberId(member.getId());
+        for (PaymentMethod method : paymentMethods) {
+            if (method.isDefault()) {
+                isDefault = false;
+                break;
+            }
+        }
+
         PaymentMethod paymentMethod = PaymentMethod.builder()
                 .member(member)
                 .billingKey(encryptUtil.encrypt(registerDTO.getBillingKey()))
                 .cardType(registerDTO.getCardType())
                 .cardOwnerType(registerDTO.getCardOwnerType())
-                .cardCompany(registerDTO.getCardCompany())
+                .cardIssuerCode(registerDTO.getCardIssuerCode())
                 .cardNumberMasked(registerDTO.getCardNumberMasked())
                 .authenticatedAt(registerDTO.getAuthenticatedAt())
                 .isActive(true)
+                .isDefault(isDefault)
                 .build();
         paymentMethodRepository.save(paymentMethod);
         return PaymentMethodResponse.of(paymentMethod);

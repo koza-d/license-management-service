@@ -27,7 +27,6 @@ public class PaymentMethodService {
     private final MemberRepository memberRepository;
     private final PaymentMethodRepository paymentMethodRepository;
 
-    @Transactional(readOnly = true)
     public PaymentMethodResponse issueTossBillingKey(CustomUser user, TossBillingAuthRequest request) {
         Member member = memberRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -37,7 +36,7 @@ public class PaymentMethodService {
 
         TossBillingResponse response = tossBillingService.issueBillingKey(request);
 
-        Optional<PaymentMethod> existPaymentMethod = paymentMethodRepository.findByMemberIdAndCardCompanyAndCardNumberMaskedAndIsActiveIsTrue(member.getId(), response.getCardCompany(), response.getCardNumber());
+        Optional<PaymentMethod> existPaymentMethod = paymentMethodRepository.findByMemberIdAndCardIssuerCodeAndCardNumberMaskedAndIsActiveIsTrue(member.getId(), response.getCard().getIssuerCode(), response.getCard().getNumber());
         if (existPaymentMethod.isPresent())
             throw new BusinessException(ErrorCode.PAYMENT_METHOD_DUPLICATE);
 
