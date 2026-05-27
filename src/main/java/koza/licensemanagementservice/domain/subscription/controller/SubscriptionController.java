@@ -13,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/subscriptions")
@@ -60,6 +62,17 @@ public class SubscriptionController {
     public ResponseEntity<ApiResponse<?>> resume(@AuthenticationPrincipal CustomUser user,
                                                  @PathVariable("subscriptionId") Long subscriptionId) {
         subscriptionService.resume(user, subscriptionId);
+        ApiResponse<?> response = ApiResponse.success("success!!");
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "해당 구독에 대한 결제수단 변경")
+    @PutMapping("/{subscriptionId}/payment-method")
+    public ResponseEntity<ApiResponse<?>> changePaymentMethod(@AuthenticationPrincipal CustomUser user,
+                                                              @PathVariable("subscriptionId") Long subscriptionId,
+                                                              @RequestBody Map<String, Long> requestData) {
+        Long paymentMethodId = requestData.get("paymentMethodId");
+        subscriptionService.changePaymentMethod(user, subscriptionId, paymentMethodId);
         ApiResponse<?> response = ApiResponse.success("success!!");
         return ResponseEntity.ok(response);
     }
