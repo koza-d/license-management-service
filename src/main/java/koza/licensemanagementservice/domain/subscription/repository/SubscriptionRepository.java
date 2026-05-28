@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
+public interface SubscriptionRepository extends JpaRepository<Subscription, Long>, SubscriptionRepositoryCustom {
     @Query("SELECT s FROM Subscription s " +
             "JOIN FETCH s.member " +
             "JOIN FETCH s.plan " +
