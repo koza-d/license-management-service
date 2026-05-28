@@ -84,6 +84,9 @@ public class Payment extends BaseEntity {
     @Column(name = "raw_response", columnDefinition = "TEXT")
     private String rawResponse;
 
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
+
     public boolean fail(String failureCode, String failureReason) {
         if (this.status == PaymentStatus.FAILED)
             return false;
@@ -105,4 +108,21 @@ public class Payment extends BaseEntity {
         this.status = PaymentStatus.SUCCESS;
         return true;
     }
+
+    public void refund() {
+        if (this.status != PaymentStatus.SUCCESS)
+            return;
+
+        this.status = PaymentStatus.REFUNDED;
+        this.refundedAt = LocalDateTime.now();
+    }
+
+    public void manualSuccess() {
+        if (this.status != PaymentStatus.PENDING)
+            return;
+
+        this.approvedAt = LocalDateTime.now();
+        this.status = PaymentStatus.SUCCESS;
+    }
+
 }

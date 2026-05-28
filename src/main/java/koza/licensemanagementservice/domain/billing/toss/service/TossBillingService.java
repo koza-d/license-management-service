@@ -17,6 +17,7 @@ import org.springframework.data.util.Pair;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -90,5 +91,22 @@ public class TossBillingService {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public void cancelPayment(String paymentKey, String cancelReason) {
+        String auth = "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+
+        restClient.post()
+                .uri("https://api.tosspayments.com/v1/payments/{paymentKey}/cancel", paymentKey)
+                .header(HttpHeaders.AUTHORIZATION, auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("cancelReason", cancelReason))
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, resp) -> {
+                    TossErrorResponse error = objectMapper.readValue(resp.getBody(), TossErrorResponse.class);
+                    throw new PaymentException(resp.getStatusCode(), error.getCode(), error.getMessage());
+                })
+                .toBodilessEntity();
     }
 }

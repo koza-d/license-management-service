@@ -19,9 +19,13 @@ import koza.licensemanagementservice.domain.session.log.dto.event.SessionTermina
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.log.dto.event.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.domain.payment.event.PaymentAdminApprovedEvent;
+import koza.licensemanagementservice.domain.payment.event.PaymentAdminFailedEvent;
+import koza.licensemanagementservice.domain.payment.event.PaymentAdminRefundedEvent;
 import koza.licensemanagementservice.domain.subscription.event.SubscriptionAdminStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -270,6 +274,62 @@ public class AdminAuditLogListener {
                 event.getSubscriptionId(), event.getTargetEmail(),
                 summary,
                 payload);
+    }
+
+    // ===== Payment =====
+
+    @Async("auditLogExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onPaymentAdminApproved(PaymentAdminApprovedEvent event) {
+        String actorEmail = resolveMemberEmail(event.getOperatorId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("orderId", event.getOrderId());
+        payload.put("reason", event.getReason());
+
+        String summary = String.format("결제 '%s' 관리자 승인 (%s) | 사유 : %s",
+                event.getOrderId(), "수동", event.getReason());
+
+        save(EventCategory.PAYMENT, "APPROVED",
+                event.getOperatorId(), actorEmail,
+                event.getPaymentId(), event.getOrderId(),
+                summary, payload);
+    }
+
+    @Async("auditLogExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onPaymentAdminFailed(PaymentAdminFailedEvent event) {
+        String actorEmail = resolveMemberEmail(event.getOperatorId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("orderId", event.getOrderId());
+        payload.put("reason", event.getReason());
+
+        String summary = String.format("결제 '%s' 관리자 실패 처리", event.getOrderId());
+
+        save(EventCategory.PAYMENT, "FAILED",
+                event.getOperatorId(), actorEmail,
+                event.getPaymentId(), event.getOrderId(),
+                summary, payload);
+    }
+
+    @Async("auditLogExecutor")
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onPaymentAdminRefunded(PaymentAdminRefundedEvent event) {
+        String actorEmail = resolveMemberEmail(event.getOperatorId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("paymentKey", event.getPaymentKey());
+        payload.put("amount", event.getAmount());
+        payload.put("reason", event.getReason());
+
+        String summary = String.format("결제 '%s' 환불 처리 (금액: %d원) | 사유 : %s",
+                event.getPaymentKey(), event.getAmount(), event.getReason());
+
+        save(EventCategory.PAYMENT, "REFUNDED",
+                event.getOperatorId(), actorEmail,
+                event.getPaymentId(), event.getTargetEmail(),
+                summary, payload);
     }
 
     // ===== helpers =====

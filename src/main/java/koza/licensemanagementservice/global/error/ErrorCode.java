@@ -62,6 +62,12 @@ public enum ErrorCode {
     PAYMENT_METHOD_CANNOT_DELETE_DEFAULT(400, "PAYMENT_002", "기본값으로 설정된 결제수단이라 삭제할 수 없습니다."),
     PAYMENT_METHOD_NOT_FOUND(400, "PAYMENT_003", "등록된 결제수단을 찾을 수 없습니다."),
     PAYMENT_METHOD_NOT_ACTIVE(400, "PAYMENT_004", "설정된 결제수단이 사용할 수 없는 상태입니다."),
+    PAYMENT_NOT_FOUND(404, "PAYMENT_005", "결제를 찾을 수 없습니다."),
+    PAYMENT_NOT_PENDING(409, "PAYMENT_006", "대기 상태의 결제만 처리할 수 있습니다."),
+    PAYMENT_NOT_SUCCESS(409, "PAYMENT_007", "성공 상태의 결제만 환불할 수 있습니다."),
+    PAYMENT_REFUND_FAILED(500, "PAYMENT_008", "환불 처리 중 오류가 발생했습니다."),
+    PAYMENT_ALREADY_RESOLVE(409, "PAYMENT_009", "이미 처리된 결제입니다."),
+    PAYMENT_REFUNDED_BELATED(400, "PAYMENT_010", "결제시점으로부터 7일이 지나 환불이 불가능합니다."),
 
     // 구독 관련 예외
     SUBSCRIPTION_RENEWAL_TARGET_NOT_FOUND(404, "SUBSCRIPTION_001", "갱신할 구독을 찾을 수 없습니다."),
