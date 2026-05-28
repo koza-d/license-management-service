@@ -78,7 +78,6 @@ public class AdminAuditLogRepositoryImpl implements AdminAuditLogRepositoryCusto
                         adminAuditLog.eventCategory,
                         adminAuditLog.eventType,
                         adminAuditLog.actorEmail,
-                        adminAuditLog.targetType,
                         adminAuditLog.targetId,
                         adminAuditLog.targetLabel,
                         adminAuditLog.summary,
