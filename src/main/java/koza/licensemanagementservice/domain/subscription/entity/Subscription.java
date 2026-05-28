@@ -110,6 +110,13 @@ public class Subscription extends BaseEntity {
         this.member.changeCurrentPlanCode(PlanCode.FREE);
     }
 
+    public void refund() {
+        this.status = SubscriptionStatus.REFUNDED;
+        this.gracePeriodEnd = null;
+        this.nextBillingAt = null;
+        this.member.changeCurrentPlanCode(PlanCode.FREE);
+    }
+
     public void failedBilling() {
         if (this.status == SubscriptionStatus.EXPIRED)
             return;

@@ -19,6 +19,7 @@ import koza.licensemanagementservice.domain.session.log.dto.event.SessionTermina
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.log.dto.event.AdminSoftwareStatusChangedEvent;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.domain.subscription.event.SubscriptionAdminStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -36,12 +37,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class AdminAuditLogListener {
-    private static final String TARGET_LICENSE = "LICENSE";
-    private static final String TARGET_MEMBER = "MEMBER";
-    private static final String TARGET_SOFTWARE = "SOFTWARE";
-    private static final String TARGET_SESSION = "SESSION";
-    private static final String TARGET_QNA = "QNA";
-
     private final AdminAuditLogRepository auditLogRepository;
     private final MemberRepository memberRepository;
     private final LicenseRepository licenseRepository;
@@ -72,7 +67,7 @@ public class AdminAuditLogListener {
 
         save(EventCategory.LICENSE, "STATUS_CHANGED",
                 event.getOperatorId(), actorEmail,
-                TARGET_LICENSE, event.getTargetId(), label,
+                event.getTargetId(), label,
                 summary,
                 payload);
     }
@@ -89,7 +84,7 @@ public class AdminAuditLogListener {
         payload.put("periodMs", event.getPeriodMs());
         save(EventCategory.LICENSE, "EXTENDED",
                 event.getOperatorId(), actorEmail,
-                TARGET_LICENSE, event.getLicenseId(), label,
+                event.getLicenseId(), label,
                 String.format("라이센스 '%s' 만료일 연장", label),
                 payload);
     }
@@ -108,7 +103,7 @@ public class AdminAuditLogListener {
         payload.put("reason", event.getReason());
         save(EventCategory.MEMBER, "STATUS_CHANGED",
                 operator.getId(), operator.getEmail(),
-                TARGET_MEMBER, target.getId(), target.getEmail(),
+                target.getId(), target.getEmail(),
                 String.format("회원 '%s' 상태 %s → %s",
                         target.getEmail(), event.getBefore(), event.getAfter()),
                 payload);
@@ -126,7 +121,7 @@ public class AdminAuditLogListener {
         payload.put("reason", event.getReason());
         save(EventCategory.MEMBER, "ROLE_CHANGED",
                 operator.getId(), operator.getEmail(),
-                TARGET_MEMBER, target.getId(), target.getEmail(),
+                target.getId(), target.getEmail(),
                 String.format("회원 '%s' 역할 %s → %s",
                         target.getEmail(), event.getBefore(), event.getAfter()),
                 payload);
@@ -162,7 +157,7 @@ public class AdminAuditLogListener {
 
         save(EventCategory.SOFTWARE, "STATUS_CHANGED",
                 event.getOperatorId(), actorEmail,
-                TARGET_SOFTWARE, event.getTargetSoftwareId(), label,
+                event.getTargetSoftwareId(), label,
                 summary,
                 payload);
     }
@@ -181,7 +176,7 @@ public class AdminAuditLogListener {
         payload.put("reason", event.getReason());
         save(EventCategory.SESSION, "TERMINATED",
                 event.getOperatorId(), actorEmail,
-                TARGET_SESSION, event.getLicenseId(), licenseLabel,
+                event.getLicenseId(), licenseLabel,
                 String.format("세션 강제 종료 (license '%s')", licenseLabel),
                 payload);
     }
@@ -199,7 +194,7 @@ public class AdminAuditLogListener {
         // 대량 종료는 특정 단일 target이 아니라 operator 본인을 target으로 기록
         save(EventCategory.SESSION, "BULK_TERMINATED",
                 event.getOperatorId(), actorEmail,
-                TARGET_MEMBER, event.getOperatorId(), actorEmail,
+                event.getOperatorId(), actorEmail,
                 String.format("세션 %d건 일괄 강제 종료 (실패 %d건)", event.getTerminated(), event.getFailed()),
                 payload);
     }
@@ -216,7 +211,7 @@ public class AdminAuditLogListener {
         payload.put("askerEmail", event.getAskerEmail());
         save(EventCategory.QNA, "ANSWERED",
                 event.getOperatorId(), actorEmail,
-                TARGET_QNA, event.getQnaId(), event.getQnaTitle(),
+                event.getQnaId(), event.getQnaTitle(),
                 String.format("문의 '%s' 답변 등록", event.getQnaTitle()),
                 payload);
     }
@@ -233,7 +228,7 @@ public class AdminAuditLogListener {
         payload.put("after", event.getAfterAnswer());
         save(EventCategory.QNA, "ANSWER_UPDATED",
                 event.getOperatorId(), actorEmail,
-                TARGET_QNA, event.getQnaId(), event.getQnaTitle(),
+                event.getQnaId(), event.getQnaTitle(),
                 String.format("문의 '%s' 답변 수정", event.getQnaTitle()),
                 payload);
     }
@@ -248,9 +243,32 @@ public class AdminAuditLogListener {
         payload.put("after", event.getAfter().name());
         save(EventCategory.QNA, "PRIORITY_CHANGED",
                 event.getOperatorId(), actorEmail,
-                TARGET_QNA, event.getQnaId(), event.getQnaTitle(),
+                event.getQnaId(), event.getQnaTitle(),
                 String.format("문의 '%s' 긴급도 %s → %s",
                         event.getQnaTitle(), event.getBefore(), event.getAfter()),
+                payload);
+    }
+
+    // ===== Subscription =====
+
+    @Async("auditLogExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSubscriptionAdminStatusChanged(SubscriptionAdminStatusChangedEvent event) {
+        if (event.getBeforeStatus() == event.getAfterStatus()) return;
+        String actorEmail = resolveMemberEmail(event.getOperatorId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("before", event.getBeforeStatus().name());
+        payload.put("after", event.getAfterStatus().name());
+        payload.put("reason", event.getReason());
+
+        String summary = String.format("구독 '%s' 상태 %s → %s",
+                event.getTargetEmail(), event.getBeforeStatus(), event.getAfterStatus());
+
+        save(EventCategory.SUBSCRIPTION, "STATUS_CHANGED",
+                event.getOperatorId(), actorEmail,
+                event.getSubscriptionId(), event.getTargetEmail(),
+                summary,
                 payload);
     }
 
@@ -258,7 +276,7 @@ public class AdminAuditLogListener {
 
     private void save(EventCategory category, String type,
                       Long actorId, String actorEmail,
-                      String targetType, Long targetId, String targetLabel,
+                      Long targetId, String targetLabel,
                       String summary, Map<String, Object> payload) {
         try {
             auditLogRepository.save(AdminAuditLog.builder()
@@ -266,7 +284,6 @@ public class AdminAuditLogListener {
                     .eventType(type)
                     .actorId(actorId)
                     .actorEmail(actorEmail)
-                    .targetType(targetType)
                     .targetId(targetId)
                     .targetLabel(targetLabel)
                     .summary(summary)

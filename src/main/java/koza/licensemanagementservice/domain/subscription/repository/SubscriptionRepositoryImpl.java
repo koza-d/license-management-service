@@ -33,6 +33,7 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepositoryCustom 
         List<AdminSubscriptionSummaryResponse> content = queryFactory
                 .select(
                         new QAdminSubscriptionSummaryResponse(
+                                subscription.id,
                                 member.email,
                                 member.nickname,
                                 plan.planCode,

@@ -7,4 +7,5 @@ public enum SubscriptionStatus {
     EXPIRED, // 만료
     PAST_DUE, // 결제안됨(결제일 이후)
     CANCELLED, // 구독취소 (만료일까지 이용가능)
+    REFUNDED, // 환불
 }

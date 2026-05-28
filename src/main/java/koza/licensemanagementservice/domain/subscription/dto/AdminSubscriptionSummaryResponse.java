@@ -7,7 +7,7 @@ import koza.licensemanagementservice.domain.subscription.entity.SubscriptionStat
 
 import java.time.LocalDateTime;
 
-public record AdminSubscriptionSummaryResponse(String email, String nickname, PlanCode planCode,
+public record AdminSubscriptionSummaryResponse(Long subscriptionId, String email, String nickname, PlanCode planCode,
                                                BillingCycle billingCycle, SubscriptionStatus status,
                                                LocalDateTime currentPeriodStart, LocalDateTime currentPeriodEnd,
                                                LocalDateTime startedAt) {

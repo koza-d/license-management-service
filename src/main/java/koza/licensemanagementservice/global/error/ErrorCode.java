@@ -69,6 +69,8 @@ public enum ErrorCode {
     SUBSCRIPTION_PAYMENT_PENDING(409, "SUBSCRIPTION_003", "결제가 처리 중입니다. 잠시 후 다시 확인해주세요. 문제가 지속되면 문의 바랍니다."),
     SUBSCRIPTION_RENEWAL_PAYMENT_SUCCESS(409, "SUBSCRIPTION_004", "구독 갱신 결제가 이미 처리됐습니다."),
     SUBSCRIPTION_RENEWAL_EARLY(400, "SUBSCRIPTION_005", "구독 갱신은 구독 종료 7일전부터 가능합니다."),
+    SUBSCRIPTION_NOT_FOUND(404, "SUBSCRIPTION_006", "구독을 찾을 수 없습니다."),
+    SUBSCRIPTION_NOT_ACTIVE_PAST_DUE(400, "SUBSCRIPTION_007", "구독이 활성화된 상태가 아닙니다."),
 
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),

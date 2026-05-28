@@ -4,8 +4,10 @@ package koza.licensemanagementservice.domain.subscription.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.domain.subscription.dto.AdminSubscriptionDetailResponse;
 import koza.licensemanagementservice.domain.subscription.dto.AdminSubscriptionSummaryResponse;
 import koza.licensemanagementservice.domain.subscription.dto.condition.SubscriptionAdminSearchCondition;
+import koza.licensemanagementservice.domain.subscription.dto.request.AdminSubscriptionCancelRequest;
 import koza.licensemanagementservice.domain.subscription.service.SubscriptionAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/subscriptions")
 @Tag(name = "[Admin] 구독 관련 API", description = "관리자 전용 구독 관련 API")
@@ -30,10 +29,26 @@ public class SubscriptionAdminController {
     public ResponseEntity<ApiResponse<?>> getSubscriptions(@AuthenticationPrincipal CustomUser user,
                                                            @ModelAttribute SubscriptionAdminSearchCondition condition,
                                                            Pageable pageable) {
-        System.out.println("condition = " + condition);
-        System.out.println("pageable = " + pageable);
         Page<AdminSubscriptionSummaryResponse> subscriptions = subscriptionAdminService.getSubscriptions(user, condition, pageable);
-        ApiResponse<?> response = ApiResponse.success(subscriptions);
+        return ResponseEntity.ok(ApiResponse.success(subscriptions));
+    }
+
+    @Operation(description = "구독 상세 조회 API")
+    @GetMapping("/{subscriptionId}")
+    public ResponseEntity<ApiResponse<?>> getSubscriptionDetail(@AuthenticationPrincipal CustomUser user,
+                                                                @PathVariable Long subscriptionId) {
+        AdminSubscriptionDetailResponse detail = subscriptionAdminService.getSubscriptionDetail(user, subscriptionId);
+        ApiResponse<?> response = ApiResponse.success(detail);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(description = "구독 강제 취소 API")
+    @PostMapping("/{subscriptionId}/cancel")
+    public ResponseEntity<ApiResponse<?>> cancelSubscription(@AuthenticationPrincipal CustomUser user,
+                                                             @PathVariable Long subscriptionId,
+                                                             @RequestBody AdminSubscriptionCancelRequest request) {
+        subscriptionAdminService.cancel(user, subscriptionId, request);
+        ApiResponse<?> response = ApiResponse.success("success!!");
         return ResponseEntity.ok(response);
     }
 
