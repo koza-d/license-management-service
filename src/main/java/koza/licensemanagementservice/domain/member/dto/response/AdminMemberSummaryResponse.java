@@ -1,8 +1,8 @@
 package koza.licensemanagementservice.domain.member.dto.response;
 
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.entity.MemberGrade;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +15,7 @@ public class AdminMemberSummaryResponse {
     private String memberEmail;
     private String memberNickname;
     private String profileURL;
-    private MemberGrade grade;
+    private PlanCode planCode;
     private MemberStatus status;
     private String provider;
     private LocalDateTime createdAt;
@@ -27,7 +27,7 @@ public class AdminMemberSummaryResponse {
                 .memberEmail(m.getEmail())
                 .memberNickname(m.getNickname())
                 .profileURL(m.getProfileURL())
-                .grade(m.getGrade())
+                .planCode(m.getCurrentPlanCode())
                 .status(m.getStatus())
                 .provider(m.getProvider())
                 .createdAt(m.getCreateAt())

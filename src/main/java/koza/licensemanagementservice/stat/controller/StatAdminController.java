@@ -40,7 +40,7 @@ public class StatAdminController {
     @GetMapping("/members/plan-distribution")
     @Operation(summary = "회원 플랜 분포", description = "현재 유저의 플랜 분포")
     public ResponseEntity<ApiResponse<?>> getMemberPlanDistribution(@AuthenticationPrincipal CustomUser user) {
-        MemberPlanDistributionResponse planDistribution = statAdminService.getMemberPlanDistribution(user);
+        PlanDistributionResponse planDistribution = statAdminService.getMemberPlanDistribution(user);
         ApiResponse<?> response = ApiResponse.success(planDistribution);
         return ResponseEntity.ok(response);
     }

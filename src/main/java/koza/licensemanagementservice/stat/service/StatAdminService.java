@@ -4,6 +4,7 @@ import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.log.repository.LicenseLogRepository;
 import koza.licensemanagementservice.domain.member.log.repository.MemberLogRepository;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository.SessionPeakInterface;
 import koza.licensemanagementservice.domain.software.log.repository.SoftwareLogRepository;
@@ -49,10 +50,14 @@ public class StatAdminService {
                 date -> new MemberTrendResponse(date.toString(), 0L, 0L));
     }
 
-    public MemberPlanDistributionResponse getMemberPlanDistribution(CustomUser user) {
+    public PlanDistributionResponse getMemberPlanDistribution(CustomUser user) {
         validAdminAuthorized(user);
 
-        return memberRepository.getMemberPlanDistribution();
+        long free = memberRepository.countByCurrentPlanCode(PlanCode.FREE);
+        long pro = memberRepository.countByCurrentPlanCode(PlanCode.PRO);
+        long enterprise = memberRepository.countByCurrentPlanCode(PlanCode.ENTERPRISE);
+
+        return new PlanDistributionResponse(free, pro, enterprise);
     }
 
     public List<SoftwareRegisterTrendResponse> getSoftwareRegistrationTrends(CustomUser user, LocalDate from, LocalDate to) {

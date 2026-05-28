@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.plan.dto;
 
 import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +9,7 @@ import lombok.Getter;
 @Builder
 public class PlanResponse {
     private String name;
-    private String planCode;
+    private PlanCode planCode;
     private int monthlyPrice;
     private int yearlyPrice;
     private int limitLicense;

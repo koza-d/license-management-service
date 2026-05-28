@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
-import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberRoleChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
@@ -66,15 +65,6 @@ public class MemberAdminController {
                                                        @PathVariable Long memberId,
                                                        @RequestBody @Valid MemberStatusChangeRequest request) {
         memberAdminService.changeStatus(admin, memberId, request);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    @Operation(summary = "회원 등급 변경", description = "회원의 등급을 변경합니다.")
-    @PatchMapping("/{memberId}/grade")
-    public ResponseEntity<ApiResponse<?>> changeGrade(@AuthenticationPrincipal CustomUser admin,
-                                                      @PathVariable Long memberId,
-                                                      @RequestBody @Valid MemberGradeChangeRequest request) {
-        memberAdminService.changeGrade(admin, memberId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

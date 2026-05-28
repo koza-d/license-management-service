@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.member.log.dto.event;
 
-import koza.licensemanagementservice.domain.member.entity.MemberGrade;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class MemberWithdrawEvent {
     private final Long memberId;
     private final String provider;
-    private final MemberGrade grade;
+    private final PlanCode planCode;
     private final String reason;
     private final LocalDateTime registerAt;
 }

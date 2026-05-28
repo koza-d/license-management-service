@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.paymentmethod.entity.PaymentMethod;
 import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
@@ -64,13 +65,14 @@ public class Subscription extends BaseEntity {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
-    public void start() {
+    public void start(PlanCode planCode) {
         LocalDateTime now = LocalDateTime.now();
         this.status = SubscriptionStatus.ACTIVE;
         this.startedAt = now;
         this.currentPeriodStart = now;
         this.currentPeriodEnd = getPeriodEnd(this.billingCycle, now);
         this.nextBillingAt = this.currentPeriodEnd;
+        this.member.changeCurrentPlanCode(planCode);
     }
 
     public void renewal() {
@@ -105,6 +107,7 @@ public class Subscription extends BaseEntity {
         this.status = SubscriptionStatus.EXPIRED;
         this.gracePeriodEnd = null;
         this.nextBillingAt = null;
+        this.member.changeCurrentPlanCode(PlanCode.FREE);
     }
 
     public void failedBilling() {

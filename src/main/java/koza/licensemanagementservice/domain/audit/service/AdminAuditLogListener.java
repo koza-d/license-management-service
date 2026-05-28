@@ -8,7 +8,6 @@ import koza.licensemanagementservice.domain.license.log.dto.event.LicenseAdminSt
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseExtendEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.log.dto.event.MemberGradeChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberRoleChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
@@ -111,24 +110,6 @@ public class AdminAuditLogListener {
                 operator.getId(), operator.getEmail(),
                 TARGET_MEMBER, target.getId(), target.getEmail(),
                 String.format("회원 '%s' 상태 %s → %s",
-                        target.getEmail(), event.getBefore(), event.getAfter()),
-                payload);
-    }
-
-    @Async("auditLogExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onMemberGradeChanged(MemberGradeChangedEvent event) {
-        Member target = event.getTarget();
-        Member operator = event.getOperator();
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("before", event.getBefore().name());
-        payload.put("after", event.getAfter().name());
-        payload.put("reason", event.getReason());
-        save(EventCategory.MEMBER, "GRADE_CHANGED",
-                operator.getId(), operator.getEmail(),
-                TARGET_MEMBER, target.getId(), target.getEmail(),
-                String.format("회원 '%s' 등급 %s → %s",
                         target.getEmail(), event.getBefore(), event.getAfter()),
                 payload);
     }

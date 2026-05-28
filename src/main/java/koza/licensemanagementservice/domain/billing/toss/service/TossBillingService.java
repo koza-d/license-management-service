@@ -74,7 +74,7 @@ public class TossBillingService {
         String rawResponse = restClient.post()
                 .uri("https://api.tosspayments.com/v1/billing/{billingKey}", billingKey)
                 .header(HttpHeaders.AUTHORIZATION, auth)
-                .header("TossPayments-Test-Code", "REJECT_CARD_PAYMENT")
+//                .header("TossPayments-Test-Code", "REJECT_CARD_PAYMENT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(paymentRequest)
                 .retrieve()

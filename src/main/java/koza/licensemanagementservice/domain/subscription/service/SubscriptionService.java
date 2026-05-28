@@ -15,6 +15,7 @@ import koza.licensemanagementservice.domain.payment.service.PendingPaymentResolv
 import koza.licensemanagementservice.domain.paymentmethod.entity.PaymentMethod;
 import koza.licensemanagementservice.domain.paymentmethod.repository.PaymentMethodRepository;
 import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.domain.plan.repository.PlanRepository;
 import koza.licensemanagementservice.domain.subscription.dto.SubscriptionResponse;
 import koza.licensemanagementservice.domain.subscription.dto.SubscriptionStartRequest;
@@ -70,7 +71,7 @@ public class SubscriptionService {
         Plan plan = planRepository.findByPlanCode(request.getPlanCode())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
 
-        if (plan.getPlanCode().equalsIgnoreCase("FREE"))
+        if (plan.getPlanCode() == PlanCode.FREE)
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
         PaymentMethod defaultMethod = paymentMethodRepository.findByMemberIdAndIsDefaultIsTrueAndIsActiveIsTrue(member.getId())
@@ -133,7 +134,7 @@ public class SubscriptionService {
             throw new BusinessException(ErrorCode.SUBSCRIPTION_PAYMENT_PENDING);
         }
 
-        subscription.start();
+        subscription.start(plan.getPlanCode());
         subscriptionRepository.saveAndFlush(subscription);
         log.info("memberId={} | memberEmail={} | 구독 성공 | SubscriptionId={} | OrderId={}", member.getId(), member.getEmail(), subscription.getId(), orderId);
     }

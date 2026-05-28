@@ -19,8 +19,9 @@ public class Plan {
     @Column(name = "name", length = 20, nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "plan_code", length = 20, nullable = false)
-    private String planCode;
+    private PlanCode planCode;
 
     @Column(name = "monthly_price")
     private int monthlyPrice;

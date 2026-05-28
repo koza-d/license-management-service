@@ -17,6 +17,7 @@ import koza.licensemanagementservice.domain.member.repository.MemberRepository;
 import koza.licensemanagementservice.domain.member.dto.response.MemberInfoResponse;
 import koza.licensemanagementservice.domain.member.dto.request.MemberJoinRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.auth.jwt.JwtTokenProvider;
@@ -58,6 +59,7 @@ public class MemberService {
                 .nickname(joinRequest.getNickname())
                 .password(passwordEncoder.encode(joinRequest.getPassword()))
                 .provider(SocialProvider.LOCAL.getName())
+                .currentPlanCode(PlanCode.FREE)
                 .paymentKey(UUID.randomUUID().toString().replace("-", ""))
                 .roles(roles)
                 .build();

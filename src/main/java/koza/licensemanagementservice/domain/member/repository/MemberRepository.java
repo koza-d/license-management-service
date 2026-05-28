@@ -2,6 +2,7 @@ package koza.licensemanagementservice.domain.member.repository;
 
 import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MemberRepository extends MemberRepositoryCustom, JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByEmail(String email);
 
     List<Member> findAllByStatusAndWithdrawScheduledAtBefore(MemberStatus status, LocalDateTime threshold);
@@ -27,4 +28,7 @@ public interface MemberRepository extends MemberRepositoryCustom, JpaRepository<
     Page<Member> searchForAdmin(@Param("keyword") String keyword,
                                 @Param("status") MemberStatus status,
                                 Pageable pageable);
+
+    long countByCurrentPlanCode(PlanCode planCode);
+
 }

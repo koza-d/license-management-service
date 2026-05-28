@@ -41,7 +41,7 @@ public class PendingPaymentResolverService {
                 payment.success(response, rawResponse);
                 if (subscription.getStatus() == SubscriptionStatus.PENDING) {
                     // 구독 시작 성공
-                    subscription.start();
+                    subscription.start(subscription.getPlan().getPlanCode());
                 } else {
                     // 구독 연장 결제 성공
                     subscription.renewal();

@@ -43,17 +43,6 @@ public class MemberLogListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handleGradeChanged(MemberGradeChangedEvent event) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("before", event.getBefore().name());
-        payload.put("after", event.getAfter().name());
-        payload.put("reason", event.getReason());
-        persist(event.getTarget(), event.getOperator(), MemberLogType.GRADE_CHANGE, payload);
-    }
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleRoleChanged(MemberRoleChangedEvent event) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("before", event.getBefore().name());
@@ -116,7 +105,6 @@ public class MemberLogListener {
         Member memberReference = memberRepository.getReferenceById(event.getMemberId());
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("provider", event.getProvider());
-        payload.put("finalGrade", event.getGrade());
         payload.put("reason", event.getReason());
         payload.put("registerAt", event.getRegisterAt());
         persist(memberReference, memberReference, MemberLogType.WITHDRAW, payload);

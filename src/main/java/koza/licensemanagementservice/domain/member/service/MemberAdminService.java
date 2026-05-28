@@ -4,14 +4,11 @@ import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.auth.repository.RefreshTokenRepository;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberDetailResponse;
 import koza.licensemanagementservice.domain.member.dto.response.AdminMemberSummaryResponse;
-import koza.licensemanagementservice.domain.member.dto.request.MemberGradeChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberRoleChangeRequest;
 import koza.licensemanagementservice.domain.member.dto.request.MemberStatusChangeRequest;
 import koza.licensemanagementservice.domain.member.entity.Member;
-import koza.licensemanagementservice.domain.member.entity.MemberGrade;
 import koza.licensemanagementservice.domain.member.entity.MemberRole;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
-import koza.licensemanagementservice.domain.member.log.dto.event.MemberGradeChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberRoleChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberStatusChangedEvent;
 import koza.licensemanagementservice.domain.member.log.dto.response.MemberLogResponse;
@@ -88,30 +85,6 @@ public class MemberAdminService {
                 .operator(manager)
                 .before(before)
                 .after(request.getStatus())
-                .reason(request.getReason())
-                .build());
-    }
-
-    @Transactional
-    public void changeGrade(CustomUser admin, Long memberId, MemberGradeChangeRequest request) {
-        validAdminAuthorized(admin);
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        Member manager = memberRepository.findById(admin.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (member.getGrade() == request.getGrade()) {
-            throw new BusinessException(ErrorCode.MEMBER_GRADE_SAME);
-        }
-
-        MemberGrade before = member.getGrade();
-        member.changeGrade(request.getGrade());
-
-        publisher.publishEvent(MemberGradeChangedEvent.builder()
-                .target(member)
-                .operator(manager)
-                .before(before)
-                .after(request.getGrade())
                 .reason(request.getReason())
                 .build());
     }
