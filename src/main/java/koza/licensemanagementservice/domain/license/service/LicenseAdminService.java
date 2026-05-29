@@ -101,7 +101,7 @@ public class LicenseAdminService {
         License license = licenseRepository.findByIdWithSoftwareAndMember(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
 
-        Map<String, Object> finalVars = license.getMergeLocalVariables();
+        Map<String, String> finalVars = license.getMergeLocalVariables();
 
         Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(licenseId);
         LocalDateTime latestActiveAt = license.getLatestActiveAt();

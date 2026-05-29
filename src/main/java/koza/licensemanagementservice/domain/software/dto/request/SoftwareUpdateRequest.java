@@ -26,9 +26,9 @@ public class SoftwareUpdateRequest {
 
     @JsonSize
     @Schema(description = "소프트웨어 전역변수, 소속 라이센스마다 동일한 값을 가짐", example = "{}")
-    private Map<String, Object> globalVariables;
+    private Map<String, String> globalVariables;
 
     @JsonSize
     @Schema(description = "소프트웨어 지역변수, value는 기본값", example = "{}")
-    private Map<String, Object> localVariables;
+    private Map<String, String> localVariables;
 }

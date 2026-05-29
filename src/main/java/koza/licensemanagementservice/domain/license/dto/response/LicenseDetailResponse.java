@@ -23,15 +23,15 @@ public class LicenseDetailResponse {
     private LocalDateTime latestActiveAt; // 마지막 라이센스 활성 시간
     private LocalDateTime expiredAt;
     private long remainingMs; // 남은시간(ms)
-    private Map<String, Object> defaultVariables; // 소프트웨어에 설정된 기본 지역변수
-    private Map<String, Object> modifiedVariables; // 라이센스 층에서 수정된 지역변수
-    private Map<String, Object> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
+    private Map<String, String> defaultVariables; // 소프트웨어에 설정된 기본 지역변수
+    private Map<String, String> modifiedVariables; // 라이센스 층에서 수정된 지역변수
+    private Map<String, String> finalVariables; // 기본값에 수정된 지역변수를 덮어씌운 결과
     private String status;
     private LocalDateTime statusUntil;
     private String statusReason;
     private LocalDateTime createAt;
 
-    public static LicenseDetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, Object> finalVariables) {
+    public static LicenseDetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, String> finalVariables) {
         long remainingMs = calcRemainingMs(license.getExpiredAt());
 
         Software software = license.getSoftware();

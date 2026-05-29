@@ -30,5 +30,5 @@ public class LicenseIssueRequest {
 
     @JsonSize
     @Schema(description = "지역변수", example = "{\"meta-data\": \"example\"}")
-    private Map<String, Object> localVariables;
+    private Map<String, String> localVariables;
 }

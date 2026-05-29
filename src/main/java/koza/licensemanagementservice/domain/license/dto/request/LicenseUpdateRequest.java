@@ -26,5 +26,5 @@ public class LicenseUpdateRequest {
             "  \"meta-data\": \"example\"\n" +
             "\n" +
             "}")
-    private Map<String, Object> localVariables;
+    private Map<String, String> localVariables;
 }

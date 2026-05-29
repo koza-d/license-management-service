@@ -47,7 +47,7 @@ public class License extends BaseEntity {
     @Getter(AccessLevel.NONE)
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "local_variables", columnDefinition = "json", nullable = false)
-    private Map<String, Object> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
+    private Map<String, String> localVariables = new HashMap<>(); // 변경된 지역변수만 담음
 
     @Getter(AccessLevel.NONE)
     private boolean hasActiveSession;
@@ -82,12 +82,12 @@ public class License extends BaseEntity {
     /**
      * 소프트웨어의 default value인 localVariables와 라이센스의 localVariables를 합친 결과물을 반환합니다.
      */
-    public Map<String, Object> getMergeLocalVariables() {
+    public Map<String, String> getMergeLocalVariables() {
         // 지역변수 템플릿 + 실제 값 병합 로직
-        Map<String, Object> defaultVars = software.getLocalVariables();
-        Map<String, Object> modifiedVars = localVariables;
+        Map<String, String> defaultVars = software.getLocalVariables();
+        Map<String, String> modifiedVars = localVariables;
 
-        Map<String, Object> finalVars = new HashMap<>(defaultVars);
+        Map<String, String> finalVars = new HashMap<>(defaultVars);
         finalVars.putAll(modifiedVars);
         return finalVars;
     }
@@ -96,10 +96,10 @@ public class License extends BaseEntity {
      * 정제되지 않은 localVariables를 반환합니다.
      * @see License#getMergeLocalVariables() (병합된 최종 localVariables)
      */
-    public Map<String, Object> getRawLocalVariables() {
+    public Map<String, String> getRawLocalVariables() {
         return this.localVariables;
     }
-    public void updateLocalVariables(Map<String, Object> localVariables) {
+    public void updateLocalVariables(Map<String, String> localVariables) {
         this.localVariables.clear();
         if (localVariables != null)
             this.localVariables.putAll(localVariables);
@@ -128,7 +128,7 @@ public class License extends BaseEntity {
     }
 
     public Map<String, Object> toSnapshot() {
-        Map<String, Object> localVariables = new HashMap<>(this.localVariables);
+        Map<String, String> localVariables = new HashMap<>(this.localVariables);
         return Map.of(
                 "id", this.id,
                 "name", this.name,

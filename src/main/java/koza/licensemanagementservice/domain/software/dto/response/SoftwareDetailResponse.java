@@ -22,8 +22,8 @@ public class SoftwareDetailResponse {
     private int licenseCount;
     private int limitLicense;
     private int remainLicense;
-    private Map<String, Object> globalVariables;
-    private Map<String, Object> localVariables;
+    private Map<String, String> globalVariables;
+    private Map<String, String> localVariables;
     private LocalDateTime createAt;
 
     public static SoftwareDetailResponse of(Software software, int licenseCount) {
