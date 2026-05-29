@@ -86,7 +86,7 @@ public class SoftwareAdminController {
     @PostMapping("/{softwareId}/unban")
     public ResponseEntity<ApiResponse<?>> unban(@AuthenticationPrincipal CustomUser user,
                                                 @PathVariable Long softwareId,
-                                                @RequestBody SoftwareUnbanRequest request) {
+                                                @RequestBody @Valid SoftwareUnbanRequest request) {
         softwareAdminService.unban(user, softwareId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

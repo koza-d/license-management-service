@@ -2,6 +2,7 @@ package koza.licensemanagementservice.domain.subscription.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.subscription.dto.SubscriptionResponse;
 import koza.licensemanagementservice.domain.subscription.dto.SubscriptionStartRequest;
@@ -33,7 +34,7 @@ public class SubscriptionController {
     @Operation(summary = "구독 시작")
     @PostMapping("/start")
     public ResponseEntity<ApiResponse<?>> start(@AuthenticationPrincipal CustomUser user,
-                                                @RequestBody SubscriptionStartRequest request) {
+                                                @RequestBody @Valid SubscriptionStartRequest request) {
         subscriptionService.start(user, request);
         ApiResponse<?> response = ApiResponse.success("success!!");
         return ResponseEntity.ok(response);

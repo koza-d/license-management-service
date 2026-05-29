@@ -3,6 +3,7 @@ package koza.licensemanagementservice.sdk.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.sdk.dto.request.*;
 import koza.licensemanagementservice.sdk.dto.resposne.HeartbeatResponse;
@@ -26,7 +27,7 @@ public class SdkController {
 
     @Operation(summary = "소프트웨어 초기화", description = "소프트웨어 유효성 검증 및 기본 정보를 반환하는 API. 프로그램 실행 시 호출.")
     @PostMapping("/init")
-    public ResponseEntity<ApiResponse<?>> init(@RequestBody InitRequest request,
+    public ResponseEntity<ApiResponse<?>> init(@RequestBody @Valid InitRequest request,
                                                HttpServletRequest servletRequest) throws Exception {
         InitResponse initResponse = sdkService.init(request, servletRequest);
         ApiResponse<InitResponse> response = ApiResponse.success(initResponse);
@@ -35,7 +36,7 @@ public class SdkController {
 
     @Operation(summary = "라이센스 인증", description = "세션이 생성되는 기능이 있으며, 프로그램 최초 실행 시 호출하는 라이센스 인증 API")
     @PostMapping("/verify")
-    public ResponseEntity<ApiResponse<?>> verify(@RequestBody VerifyRequest request,
+    public ResponseEntity<ApiResponse<?>> verify(@RequestBody @Valid VerifyRequest request,
                                                  HttpServletRequest servletRequest) throws Exception {
         VerifyResponse verifyResponse = sdkService.verify(request, servletRequest);
         ApiResponse<VerifyResponse> response = ApiResponse.success(verifyResponse);
@@ -44,7 +45,7 @@ public class SdkController {
 
     @Operation(summary = "라이센스 하트비트", description = "짧은 시간 내에 요청을 보내 세션이 살아있음을 알리는 API")
     @PostMapping("/hb")
-    public ResponseEntity<ApiResponse<?>> heartBeat(@RequestBody HeartbeatRequest request) throws Exception {
+    public ResponseEntity<ApiResponse<?>> heartBeat(@RequestBody @Valid HeartbeatRequest request) throws Exception {
         HeartbeatResponse heartbeatResponse = sdkService.heartbeat(request);
         ApiResponse<HeartbeatResponse> response = ApiResponse.success(heartbeatResponse);
         return ResponseEntity.ok(response);
@@ -52,14 +53,14 @@ public class SdkController {
 
     @Operation(summary = "라이센스 연결 해제", description = "세션을 해제하는 기능이 있으며, 프로그램 종료 시 호출되는 API")
     @PostMapping("/release")
-    public ResponseEntity<ApiResponse<?>> release(@RequestBody ReleaseRequest request) {
+    public ResponseEntity<ApiResponse<?>> release(@RequestBody @Valid ReleaseRequest request) {
         sdkService.release(request);
         return ResponseEntity.ok(ApiResponse.success("success"));
     }
 
     @Operation(summary = "라이센스 LocalVariables 수정", description = "라이센스의 LocalVariables를 수정하는 API")
     @PatchMapping("/lv")
-    public ResponseEntity<ApiResponse<?>> changeLocalVariables(@RequestBody ChangeLocalVariablesRequest request) throws Exception {
+    public ResponseEntity<ApiResponse<?>> changeLocalVariables(@RequestBody @Valid ChangeLocalVariablesRequest request) throws Exception {
         sdkService.changeLocalVariable(request);
         return ResponseEntity.ok(ApiResponse.success("success"));
     }

@@ -119,7 +119,7 @@ public class LicenseController {
     @PostMapping("/{licenseId}/ban")
     public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
                                               @PathVariable("licenseId") Long licenseId,
-                                              @RequestBody LicenseBannedRequest request) {
+                                              @RequestBody @Valid LicenseBannedRequest request) {
 
         licenseService.ban(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");
@@ -130,7 +130,7 @@ public class LicenseController {
     @PostMapping("/{licenseId}/active")
     public ResponseEntity<ApiResponse<?>> active(@AuthenticationPrincipal CustomUser user,
                                                  @PathVariable("licenseId") Long licenseId,
-                                                 @RequestBody LicenseActiveRequest request) {
+                                                 @RequestBody @Valid LicenseActiveRequest request) {
 
         licenseService.active(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success("success");

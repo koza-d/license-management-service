@@ -2,6 +2,7 @@ package koza.licensemanagementservice.domain.payment.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.payment.dto.condition.PaymentAdminSearchCondition;
 import koza.licensemanagementservice.domain.payment.dto.request.AdminPaymentSuccessRequest;
@@ -64,7 +65,7 @@ public class PaymentAdminController {
     @PostMapping("/{paymentId}/success")
     public ResponseEntity<ApiResponse<?>> approvePayment(@AuthenticationPrincipal CustomUser user,
                                                       @PathVariable Long paymentId,
-                                                      @RequestBody AdminPaymentSuccessRequest request) {
+                                                      @RequestBody @Valid AdminPaymentSuccessRequest request) {
         paymentAdminService.manualSuccess(user, paymentId, request);
         return ResponseEntity.ok(ApiResponse.success("success!!"));
     }
@@ -73,7 +74,7 @@ public class PaymentAdminController {
     @PostMapping("/{paymentId}/fail")
     public ResponseEntity<ApiResponse<?>> failPayment(@AuthenticationPrincipal CustomUser user,
                                                       @PathVariable Long paymentId,
-                                                      @RequestBody AdminPaymentFailRequest request) {
+                                                      @RequestBody @Valid AdminPaymentFailRequest request) {
         paymentAdminService.fail(user, paymentId, request);
         return ResponseEntity.ok(ApiResponse.success("success!!"));
     }
@@ -82,7 +83,7 @@ public class PaymentAdminController {
     @PostMapping("/{paymentId}/refund")
     public ResponseEntity<ApiResponse<?>> refundPayment(@AuthenticationPrincipal CustomUser user,
                                                         @PathVariable Long paymentId,
-                                                        @RequestBody AdminPaymentRefundRequest request) {
+                                                        @RequestBody @Valid AdminPaymentRefundRequest request) {
         paymentAdminService.refund(user, paymentId, request);
         return ResponseEntity.ok(ApiResponse.success("success!!"));
     }

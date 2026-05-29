@@ -3,6 +3,7 @@ package koza.licensemanagementservice.domain.subscription.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.subscription.dto.AdminSubscriptionDetailResponse;
 import koza.licensemanagementservice.domain.subscription.dto.AdminSubscriptionSummaryResponse;
@@ -46,7 +47,7 @@ public class SubscriptionAdminController {
     @PostMapping("/{subscriptionId}/cancel")
     public ResponseEntity<ApiResponse<?>> cancelSubscription(@AuthenticationPrincipal CustomUser user,
                                                              @PathVariable Long subscriptionId,
-                                                             @RequestBody AdminSubscriptionCancelRequest request) {
+                                                             @RequestBody @Valid AdminSubscriptionCancelRequest request) {
         subscriptionAdminService.cancel(user, subscriptionId, request);
         ApiResponse<?> response = ApiResponse.success("success!!");
         return ResponseEntity.ok(response);

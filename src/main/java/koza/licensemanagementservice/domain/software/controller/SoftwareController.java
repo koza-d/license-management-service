@@ -117,7 +117,7 @@ public class SoftwareController {
     @PostMapping("/{softwareId}/maintenance")
     public ResponseEntity<ApiResponse<?>> maintenanceSoftware(@AuthenticationPrincipal CustomUser user,
                                                          @PathVariable("softwareId") Long id,
-                                                         @RequestBody SoftwareMaintenanceRequest request) {
+                                                         @RequestBody @Valid SoftwareMaintenanceRequest request) {
         softwareService.maintenance(user, id, request);
         ApiResponse<?> response = ApiResponse.success(null);
         return ResponseEntity.ok(response);
@@ -126,7 +126,7 @@ public class SoftwareController {
     @PostMapping("/{softwareId}/unsupported")
     public ResponseEntity<ApiResponse<?>> unsupportedSoftware(@AuthenticationPrincipal CustomUser user,
                                                          @PathVariable("softwareId") Long id,
-                                                         @RequestBody SoftwareUnsupportedRequest request) {
+                                                         @RequestBody @Valid SoftwareUnsupportedRequest request) {
         softwareService.unsupported(user, id, request);
         ApiResponse<?> response = ApiResponse.success(null);
         return ResponseEntity.ok(response);

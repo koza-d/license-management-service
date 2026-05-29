@@ -28,7 +28,7 @@ public class LicenseIssueRequest {
     @Schema(description = "유효기간(일)", example = "30")
     private int periodDays;
 
-    @JsonSize(max = 5000, message = "지역변수 크기가 5000byte를 넘을 수 없습니다.")
+    @JsonSize
     @Schema(description = "지역변수", example = "{\"meta-data\": \"example\"}")
     private Map<String, Object> localVariables;
 }
