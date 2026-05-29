@@ -3,11 +3,14 @@ package koza.licensemanagementservice.domain.license.entity;
 import jakarta.persistence.*;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import koza.licensemanagementservice.domain.software.entity.Software;
+import koza.licensemanagementservice.global.error.BusinessException;
+import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +40,10 @@ public class License extends BaseEntity {
     @Column(name = "license_key", length = 128, nullable = false)
     private String licenseKey;
 
-    @Column(name = "expired_at", nullable = false)
+    @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
-    @Column(name = "latest_active_at", nullable = false)
+    @Column(name = "latest_active_at")
     private LocalDateTime latestActiveAt;
 
     @Builder.Default
@@ -62,6 +65,12 @@ public class License extends BaseEntity {
     @Column(name = "status_reason", length = 100)
     private String statusReason;
 
+    @Column(name = "start_duration_days")
+    private int startDurationDays; // 최초 부여 기간
+
+    @Column(name = "started_at")
+    private LocalDateTime startedAt; // 최초 사용일
+
     public void updateName(String name) {
         this.name = name;
     }
@@ -73,6 +82,7 @@ public class License extends BaseEntity {
     public void changeStatus(LicenseStatus status) {
         changeStatus(status, null, null);
     }
+
     public void changeStatus(LicenseStatus status, LocalDateTime until, String reason) {
         this.status = status;
         this.statusUntil = until;
@@ -94,11 +104,13 @@ public class License extends BaseEntity {
 
     /**
      * 정제되지 않은 localVariables를 반환합니다.
+     *
      * @see License#getMergeLocalVariables() (병합된 최종 localVariables)
      */
     public Map<String, String> getRawLocalVariables() {
         return this.localVariables;
     }
+
     public void updateLocalVariables(Map<String, String> localVariables) {
         this.localVariables.clear();
         if (localVariables != null)
@@ -110,6 +122,9 @@ public class License extends BaseEntity {
     }
 
     public void extendPeriod(int extendDays) {
+        if (this.status == LicenseStatus.INACTIVE)
+            throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
+
         LocalDateTime now = LocalDateTime.now();
         if (expiredAt.isBefore(now))
             expiredAt = now;
@@ -119,6 +134,19 @@ public class License extends BaseEntity {
     public void verify() {
         this.hasActiveSession = true;
         this.latestActiveAt = LocalDateTime.now();
+
+        // 최초 인증 시 활성상태로 변경
+        if (this.status == LicenseStatus.INACTIVE)
+            this.startActive();
+    }
+
+    public void startActive() {
+        if (this.status != LicenseStatus.INACTIVE)
+            throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
+
+        this.startedAt = LocalDateTime.now();
+        this.expiredAt = LocalDate.now().plusDays(startDurationDays + 1).atStartOfDay();
+        this.status = LicenseStatus.ACTIVE;
     }
 
     public void release(Map<String, String> changedLocalVariables) {
@@ -128,15 +156,21 @@ public class License extends BaseEntity {
     }
 
     public Map<String, Object> toSnapshot() {
-        Map<String, String> localVariables = new HashMap<>(this.localVariables);
-        return Map.of(
-                "id", this.id,
-                "name", this.name,
-                "memo", this.memo,
-                "licenseKey", this.licenseKey,
-                "expiredAt", this.expiredAt,
-                "status", this.status.name(),
-                "localVariables", localVariables
-        );
+        Map<String, Object> snapshot = new HashMap<>();
+        snapshot.put("id", this.id);
+        snapshot.put("softwareId", this.software != null ? this.software.getId() : null);
+        snapshot.put("name", this.name);
+        snapshot.put("memo", this.memo);
+        snapshot.put("licenseKey", this.licenseKey);
+        snapshot.put("expiredAt", this.expiredAt);
+        snapshot.put("latestActiveAt", this.latestActiveAt);
+        snapshot.put("localVariables", new HashMap<>(this.localVariables));
+        snapshot.put("hasActiveSession", this.hasActiveSession);
+        snapshot.put("status", this.status.name());
+        snapshot.put("statusUntil", this.statusUntil);
+        snapshot.put("statusReason", this.statusReason);
+        snapshot.put("startDurationDays", this.startDurationDays);
+        snapshot.put("startedAt", this.startedAt);
+        return snapshot;
     }
 }

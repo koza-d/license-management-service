@@ -151,6 +151,7 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                         license.expiredAt,
                         license.hasActiveSession,
                         license.latestActiveAt,
+                        license.startDurationDays,
                         license.status.stringValue()
                 ))
                 .from(license)

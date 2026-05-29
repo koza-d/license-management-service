@@ -29,6 +29,8 @@ public class AdminLicenseDetailResponse {
     private String status;
     private LocalDateTime statusUntil;
     private String statusReason;
+    private int startDurationDays;
+    private LocalDateTime startedAt;
     private LocalDateTime createAt;
 
     public static AdminLicenseDetailResponse of(License license, LocalDateTime latestActiveAt, Map<String, String> finalVariables) {
@@ -54,11 +56,16 @@ public class AdminLicenseDetailResponse {
                 .defaultVariables(software.getLocalVariables())
                 .modifiedVariables(license.getRawLocalVariables())
                 .finalVariables(finalVariables)
+                .startDurationDays(license.getStartDurationDays())
+                .startedAt(license.getStartedAt())
                 .createAt(license.getCreateAt())
                 .build();
     }
 
     private static Long calcRemainingMs(LocalDateTime expiredAt) {
+        if (expiredAt == null)
+            return -1L;
+
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, expiredAt);
         return Math.max(0, duration.toMillis());

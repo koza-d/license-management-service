@@ -85,7 +85,7 @@ public class LicenseController {
     @PostMapping("/bulk-extend")
     public ResponseEntity<ApiResponse<?>> extendLicense(@AuthenticationPrincipal CustomUser user,
                                                         @RequestBody @Valid LicenseExtendRequest request) {
-        List<LicenseExtendResponse> extendResponses = licenseService.extendLicense(user, request.getSoftwareId(), request);
+        List<LicenseExtendResponse> extendResponses = licenseService.extendLicense(user, request);
         ApiResponse<?> response = ApiResponse.success(extendResponses);
         return ResponseEntity.ok(response);
 

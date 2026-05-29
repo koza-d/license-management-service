@@ -50,15 +50,14 @@ public class LicenseService {
         while (licenseRepository.existsByLicenseKey(licenseKey))
             licenseKey = LicenseKeyGenerator.generateKey();
 
-        LocalDateTime expireAt = LocalDateTime.now().plusDays(request.getPeriodDays());
         License license = License.builder()
                 .software(software)
                 .name(request.getName())
                 .memo(request.getMemo())
                 .licenseKey(licenseKey)
-                .expiredAt(expireAt)
                 .localVariables(request.getLocalVariables())
-                .status(LicenseStatus.ACTIVE)
+                .status(LicenseStatus.INACTIVE)
+                .startDurationDays(request.getPeriodDays())
                 .build();
 
         License save = licenseRepository.saveAndFlush(license);
@@ -112,12 +111,9 @@ public class LicenseService {
     }
 
     @Transactional
-    public List<LicenseExtendResponse> extendLicense(CustomUser user, Long softwareId, LicenseExtendRequest request) {
+    public List<LicenseExtendResponse> extendLicense(CustomUser user, LicenseExtendRequest request) {
         // 라이센스 연장
         List<License> targetLicenses = licenseRepository.findByIdInWithSoftwareWithMember(request.getIds());
-        // beforeExpiredAt, afterExpiredAt
-        Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
-                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
 
         // 존재하지 않는 라이센스를 request에 담았을 때
         if (request.getIds().size() != targetLicenses.size())
@@ -128,8 +124,15 @@ public class LicenseService {
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
-            license.extendPeriod(request.getDays());
+            if (license.getStatus() == LicenseStatus.INACTIVE)
+                throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
         });
+
+        // beforeExpiredAt, afterExpiredAt
+        Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
+                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
+
+        targetLicenses.forEach(license -> license.extendPeriod(request.getDays()));
 
         Map<Long, LocalDateTime> afterExpiredAt = targetLicenses.stream()
                 .collect(Collectors.toMap(License::getId, License::getExpiredAt));
@@ -195,6 +198,8 @@ public class LicenseService {
         License license = getLicenseOrThrow(user, licenseId);
         LicenseStatus beforeStatus = license.getStatus();
         LocalDateTime now = LocalDateTime.now();
+        if (beforeStatus == LicenseStatus.INACTIVE)
+            license.startActive();
 
         license.changeStatus(LicenseStatus.ACTIVE);
         eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.ACTIVE, request.getReason(), now));

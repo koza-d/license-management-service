@@ -201,9 +201,9 @@ public class SdkService {
             byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
             byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
 
+            license.verify();
             String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt(), sessionKey);
 
-            license.verify();
 
             LocalDateTime now = LocalDateTime.now();
             Duration duration = Duration.between(now, license.getExpiredAt());

@@ -43,6 +43,8 @@ public enum ErrorCode {
     LICENSE_NOT_FOUND(404, "LICENSE_001", "라이센스를 찾을 수 없습니다."),
     LICENSE_BANNED(403, "LICENSE_002", "라이센스가 정지된 상태입니다."),
     LICENSE_NOT_BANNED(409, "LICENSE_003", "라이센스가 밴 상태가 아닙니다."),
+    LICENSE_NOT_ACTIVATED(409, "LICENSE_004", "아직 활성화되지 않은 라이센스입니다."),
+    LICENSE_NOT_INACTIVATED(409, "LICENSE_004", "비활성화된 라이센스가 아닙니다."),
 
 
     // 세션 로직 예외

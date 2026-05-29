@@ -13,7 +13,6 @@ public class PlanResponse {
     private int monthlyPrice;
     private int yearlyPrice;
     private int limitLicense;
-    private int limitSoftware;
 
     public static PlanResponse of(Plan plan) {
         return PlanResponse.builder()
@@ -22,7 +21,6 @@ public class PlanResponse {
                 .monthlyPrice(plan.getMonthlyPrice())
                 .yearlyPrice(plan.getYearlyPrice())
                 .limitLicense(plan.getLimitLicense())
-                .limitSoftware(plan.getLimitSoftware())
                 .build();
     }
 }

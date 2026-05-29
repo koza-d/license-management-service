@@ -31,7 +31,4 @@ public class Plan {
 
     @Column(name = "limit_license")
     private int limitLicense;
-
-    @Column(name = "limit_software")
-    private int limitSoftware;
 }

@@ -18,6 +18,7 @@ public class LicenseSummaryResponse {
     private LocalDateTime expiredAt;
     private boolean hasActiveSession;
     private LocalDateTime latestActiveAt;
+    private int startedDurationDays;
     private String status;
 
     public static LicenseSummaryResponse of(License license, LocalDateTime latestActiveAt) {
@@ -31,11 +32,15 @@ public class LicenseSummaryResponse {
                 .expiredAt(license.getExpiredAt())
                 .hasActiveSession(license.hasActiveSession())
                 .latestActiveAt(latestActiveAt)
+                .startedDurationDays(license.getStartDurationDays())
                 .status(license.getStatus().name())
                 .build();
     }
 
     private static Long calcRemainingMs(LocalDateTime expiredAt) {
+        if (expiredAt == null)
+            return -1L;
+
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, expiredAt);
         return Math.max(0, duration.toMillis());
