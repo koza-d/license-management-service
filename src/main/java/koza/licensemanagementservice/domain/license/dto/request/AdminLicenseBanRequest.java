@@ -9,8 +9,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class LicenseBanRequest {
-    @Min(value = 1, message = "정지 일수는 최소 1일입니다.")
+public class AdminLicenseBanRequest {
+    @Min(value = 0, message = "정지 일수는 최소 0일 이상 입력해야합니다.")
     @Max(value = 365, message = "정지 일수는 최대 365일입니다.")
     private final int untilDays;
 

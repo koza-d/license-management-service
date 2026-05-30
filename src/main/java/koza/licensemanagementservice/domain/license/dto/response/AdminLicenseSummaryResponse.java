@@ -19,11 +19,11 @@ public class AdminLicenseSummaryResponse {
     private LocalDateTime expiredAt;
     private boolean hasActiveSession;
     private LocalDateTime latestActiveAt;
-    private int startedDurationDays;
+    private int startDurationDays;
     private String status;
 
     @QueryProjection
-    public AdminLicenseSummaryResponse(Long licenseId, String softwareOwnerEmail, String softwareName, String licenseName, String licenseKey, LocalDateTime createAt, LocalDateTime expiredAt, boolean hasActiveSession, LocalDateTime latestActiveAt, int startedDurationDays, String status) {
+    public AdminLicenseSummaryResponse(Long licenseId, String softwareOwnerEmail, String softwareName, String licenseName, String licenseKey, LocalDateTime createAt, LocalDateTime expiredAt, boolean hasActiveSession, LocalDateTime latestActiveAt, int startDurationDays, String status) {
         this.licenseId = licenseId;
         this.softwareOwnerEmail = softwareOwnerEmail;
         this.softwareName = softwareName;
@@ -33,7 +33,7 @@ public class AdminLicenseSummaryResponse {
         this.expiredAt = expiredAt;
         this.hasActiveSession = hasActiveSession;
         this.latestActiveAt = latestActiveAt;
-        this.startedDurationDays = startedDurationDays;
+        this.startDurationDays = startDurationDays;
         this.status = status;
     }
 }

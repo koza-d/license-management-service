@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseBanRequest;
+import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseBanRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseUnbanRequest;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
@@ -71,7 +71,7 @@ public class LicenseAdminController {
     @PostMapping("/{licenseId}/ban")
     public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
                                               @PathVariable("licenseId") Long licenseId,
-                                              @RequestBody @Valid LicenseBanRequest request) {
+                                              @RequestBody @Valid AdminLicenseBanRequest request) {
         licenseAdminService.ban(user, licenseId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

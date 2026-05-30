@@ -2,7 +2,7 @@ package koza.licensemanagementservice.domain.license.service;
 
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseBanRequest;
+import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseBanRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseUnbanRequest;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
@@ -43,7 +43,7 @@ public class LicenseAdminService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void ban(CustomUser user, Long licenseId, LicenseBanRequest request) {
+    public void ban(CustomUser user, Long licenseId, AdminLicenseBanRequest request) {
         validAdminAuthorized(user);
 
         License license = licenseRepository.findById(licenseId)
