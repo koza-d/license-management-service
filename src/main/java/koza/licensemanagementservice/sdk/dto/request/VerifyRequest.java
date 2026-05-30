@@ -25,4 +25,15 @@ public class VerifyRequest {
 
     @Size(max = 64, message = "fileHash는 최대 64자입니다.")
     private String fileHash;
+
+    @Override
+    public String toString() {
+        return "VerifyRequest{" +
+                "publicKey='" + publicKey + '\'' +
+                ", licenseKey='" + licenseKey + '\'' +
+                ", appId='" + appId + '\'' +
+                ", clientVersion='" + clientVersion + '\'' +
+                ", fileHash='" + fileHash + '\'' +
+                '}';
+    }
 }

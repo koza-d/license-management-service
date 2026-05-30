@@ -44,8 +44,11 @@ public enum ErrorCode {
     LICENSE_BANNED(403, "LICENSE_002", "라이센스가 정지된 상태입니다."),
     LICENSE_NOT_BANNED(409, "LICENSE_003", "라이센스가 밴 상태가 아닙니다."),
     LICENSE_NOT_ACTIVATED(409, "LICENSE_004", "아직 활성화되지 않은 라이센스입니다."),
-    LICENSE_NOT_INACTIVATED(409, "LICENSE_004", "비활성화된 라이센스가 아닙니다."),
-
+    LICENSE_NOT_INACTIVATED(409, "LICENSE_005", "비활성화된 라이센스가 아닙니다."),
+    LICENSE_ISSUE_LIMIT(409, "LICENSE_006", "라이센스 발급 한도를 넘었습니다. 상위 플랜 이용이 필요합니다."),
+    LICENSE_CANNOT_EXTEND_LIMIT(409, "LICENSE_007", "라이센스 한도를 넘어서서 만료된 라이센스를 연장할 수 없습니다. 상위 플랜 이용이 필요합니다."),
+    LICENSE_EXPIRED_CANNOT_ACTIVE(409, "LICENSE_008", "만료된 라이센스를 임의로 활성상태로 변경할 수 없습니다. 연장을 통해서 활성시켜주세요."),
+    LICENSE_CANNOT_ACTIVE_LIMIT(409, "LICENSE_009", "라이센스 보유 한도를 넘어섰습니다. 상위 플랜 이용이 필요합니다."),
 
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
@@ -58,6 +61,9 @@ public enum ErrorCode {
 
     // FAQ 예외
     FAQ_NOT_FOUND(404, "FAQ_001", "FAQ를 찾을 수 없습니다."),
+
+    // 플랜 관련 예외
+    PLAN_NOT_FOUND(404, "PLAN_001", "로그인 중인 회원의 플랜을 찾을 수 없습니다."),
 
     // 결제 관련 예외
     PAYMENT_METHOD_DUPLICATE(409, "PAYMENT_001", "이미 등록된 결제수단입니다."),
@@ -84,7 +90,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),
 
     // SDK 전용 예외
-    SDK_SERVER_ERROR(500, "SDK_001", "서버 내부 오류가 발생했습니다."),
+    SDK_SERVER_ERROR(500, "SDK_001", "인증 서버 내부 오류가 발생했습니다."),
     SDK_INVALID_REQUEST(400, "SDK_002", "유효하지 않은 요청입니다."),
     SDK_INVALID_SOFTWARE(404, "SDK_003", "유효하지 않은 소프트웨어입니다."),
     SDK_INVALID_LICENSE(404, "SDK_004", "유효하지 않은 라이센스입니다."),
@@ -94,6 +100,7 @@ public enum ErrorCode {
     SDK_LICENSE_IN_USE(409, "SDK_101", "이미 사용 중인 라이센스입니다."),
     SDK_LICENSE_BANNED(403, "SDK_102", "사용 정지된 라이센스입니다."),
     SDK_LICENSE_EXPIRED(403, "SDK_103", "만료된 라이센스입니다."),
+    SDK_LICENSE_ACTIVE_LIMIT(409, "SDK_104", "관리자의 라이센스 보유 가능한 수를 넘어 첫 인증을 진행할 수 없습니다."),
 
     SDK_SOFTWARE_BANNED(403, "SDK_201", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
     SDK_SOFTWARE_INACTIVE(403, "SDK_202", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),

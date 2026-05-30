@@ -10,6 +10,10 @@ import koza.licensemanagementservice.domain.license.log.dto.event.LicenseIssuedE
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseModifiedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.repository.PlanRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -37,6 +41,9 @@ import java.util.stream.Collectors;
 public class LicenseService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
+    private final MemberRepository memberRepository;
+    private final PlanRepository planRepository;
+
     private final SessionManager sessionManager;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -45,6 +52,16 @@ public class LicenseService {
         // 라이센스 발급
         Long softwareId = request.getSoftwareId();
         Software software = getSoftwareOrThrow(user, softwareId);
+        Member member = software.getMember();
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(user.getId());
+
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        // 라이센스 활성/발급 한도 제한
+        if (allocatedLicenses >= userPlan.getLimitLicense())
+            throw new BusinessException(ErrorCode.LICENSE_ISSUE_LIMIT);
 
         String licenseKey = LicenseKeyGenerator.generateKey();
         while (licenseRepository.existsByLicenseKey(licenseKey))
@@ -96,7 +113,7 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-     public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
+    public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
         // 소프트웨어 별 라이센스 목록
         getSoftwareOrThrow(user, softwareId);
         return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
@@ -119,14 +136,29 @@ public class LicenseService {
         if (request.getIds().size() != targetLicenses.size())
             throw new BusinessException(ErrorCode.NOT_FOUND);
 
-        targetLicenses.forEach(license -> {
+        Member member = memberRepository.findById(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        int activeDue = 0;
+        for (License license : targetLicenses) {
             // 연장하려는 라이센스의 소속 소프트웨어가 본인의 소프트웨어가 아니면 접근 불가
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
             if (license.getStatus() == LicenseStatus.INACTIVE)
                 throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
-        });
+
+            if (license.getStatus() == LicenseStatus.EXPIRED)
+                activeDue++;
+
+        }
+        // 라이센스 활성 한도 제한 - (활성화 된 갯수 + 활성화 될 갯수)
+        if (allocatedLicenses + activeDue >= userPlan.getLimitLicense())
+            throw new BusinessException(ErrorCode.LICENSE_CANNOT_EXTEND_LIMIT);
 
         // beforeExpiredAt, afterExpiredAt
         Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
@@ -198,6 +230,21 @@ public class LicenseService {
         License license = getLicenseOrThrow(user, licenseId);
         LicenseStatus beforeStatus = license.getStatus();
         LocalDateTime now = LocalDateTime.now();
+
+        if (beforeStatus == LicenseStatus.EXPIRED)
+            throw new BusinessException(ErrorCode.LICENSE_EXPIRED_CANNOT_ACTIVE);
+
+        Member member = license.getSoftware().getMember();
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        // 라이센스 활성 한도 제한 - 영구밴 상태인건 활성불가
+        boolean isUnlimitedBan = beforeStatus == LicenseStatus.BANNED && license.getStatusUntil() == null;
+        if (allocatedLicenses >= userPlan.getLimitLicense() && (isUnlimitedBan || beforeStatus == LicenseStatus.INACTIVE))
+            throw new BusinessException(ErrorCode.LICENSE_CANNOT_ACTIVE_LIMIT);
+
         if (beforeStatus == LicenseStatus.INACTIVE)
             license.startActive();
 

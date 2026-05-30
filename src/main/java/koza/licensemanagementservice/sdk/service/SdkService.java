@@ -2,6 +2,10 @@ package koza.licensemanagementservice.sdk.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.repository.PlanRepository;
 import koza.licensemanagementservice.domain.software.entity.Software;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
 import koza.licensemanagementservice.domain.software.version.entity.SoftwareVersion;
@@ -18,7 +22,6 @@ import koza.licensemanagementservice.sdk.dto.resposne.InitResponse;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyData;
 import koza.licensemanagementservice.sdk.dto.resposne.VerifyResponse;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
-import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
 import koza.licensemanagementservice.sdk.log.dto.InitFailedEvent;
 import koza.licensemanagementservice.sdk.log.dto.InitSuccessEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifyFailedEvent;
@@ -51,8 +54,8 @@ import static koza.licensemanagementservice.global.util.RequestIPAddressParser.*
 public class SdkService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
+    private final PlanRepository planRepository;
     private final SessionManager sessionManager;
-    private final SessionLogRepository sessionLogRepository;
     private final ObjectMapper objectMapper;
     private final Ed25519KeyProvider ed25519KeyProvider;
     private final ApplicationEventPublisher eventPublisher;
@@ -146,7 +149,6 @@ public class SdkService {
             if (!software.getId().equals(license.getSoftware().getId()))
                 throw new BusinessException(ErrorCode.SDK_INVALID_LICENSE);
 
-
             validateSoftwareStatus(software);
 
             switch (license.getStatus()) {
@@ -178,13 +180,23 @@ public class SdkService {
             if (StringUtils.hasText(clientVersion.getFileHash()) && !clientVersion.getFileHash().equals(fileHash))
                 throw new BusinessException(ErrorCode.SDK_INVALID_FILE_HASH);
 
+            // 첫 인증인 라이센스는 플랜 한도 검증 필요
+            if (license.getStatus() == LicenseStatus.INACTIVE) {
+                Member member = license.getSoftware().getMember();
+                long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
+                Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SERVER_ERROR));
+
+                // 라이센스 활성 한도 제한
+                if (allocatedLicenses >= userPlan.getLimitLicense())
+                    throw new BusinessException(ErrorCode.SDK_LICENSE_ACTIVE_LIMIT);
+            }
 
             String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
 
             // 사용중인 라이센스인 경우 연결 거부
             if (currentSessionId != null && sessionManager.isActive(currentSessionId))
                 throw new BusinessException(ErrorCode.SDK_LICENSE_IN_USE);
-
 
             String clientPublicKey = request.getPublicKey();
 
@@ -248,6 +260,10 @@ public class SdkService {
         ErrorCode errorCode = e instanceof BusinessException
                 ? ((BusinessException) e).getError()
                 : ErrorCode.SDK_SERVER_ERROR;
+
+        if (errorCode == ErrorCode.SDK_SERVER_ERROR)
+            log.error("SDK 인증 도중 문제가 발생했습니다. | 요청객체 : {} | 라이센스 ID : {} | 요청 IP : {} | UserAgent : {} | 사유 : {} ",
+                    request.toString(), license == null ? "null" : license.getId(), ipAddress, userAgent, e.getMessage());
 
         eventPublisher.publishEvent(new VerifyFailedEvent(
                 software != null ? software.getId() : null, request.getAppId(),

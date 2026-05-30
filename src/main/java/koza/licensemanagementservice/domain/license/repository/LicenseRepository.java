@@ -5,6 +5,8 @@ import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -20,6 +22,18 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     List<License> findBySoftwareIdAndHasActiveSessionIsTrue(Long softwareId);
     List<License> findByIdIn(List<Long> id);
     int countBySoftwareId(Long softwareId);
+
+    /**
+     * 최종 사용자에게 할당된(좌석을 차지하는) 라이센스 수 카운팅
+     * @return
+     */
+
+
+    @Query("SELECT COUNT(l) FROM License l " +
+            "WHERE l.software.member.id = :memberId " +
+            "AND (l.status = 'ACTIVE' " +
+            "OR (l.status = 'BANNED' AND l.statusUntil IS NOT NULL))")
+    long countAllocatedLicenses(@Param("memberId") Long memberId);
 
     Long countBySoftwareIdAndStatusEquals(Long softwareId, LicenseStatus status);
     Long countBySoftwareIdAndExpiredAtBefore(Long softwareId, LocalDateTime at);
