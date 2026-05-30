@@ -373,7 +373,6 @@ public class SdkService {
                 throw new BusinessException(ErrorCode.SDK_SOFTWARE_BANNED, data);
             }
             case INACTIVE -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_INACTIVE);
-            case SUSPENDED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_SUSPENDED);
             case MAINTENANCE -> {
                 HashMap<Object, Object> data = new HashMap<>();
                 if (software.getStatusUntil() != null)

@@ -97,7 +97,7 @@ public enum ErrorCode {
 
     SDK_SOFTWARE_BANNED(403, "SDK_201", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
     SDK_SOFTWARE_INACTIVE(403, "SDK_202", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
-    SDK_SOFTWARE_SUSPENDED(403, "SDK_203", "일시중단된 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+
     SDK_SOFTWARE_MAINTENANCE(403, "SDK_204", "소프트웨어가 점검중입니다."), // 점검 종료 일시 반환 필요
     SDK_SOFTWARE_UNSUPPORTED(403, "SDK_205", "지원중단된 소프트웨어입니다."), // 지원중단 사유 반환 필요
 
