@@ -15,7 +15,7 @@ import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExte
 import koza.licensemanagementservice.domain.license.log.dto.response.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.condition.LicenseLogSearchCondition;
 import koza.licensemanagementservice.domain.license.log.service.LicenseLogAdminService;
-import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.service.LicenseAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class LicenseAdminController {
     @Operation(summary = "전체 라이센스 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
-                                                               @ModelAttribute LicenseSearchCondition condition,
+                                                               @ModelAttribute AdminLicenseSearchCondition condition,
                                                                Pageable pageable) {
         Page<AdminLicenseSummaryResponse> summaryResponses = licenseAdminService.getLicenseSummaryAll(user, condition, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);

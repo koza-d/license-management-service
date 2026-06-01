@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.license.service;
 
+import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
@@ -99,32 +100,9 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
-        // 소프트웨어 별 라이센스 목록
-        return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, expireWithin, pageable)
-                .map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                });
-    }
-
-    @Transactional(readOnly = true)
-    public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
-        // 소프트웨어 별 라이센스 목록
-        getSoftwareOrThrow(user, softwareId);
-        return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
-                .map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                });
+    public Page<LicenseSummaryResponse> searchLicenses(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+        return licenseRepository.searchLicensesByMemberId(user.getId(), condition, pageable)
+                .map(LicenseSummaryResponse::of);
     }
 
     @Transactional
@@ -189,15 +167,7 @@ public class LicenseService {
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
         });
-        return targetLicenses.stream().map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                })
-                .collect(Collectors.toList());
+        return targetLicenses.stream().map(LicenseSummaryResponse::of).toList();
     }
 
     @Transactional

@@ -13,7 +13,7 @@ import koza.licensemanagementservice.domain.license.log.dto.event.LicenseAdminSt
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseExtendEvent;
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
@@ -88,7 +88,7 @@ public class LicenseAdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AdminLicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+    public Page<AdminLicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, AdminLicenseSearchCondition condition, Pageable pageable) {
         validAdminAuthorized(user);
 
         return licenseRepository.findByAllCondition(condition, pageable);

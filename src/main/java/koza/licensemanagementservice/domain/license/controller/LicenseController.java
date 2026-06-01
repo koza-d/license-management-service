@@ -3,6 +3,7 @@ package koza.licensemanagementservice.domain.license.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
@@ -56,29 +57,14 @@ public class LicenseController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "전체 라이센스 목록 조회")
-    @GetMapping("")
-    public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
-                                                               @RequestParam(required = false, name = "search") String search,
-                                                               @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
-                                                               @RequestParam(required = false, name = "expireWithin") Integer expireWithin,
-                                                               Pageable pageable) {
-        Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryAll(user, search, hasActiveSession, expireWithin, pageable);
+    @Operation(summary = "라이센스 필터 및 검색")
+    @GetMapping
+    public ResponseEntity<ApiResponse<?>> searchLicenses(@AuthenticationPrincipal CustomUser user,
+                                                         LicenseSearchCondition condition,
+                                                         Pageable pageable) {
+        Page<LicenseSummaryResponse> summaryResponses = licenseService.searchLicenses(user, condition, pageable);
         ApiResponse<?> response = ApiResponse.success(summaryResponses);
         return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "소프트웨어 별 라이센스 목록 조회")
-    @GetMapping("/software/{softwareId}")
-    public ResponseEntity<ApiResponse<?>> getLicenseSummaryBySoftware(@AuthenticationPrincipal CustomUser user,
-                                                                      @PathVariable("softwareId") Long softwareId,
-                                                                      @RequestParam(required = false, name = "search") String search,
-                                                                      @RequestParam(required = false, name = "hasActiveSession") Boolean hasActiveSession,
-                                                                      Pageable pageable) {
-        Page<LicenseSummaryResponse> summaryResponses = licenseService.getLicenseSummaryBySoftware(user, softwareId, search, hasActiveSession, pageable);
-        ApiResponse<?> response = ApiResponse.success(summaryResponses);
-        return ResponseEntity.ok(response);
-
     }
 
     @Operation(summary = "라이센스 연장", description = "라이센스 여러 개를 한 번에 연장하는 API")

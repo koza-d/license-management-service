@@ -4,21 +4,17 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
 import koza.licensemanagementservice.dashboard.dto.response.QExpiringLicenseResponse;
-import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
-import koza.licensemanagementservice.domain.license.dto.response.QAdminLicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatusCount;
-import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatsResponse;
-import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchTarget;
+import koza.licensemanagementservice.domain.license.dto.response.*;
+import koza.licensemanagementservice.domain.license.entity.License;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchTarget;
 import koza.licensemanagementservice.domain.session.dto.response.AdminSessionResponse;
 import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.response.QAdminSessionResponse;
 import koza.licensemanagementservice.domain.session.repository.SessionSearchTarget;
-import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -73,76 +69,7 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
-        List<License> content = queryFactory
-                .selectFrom(license)
-                .leftJoin(license.software, software)
-                .leftJoin(software.member, member)
-                .where(
-                        license.software.member.id.eq(memberId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession),
-                        isExpired(expireWithin)
-                )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(license.count())
-                .from(license)
-                .where(
-                        license.software.member.id.eq(memberId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession),
-                        isExpired(expireWithin)
-                )
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    private static BooleanExpression isExpired(Integer expireWithin) {
-        return expireWithin != null ? license.expiredAt.before(LocalDateTime.now().plusDays(expireWithin)) : null;
-    }
-
-    @Override
-    public Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
-        List<License> content = queryFactory
-                .selectFrom(license)
-                .where(
-                        license.software.id.eq(softwareId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession)
-                )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(license.count())
-                .from(license)
-                .where(
-                        license.software.id.eq(softwareId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession)
-                )
-                .fetchOne();
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    private static BooleanExpression searchNameOrMemo(String search) {
-        if (!hasText(search))
-            return null;
-
-        return license.memo.containsIgnoreCase(search)
-                .or(license.name.containsIgnoreCase(search));
-    }
-
-    @Override
-    public Page<AdminLicenseSummaryResponse> findByAllCondition(LicenseSearchCondition condition, Pageable pageable) {
+    public Page<AdminLicenseSummaryResponse> findByAllCondition(AdminLicenseSearchCondition condition, Pageable pageable) {
         List<AdminLicenseSummaryResponse> content = queryFactory
                 .select(new QAdminLicenseSummaryResponse(
                         license.id,
@@ -181,6 +108,42 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                         statusFilter(condition.getStatus())
                 ).fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Page<License> searchLicensesByMemberId(Long memberId, LicenseSearchCondition condition, Pageable pageable) {
+        List<License> content = queryFactory
+                .selectFrom(license)
+                .innerJoin(license.software, software)
+                .where(
+                        software.member.id.eq(memberId),
+                        softwareFilter(condition.getSoftwareId()),
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("createAt", "expiredAt")))
+                .fetch();
+
+        Long total = queryFactory
+                .select(license.count())
+                .from(license)
+                .innerJoin(license.software, software)
+                .where(
+                        software.member.id.eq(memberId),
+                        softwareFilter(condition.getSoftwareId()),
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
+                )
+                .fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression softwareFilter(Long softwareId) {
+        return softwareId == null ? null : software.id.eq(softwareId);
     }
 
     private BooleanExpression statusFilter(LicenseStatus status) {
@@ -387,15 +350,35 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
 
         if (target != null && target != LicenseSearchTarget.ALL) {
             return switch (target) {
+                case LICENSE_MEMO -> license.memo.containsIgnoreCase(search);
+                case LICENSE_NAME -> license.name.containsIgnoreCase(search);
+                case LICENSE_KEY -> license.licenseKey.containsIgnoreCase(search);
+                default -> null;
+            };
+        }
+
+        return license.memo.containsIgnoreCase(search)
+                .or(license.name.containsIgnoreCase(search))
+                .or(license.licenseKey.containsIgnoreCase(search));
+    }
+
+    private BooleanExpression searchFilter(AdminLicenseSearchTarget target, String search) {
+        if (!hasText(search))
+            return null;
+
+        if (target != null && target != AdminLicenseSearchTarget.ALL) {
+            return switch (target) {
                 case SOFTWARE_OWNER_EMAIL -> member.email.containsIgnoreCase(search);
                 case SOFTWARE_NAME -> software.name.containsIgnoreCase(search);
                 case LICENSE_NAME -> license.name.containsIgnoreCase(search);
+                case LICENSE_KEY -> license.licenseKey.containsIgnoreCase(search);
                 default -> null;
             };
         }
 
         return member.email.containsIgnoreCase(search)
                 .or(software.name.containsIgnoreCase(search))
-                .or(license.name.containsIgnoreCase(search));
+                .or(license.name.containsIgnoreCase(search))
+                .or(license.licenseKey.containsIgnoreCase(search));
     }
 }
