@@ -1,21 +1,17 @@
 package koza.licensemanagementservice.dashboard.service;
 
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.dashboard.dto.response.AdminDashboardLicenseStatsResponse;
+import koza.licensemanagementservice.dashboard.repository.DashboardRepository;
 import koza.licensemanagementservice.domain.audit.dto.response.AdminRecentAuditResponse;
 import koza.licensemanagementservice.domain.audit.repository.AdminAuditLogRepository;
 import koza.licensemanagementservice.dashboard.dto.response.AdminStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.PendingQnaResponse;
-import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
-import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
-import koza.licensemanagementservice.domain.member.repository.MemberRepository;
-import koza.licensemanagementservice.domain.qna.entity.QnaPriority;
-import koza.licensemanagementservice.domain.qna.entity.QnaStatus;
 import koza.licensemanagementservice.domain.qna.repository.QnaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static koza.licensemanagementservice.global.validation.ValidUserAuthorized.validAdminAuthorized;
@@ -29,10 +25,9 @@ public class DashboardAdminService {
     private static final int RECENT_AUDIT_MIN_LIMIT = 1;
     private static final int RECENT_AUDIT_MAX_LIMIT = 50;
 
-    private final LicenseRepository licenseRepository;
-    private final MemberRepository memberRepository;
     private final QnaRepository qnaRepository;
     private final AdminAuditLogRepository auditLogRepository;
+    private final DashboardRepository dashboardRepository;
 
     public List<PendingQnaResponse> getPendingQna(CustomUser admin, int limit) {
         validAdminAuthorized(admin);
@@ -48,26 +43,11 @@ public class DashboardAdminService {
 
     public AdminStatsResponse getStats(CustomUser admin) {
         validAdminAuthorized(admin);
-        Long totalLicenses = licenseRepository.count();
-        Long activeLicenses = licenseRepository.countByStatusEquals(LicenseStatus.ACTIVE);
-        Long bannedLicenses = licenseRepository.countByStatusEquals(LicenseStatus.BANNED);
-        Long expiredLicenses = licenseRepository.countByStatusAndExpiredAtBefore(
-                LicenseStatus.ACTIVE, LocalDateTime.now());
-        Long activeSessions = licenseRepository.countByHasActiveSessionTrue();
-        Long totalMembers = memberRepository.count();
-        Long pendingQna = qnaRepository.countByStatus(QnaStatus.PENDING);
-        Long urgentPendingQna = qnaRepository.countByStatusAndPriority(
-                QnaStatus.PENDING, QnaPriority.URGENT);
+        return dashboardRepository.getAdminStats();
+    }
 
-        return AdminStatsResponse.builder()
-                .totalLicenses(totalLicenses)
-                .activeLicenses(activeLicenses)
-                .bannedLicenses(bannedLicenses)
-                .expiredLicenses(expiredLicenses)
-                .activeSessions(activeSessions)
-                .totalMembers(totalMembers)
-                .pendingQna(pendingQna)
-                .urgentPendingQna(urgentPendingQna)
-                .build();
+    public AdminDashboardLicenseStatsResponse getLicenseStats(CustomUser admin) {
+        validAdminAuthorized(admin);
+        return dashboardRepository.getAdminLicenseStats();
     }
 }

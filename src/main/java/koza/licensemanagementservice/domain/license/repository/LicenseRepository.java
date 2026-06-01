@@ -29,21 +29,20 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
 
     @Query("SELECT COUNT(l) FROM License l " +
             "WHERE l.software.member.id = :memberId " +
-            "AND (l.status = 'ACTIVE' " +
+            "AND (l.status = koza.licensemanagementservice.domain.license.entity.LicenseStatus.ACTIVE " +
             "OR (l.status = 'BANNED' AND l.statusUntil IS NOT NULL))")
     long countAllocatedLicenses(@Param("memberId") Long memberId);
 
     Long countBySoftwareIdAndStatusEquals(Long softwareId, LicenseStatus status);
     Long countBySoftwareIdAndExpiredAtBefore(Long softwareId, LocalDateTime at);
     Long countBySoftwareIdAndHasActiveSessionTrue(Long softwareId);
-    Long countBySoftware_MemberId(Long memberId);
-    Long countBySoftware_MemberIdAndStatusEquals(Long memberId, LicenseStatus status);
-    Long countBySoftware_MemberIdAndStatusAndExpiredAtBefore(Long memberId, LicenseStatus status, LocalDateTime at);
-    Long countBySoftware_MemberIdAndHasActiveSessionTrue(Long memberId);
 
     Long countByStatusEquals(LicenseStatus status);
     Long countByStatusAndExpiredAtBefore(LicenseStatus status, LocalDateTime at);
     Long countByHasActiveSessionTrue();
 
+    @Query("SELECT COUNT(l) FROM License l " +
+            "WHERE l.software.member.id = :memberId ")
+    Long countByMemberId(@Param("memberId") Long memberId);
     boolean existsByLicenseKey(String licenseKey);
 }

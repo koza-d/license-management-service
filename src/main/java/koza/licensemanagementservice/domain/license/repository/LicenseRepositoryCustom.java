@@ -1,11 +1,12 @@
 package koza.licensemanagementservice.domain.license.repository;
 
 
+import koza.licensemanagementservice.dashboard.dto.response.DashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
@@ -29,11 +30,10 @@ public interface LicenseRepositoryCustom {
     List<License> bulkUpdateExpiredStatus(LocalDateTime now);
     List<License> bulkTransitionStatus(LicenseStatus from, LicenseStatus to, LocalDateTime now);
 
-    List<LicenseStatusCount> countLicensesByStatusForMember(Long memberId);
-    long countActiveSessionLicensesByMember(Long memberId);
-    long countExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, LocalDateTime threshold);
     List<ExpiringLicenseResponse> findExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, int limit);
     List<License> findActiveSessionLicensesByMember(Long memberId, int limit);
 
     LicenseStatsResponse getLicenseStatsBySoftwareId(Long softwareId);
+    DashboardLicenseStatsResponse getLicenseStatsByMemberId(Long memberId);
+
 }

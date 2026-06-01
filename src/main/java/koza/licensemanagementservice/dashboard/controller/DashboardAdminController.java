@@ -3,10 +3,12 @@ package koza.licensemanagementservice.dashboard.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
+import koza.licensemanagementservice.dashboard.dto.response.AdminDashboardLicenseStatsResponse;
 import koza.licensemanagementservice.domain.audit.dto.response.AdminRecentAuditResponse;
 import koza.licensemanagementservice.dashboard.dto.response.AdminStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.PendingQnaResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardAdminService;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatsResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,20 +34,25 @@ public class DashboardAdminController {
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
+    @Operation(summary = "라이센스 지표")
+    @GetMapping("/license/stats")
+    public ResponseEntity<ApiResponse<?>> getLicenseStats(@AuthenticationPrincipal CustomUser admin) {
+        AdminDashboardLicenseStatsResponse licenseStats = dashboardAdminService.getLicenseStats(admin);
+        return ResponseEntity.ok(ApiResponse.success(licenseStats));
+    }
+
     @Operation(summary = "개입 대기 문의 위젯", description = "PENDING 상태 상위 N건 (URGENT 우선, 오래된 문의 먼저)")
     @GetMapping("/pending-qna")
-    public ResponseEntity<ApiResponse<?>> getPendingQna(
-            @AuthenticationPrincipal CustomUser admin,
-            @RequestParam(defaultValue = "5") int limit) {
+    public ResponseEntity<ApiResponse<?>> getPendingQna(@AuthenticationPrincipal CustomUser admin,
+                                                        @RequestParam(defaultValue = "5") int limit) {
         List<PendingQnaResponse> items = dashboardAdminService.getPendingQna(admin, limit);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
 
     @Operation(summary = "최근 감사 로그 위젯", description = "라이센스/회원/소프트웨어 전역 최근 이벤트 상위 N건")
     @GetMapping("/recent-audit")
-    public ResponseEntity<ApiResponse<?>> getRecentAudit(
-            @AuthenticationPrincipal CustomUser admin,
-            @RequestParam(defaultValue = "20") int limit) {
+    public ResponseEntity<ApiResponse<?>> getRecentAudit(@AuthenticationPrincipal CustomUser admin,
+                                                         @RequestParam(defaultValue = "20") int limit) {
         List<AdminRecentAuditResponse> items = dashboardAdminService.getRecentAudit(admin, limit);
         return ResponseEntity.ok(ApiResponse.success(items));
     }

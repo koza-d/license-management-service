@@ -1,8 +1,14 @@
 package koza.licensemanagementservice.domain.license.repository;
 
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.dashboard.dto.response.DashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
+import koza.licensemanagementservice.dashboard.dto.response.QDashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.QExpiringLicenseResponse;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchTarget;
@@ -251,43 +257,6 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public List<LicenseStatusCount> countLicensesByStatusForMember(Long memberId) {
-        return queryFactory
-                .select(new QLicenseStatusCount(license.status, license.count()))
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId))
-                .groupBy(license.status)
-                .fetch();
-    }
-
-    @Override
-    public long countActiveSessionLicensesByMember(Long memberId) {
-        Long count = queryFactory
-                .select(license.count())
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId)
-                        .and(license.hasActiveSession.isTrue()))
-                .fetchOne();
-        return count != null ? count : 0L;
-    }
-
-    @Override
-    public long countExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, LocalDateTime threshold) {
-        Long count = queryFactory
-                .select(license.count())
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId)
-                        .and(license.status.eq(LicenseStatus.ACTIVE))
-                        .and(license.expiredAt.goe(now))
-                        .and(license.expiredAt.loe(threshold)))
-                .fetchOne();
-        return count != null ? count : 0L;
-    }
-
-    @Override
     public List<ExpiringLicenseResponse> findExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, int limit) {
         return queryFactory
                 .select(new QExpiringLicenseResponse(
@@ -337,6 +306,31 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                 )
                 .from(license)
                 .where(license.software.id.eq(softwareId))
+                .fetchOne();
+    }
+
+    @Override
+    public DashboardLicenseStatsResponse getLicenseStatsByMemberId(Long memberId) {
+        BooleanExpression isTemporaryBanned = license.status.eq(LicenseStatus.BANNED).and(license.statusUntil.isNotNull());
+        BooleanExpression isPermanentBanned = license.status.eq(LicenseStatus.BANNED).and(license.statusUntil.isNull());
+
+        return queryFactory
+                .select(
+                        new QDashboardLicenseStatsResponse(
+                                license.count(),
+                                countWhen(LicenseExpressions.isAllocated()),
+                                countWhen(license.status.eq(LicenseStatus.ACTIVE)),
+                                countWhen(isTemporaryBanned),
+                                countWhen(LicenseExpressions.isUnAllocated()),
+                                countWhen(license.status.eq(LicenseStatus.INACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.EXPIRED)),
+                                countWhen(isPermanentBanned),
+                                countWhen(license.hasActiveSession.isTrue())
+                        )
+                )
+                .from(license)
+                .innerJoin(license.software, software)
+                .where(software.member.id.eq(memberId))
                 .fetchOne();
     }
 

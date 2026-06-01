@@ -4,10 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.dashboard.dto.response.ActiveSessionResponse;
+import koza.licensemanagementservice.dashboard.dto.response.DashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
-import koza.licensemanagementservice.dashboard.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.SoftwareUsageResponse;
-import koza.licensemanagementservice.dashboard.dto.response.VendorStatsResponse;
 import koza.licensemanagementservice.dashboard.service.DashboardService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,17 +26,10 @@ import java.util.List;
 public class DashboardController {
     private final DashboardService dashboardService;
 
-    @Operation(description = "요약 통계 (KPI 카드용) — 등록 SW, 발급 라이센스, 활성 세션")
-    @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<?>> getStats(@AuthenticationPrincipal CustomUser user) {
-        VendorStatsResponse stats = dashboardService.getStats(user);
-        return ResponseEntity.ok(ApiResponse.success(stats));
-    }
-
     @Operation(description = "라이센스 현황 — 상태별/세션 사용 분포/만료 임박")
     @GetMapping("/licenses/stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStats(@AuthenticationPrincipal CustomUser user) {
-        LicenseStatsResponse stats = dashboardService.getLicenseStats(user);
+        DashboardLicenseStatsResponse stats = dashboardService.getLicenseStats(user);
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
