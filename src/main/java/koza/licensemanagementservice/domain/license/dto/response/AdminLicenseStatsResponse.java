@@ -7,7 +7,7 @@ import lombok.ToString;
 @Getter
 @Builder
 @ToString
-public class LicenseStatResponse {
+public class AdminLicenseStatsResponse {
     private Long total; // 총 라이센스 수
     private Long expire; // 만료 라이센스 수
     private Long active; // 상태 'ACTIVE' 라이센스 수

@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
@@ -82,16 +82,9 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public LicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
+    public LicenseStatsResponse getLicenseStat(CustomUser user, Long softwareId) {
         getSoftwareOrElse(user.getId(), softwareId);
-
-        return LicenseStatResponse.builder()
-                .total((long) licenseRepository.countBySoftwareId(softwareId))
-                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
-                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
-                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
-                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
-                .build();
+        return licenseRepository.getLicenseStatsBySoftwareId(softwareId);
     }
 
 

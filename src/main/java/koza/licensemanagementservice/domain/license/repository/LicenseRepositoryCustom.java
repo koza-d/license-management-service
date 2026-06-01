@@ -4,6 +4,7 @@ package koza.licensemanagementservice.domain.license.repository;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
@@ -33,4 +34,6 @@ public interface LicenseRepositoryCustom {
     long countExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, LocalDateTime threshold);
     List<ExpiringLicenseResponse> findExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, int limit);
     List<License> findActiveSessionLicensesByMember(Long memberId, int limit);
+
+    LicenseStatsResponse getLicenseStatsBySoftwareId(Long softwareId);
 }

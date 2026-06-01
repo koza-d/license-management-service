@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareLogResponse;
@@ -52,7 +52,7 @@ public class SoftwareController {
     @GetMapping("/{softwareId}/license-stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
-        LicenseStatResponse stat = softwareService.getLicenseStat(user, softwareId);
+        LicenseStatsResponse stat = softwareService.getLicenseStat(user, softwareId);
         ApiResponse<?> response= ApiResponse.success(stat);
         return ResponseEntity.ok(response);
     }

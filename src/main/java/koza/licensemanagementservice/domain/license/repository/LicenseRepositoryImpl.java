@@ -6,8 +6,10 @@ import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseRespo
 import koza.licensemanagementservice.dashboard.dto.response.QExpiringLicenseResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.license.dto.response.QAdminLicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatusCount;
+import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatsResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
@@ -30,6 +32,7 @@ import java.util.Set;
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.countWhen;
 import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -354,6 +357,24 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                 .orderBy(license.latestActiveAt.desc())
                 .limit(limit)
                 .fetch();
+    }
+
+    @Override
+    public LicenseStatsResponse getLicenseStatsBySoftwareId(Long softwareId) {
+        return queryFactory
+                .select(
+                        new QLicenseStatsResponse(
+                                license.count(),
+                                countWhen(license.status.eq(LicenseStatus.EXPIRED)),
+                                countWhen(license.status.eq(LicenseStatus.INACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.ACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.BANNED)),
+                                countWhen(license.hasActiveSession.isTrue())
+                        )
+                )
+                .from(license)
+                .where(license.software.id.eq(softwareId))
+                .fetchOne();
     }
 
     private BooleanExpression sessionFilter(Boolean hasActiveSession) {
