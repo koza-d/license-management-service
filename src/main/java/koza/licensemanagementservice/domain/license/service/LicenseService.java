@@ -55,11 +55,15 @@ public class LicenseService {
         Software software = getSoftwareOrThrow(user, softwareId);
         Member member = software.getMember();
 
-        long allocatedLicenses = licenseRepository.countAllocatedLicenses(user.getId());
-
         Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
 
+        long totalLicenses = licenseRepository.countByMemberId(user.getId());
+        // 라이센스 발급은 플랜별 좌석한도의 5배수 까지 발급 가능 (무차별 생성 방지)
+        if (totalLicenses >= userPlan.getLimitLicense() * 5L)
+            throw new BusinessException(ErrorCode.LICENSE_ISSUE_LIMIT);
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(user.getId());
         // 라이센스 활성/발급 한도 제한
         if (allocatedLicenses >= userPlan.getLimitLicense())
             throw new BusinessException(ErrorCode.LICENSE_ISSUE_LIMIT);
