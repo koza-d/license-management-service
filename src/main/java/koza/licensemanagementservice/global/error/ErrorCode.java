@@ -97,7 +97,7 @@ public enum ErrorCode {
     SDK_INVALID_FILE_HASH(400, "SDK_005", "변조된 파일입니다."),
     SDK_NOT_AVAILABLE_VERSION(400, "SDK_006", "사용 불가능한 버전입니다."),
 
-    SDK_LICENSE_IN_USE(409, "SDK_101", "이미 사용 중인 라이센스입니다."),
+    SDK_LICENSE_IN_TRY_VERIFY(409, "SDK_101", "현재 인증시도 중인 라이센스입니다. 잠시 후 다시 시도하세요."),
     SDK_LICENSE_BANNED(403, "SDK_102", "사용 정지된 라이센스입니다."),
     SDK_LICENSE_EXPIRED(403, "SDK_103", "만료된 라이센스입니다."),
     SDK_LICENSE_ACTIVE_LIMIT(409, "SDK_104", "관리자의 라이센스 보유 가능한 수를 넘어 첫 인증을 진행할 수 없습니다."),

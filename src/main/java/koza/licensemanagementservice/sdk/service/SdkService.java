@@ -192,12 +192,6 @@ public class SdkService {
                     throw new BusinessException(ErrorCode.SDK_LICENSE_ACTIVE_LIMIT);
             }
 
-            String currentSessionId = sessionManager.getSessionIdByLicenseId(license.getId());
-
-            // 사용중인 라이센스인 경우 연결 거부
-            if (currentSessionId != null && sessionManager.isActive(currentSessionId))
-                throw new BusinessException(ErrorCode.SDK_LICENSE_IN_USE);
-
             String clientPublicKey = request.getPublicKey();
 
             // 서버 키쌍 생성
@@ -213,8 +207,8 @@ public class SdkService {
             byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
             byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
 
+            String sessionId = sessionManager.createSession(license, ipAddress, userAgent, license.getExpiredAt(), sessionKey);
             license.verify();
-            String sessionId = sessionManager.createSession(license.getId(), ipAddress, userAgent, license.getExpiredAt(), sessionKey);
 
 
             LocalDateTime now = LocalDateTime.now();

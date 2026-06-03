@@ -11,8 +11,7 @@ public interface SessionRepository {
     void save(String sessionId, SessionValue sessionValue, Duration ttl);
     void update(String sessionId, SessionValue sessionValue, Duration ttl);
     Optional<SessionValue> findById(String sessionId);
-    String findSessionIdByLicenseId(Long licenseId);
-    boolean hasSession(String sessionId);
+    Optional<SessionValue> findSessionByLicenseId(Long licenseId);
     boolean extendTTL(String sessionId, Duration ttl);
     void delete(String sessionId);
 }

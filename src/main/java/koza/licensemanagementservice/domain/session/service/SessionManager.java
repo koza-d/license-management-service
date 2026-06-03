@@ -34,11 +34,14 @@ public class SessionManager {
 
     private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
-    public String createSession(Long licenseId, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] sessionKey) {
+    public String createSession(License license, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] sessionKey) {
+        Optional<SessionValue> sessionByLicenseId = getSessionByLicenseId(license.getId());
+        sessionByLicenseId.ifPresent(sessionValue -> releaseSession(sessionValue.getSessionId(), license, ReleaseType.REPLACED));
+
         String sessionId = createNewSessionId();
         SessionValue sessionValue = SessionValue.builder()
                 .sessionId(sessionId)
-                .licenseId(licenseId)
+                .licenseId(license.getId())
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .expiredAt(expiredAt)
@@ -51,19 +54,11 @@ public class SessionManager {
     }
 
     public Optional<SessionValue> getSessionByLicenseId(Long licenseId) {
-        String sessionId = sessionRepository.findSessionIdByLicenseId(licenseId);
-        if (sessionId == null)
-            return Optional.empty();
-
-        return sessionRepository.findById(sessionId);
+        return sessionRepository.findSessionByLicenseId(licenseId);
     }
 
     public Optional<SessionValue> getSession(String sessionId) {
         return sessionRepository.findById(sessionId);
-    }
-
-    public String getSessionIdByLicenseId(Long licenseId) {
-        return sessionRepository.findSessionIdByLicenseId(licenseId);
     }
 
     public void extendSession(String sessionId, byte[] sessionKey) {
@@ -81,10 +76,6 @@ public class SessionManager {
 
     public void updateSession(String sessionId, SessionValue sessionValue) {
         sessionRepository.update(sessionId, sessionValue, SESSION_TTL);
-    }
-
-    public boolean isActive(String sessionId) {
-        return sessionRepository.hasSession(sessionId);
     }
 
     public void releaseSession(String sessionId, License license, ReleaseType releaseType) {

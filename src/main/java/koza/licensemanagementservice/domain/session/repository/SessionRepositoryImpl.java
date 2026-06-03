@@ -33,7 +33,7 @@ public class SessionRepositoryImpl implements SessionRepository {
 
         Boolean isSave = redisTemplate.opsForValue().setIfAbsent(lockKey, sessionId, ttl);
         if (!Boolean.TRUE.equals(isSave))
-            throw new BusinessException(ErrorCode.SDK_LICENSE_IN_USE);
+            throw new BusinessException(ErrorCode.SDK_LICENSE_IN_TRY_VERIFY);
 
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.opsForValue().set(licenseKey, sessionId);
@@ -50,20 +50,14 @@ public class SessionRepositoryImpl implements SessionRepository {
     }
 
     public Optional<SessionValue> findById(String sessionId) {
-        String sessionKey = getSessionKeyFormat(sessionId);
-        String json = redisTemplate.opsForValue().get(sessionKey);
-        return Optional.ofNullable(json).map(this::fromJson);
+        return Optional.ofNullable(getSessionValue(sessionId));
     }
 
     @Override
-    public String findSessionIdByLicenseId(Long licenseId) {
-        String licenseKey = getLicenseKeyFormat(licenseId);
-        return redisTemplate.opsForValue().get(licenseKey);
-    }
-
-    public boolean hasSession(String sessionId) {
-        String triggerKey = getTriggerKeyFormat(sessionId);
-        return Boolean.TRUE.equals(redisTemplate.hasKey(triggerKey));
+    public Optional<SessionValue> findSessionByLicenseId(Long licenseId) {
+        String sessionId = getLicenseValue(licenseId);
+        SessionValue sessionValue = getSessionValue(sessionId);
+        return Optional.ofNullable(sessionValue);
     }
 
     public boolean extendTTL(String sessionId, Duration ttl) {
@@ -78,6 +72,17 @@ public class SessionRepositoryImpl implements SessionRepository {
         String licenseKey = sessionValue == null ? "" : getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
         redisTemplate.delete(List.of(sessionKey, licenseKey, triggerKey));
+    }
+
+    private SessionValue getSessionValue(String sessionId) {
+        String sessionKey = getSessionKeyFormat(sessionId);
+        String json = redisTemplate.opsForValue().get(sessionKey);
+        return fromJson(json);
+    }
+
+    private String getLicenseValue(Long licenseId) {
+        String licenseKey = getLicenseKeyFormat(licenseId);
+        return redisTemplate.opsForValue().get(licenseKey);
     }
 
     private String getSessionKeyFormat(String sessionId) {
