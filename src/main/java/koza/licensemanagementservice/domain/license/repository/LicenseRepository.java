@@ -19,6 +19,10 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     Page<License> findBySoftwareIdAndHasActiveSessionIsTrue(Long softwareId, Pageable pageable);
     Page<License> findBySoftware_MemberIdAndHasActiveSessionIsTrue(Long memberId, Pageable pageable);
     List<License> findBySoftwareIdAndHasActiveSessionIsTrue(Long softwareId);
+
+    @Query("SELECT l.id FROM License l WHERE l.hasActiveSession = true")
+    List<Long> findIdsByHasActiveSessionTrue();
+
     int countBySoftwareId(Long softwareId);
 
     /**
@@ -36,10 +40,6 @@ public interface LicenseRepository extends JpaRepository<License, Long>, License
     Long countBySoftwareIdAndStatusEquals(Long softwareId, LicenseStatus status);
     Long countBySoftwareIdAndExpiredAtBefore(Long softwareId, LocalDateTime at);
     Long countBySoftwareIdAndHasActiveSessionTrue(Long softwareId);
-
-    Long countByStatusEquals(LicenseStatus status);
-    Long countByStatusAndExpiredAtBefore(LicenseStatus status, LocalDateTime at);
-    Long countByHasActiveSessionTrue();
 
     @Query("SELECT COUNT(l) FROM License l " +
             "WHERE l.software.member.id = :memberId ")

@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.session.service;
 
+import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.session.repository.SessionRepository;
 import koza.licensemanagementservice.domain.session.log.entity.SessionLog;
 import koza.licensemanagementservice.domain.session.log.repository.SessionLogRepository;
@@ -11,10 +12,12 @@ import koza.licensemanagementservice.domain.session.log.entity.ReleaseType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,10 +32,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class SessionManager {
+    private static final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
+    // 세션 TTL(60s) + 유예(60s). latestActiveAt 이 이보다 오래되면 좀비로 간주
+    private static final Long GHOST_ACTIVE_THRESHOLD = 120 * 1000L;
+
     private final SessionRepository sessionRepository;
     private final SessionLogRepository logRepository;
+    private final LicenseRepository licenseRepository;
 
-    private final Duration SESSION_TTL = Duration.of(60, ChronoUnit.SECONDS);
 
     public String createSession(License license, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] sessionKey) {
         Optional<SessionValue> sessionByLicenseId = getSessionByLicenseId(license.getId());
@@ -86,16 +93,53 @@ public class SessionManager {
         }
         license.release(session.getChangedLocalVariables());
         sessionRepository.delete(session.getSessionId());
+        LocalDateTime releaseAt = LocalDateTime.now();
+        LocalDateTime latestActiveAt = session.getLatestActiveAt();
+        boolean isOld = latestActiveAt != null && Duration.between(latestActiveAt, LocalDateTime.now()).toMillis() >= GHOST_ACTIVE_THRESHOLD;
+        // 마지막 활동이 오래된 경우 or 정상적인 상황이 아닌 경우 마지막 활동시간을 releaseAt 으로 지정
+        if (releaseType == ReleaseType.SYSTEM_ERROR || isOld)
+            releaseAt = latestActiveAt;
+
+        // 이 경우는 없을거로 예상되지만 혹시모를 null 안전장치
+        if (latestActiveAt == null)
+            releaseAt = LocalDateTime.now();
+
         SessionLog log = SessionLog.builder()
                 .sessionId(session.getSessionId())
                 .license(license)
                 .ipAddress(session.getIpAddress())
                 .userAgent(session.getUserAgent())
                 .verifyAt(session.getVerifyAt())
-                .releaseAt(LocalDateTime.now())
+                .releaseAt(releaseAt)
                 .releaseType(releaseType)
                 .build();
         logRepository.save(log);
+    }
+
+    @Transactional
+    public void cleanUpGhostSession(Long licenseId) {
+        License license = licenseRepository.findById(licenseId).orElse(null);
+        if (license == null || !license.hasActiveSession())
+            return;
+
+        Optional<SessionValue> sessionOpt = getSessionByLicenseId(licenseId);
+        if (sessionOpt.isEmpty()) {
+            // Redis 에 살아있는 세션 없음 -> DB 플래그만 잔존(키 즉시삭제 후 커밋 실패 등)
+            sessionRepository.deleteByLicenseId(licenseId);
+            license.release(Map.of());
+            log.warn("유령 세션 정리(Redis 세션 없음). licenseId = {}", licenseId);
+            return;
+        }
+
+        SessionValue session = sessionOpt.get();
+        LocalDateTime latestActiveAt = session.getLatestActiveAt();
+        boolean isGhost = latestActiveAt == null || Duration.between(latestActiveAt, LocalDateTime.now()).toMillis() >= GHOST_ACTIVE_THRESHOLD;
+        if (isGhost) {
+            // Redis 키 잔존 + 마지막 활동이 임계치 초과 -> TTL 만료 이벤트 미처리/미만료 좀비
+            releaseSession(session.getSessionId(), license, ReleaseType.SYSTEM_ERROR);
+            log.warn("유령 세션 정리(old active). licenseId = {}, sessionId = {}, latestActiveAt = {}",
+                    licenseId, session.getSessionId(), latestActiveAt);
+        }
     }
 
     private String createNewSessionId() {

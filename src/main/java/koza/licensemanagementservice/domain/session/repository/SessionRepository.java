@@ -14,4 +14,5 @@ public interface SessionRepository {
     Optional<SessionValue> findSessionByLicenseId(Long licenseId);
     boolean extendTTL(String sessionId, Duration ttl);
     void delete(String sessionId);
+    void deleteByLicenseId(Long licenseId);
 }

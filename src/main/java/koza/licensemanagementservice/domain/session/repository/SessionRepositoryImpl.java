@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.session.repository;
 
+import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -10,6 +11,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,16 +69,35 @@ public class SessionRepositoryImpl implements SessionRepository {
     }
 
     public void delete(String sessionId) {
-        SessionValue sessionValue = findById(sessionId).get();
+        SessionValue sessionValue = findById(sessionId).orElse(null);
         String sessionKey = getSessionKeyFormat(sessionId);
-        String licenseKey = sessionValue == null ? "" : getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
-        redisTemplate.delete(List.of(sessionKey, licenseKey, triggerKey));
+
+        List<String> keys = new ArrayList<>(List.of(sessionKey, triggerKey));
+        if (sessionValue != null)
+            keys.add(getLicenseKeyFormat(sessionValue.getLicenseId()));
+        redisTemplate.delete(keys);
+    }
+
+    @Override
+    public void deleteByLicenseId(Long licenseId) {
+        String sessionId = getLicenseValue(licenseId);
+
+        List<String> keys = new ArrayList<>();
+        keys.add(getLicenseKeyFormat(licenseId));
+        if (!StringUtil.isNullOrEmpty(sessionId)) {
+            keys.add(getSessionKeyFormat(sessionId));
+            keys.add(getTriggerKeyFormat(sessionId));
+        }
+        redisTemplate.delete(keys);
     }
 
     private SessionValue getSessionValue(String sessionId) {
         String sessionKey = getSessionKeyFormat(sessionId);
         String json = redisTemplate.opsForValue().get(sessionKey);
+        if (StringUtil.isNullOrEmpty(json))
+            return null;
+
         return fromJson(json);
     }
 
