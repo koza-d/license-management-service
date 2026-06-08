@@ -21,6 +21,7 @@ public class SessionRepositoryImpl implements SessionRepository {
     public static final String SESSION_KEY_PREFIX = "session";
     public static final String SESSION_LICENSE_PREFIX = "license";
     public static final String SESSION_TRIGGER_PREFIX = "trigger";
+    public static final String SESSION_SEQ_PREFIX = "seq";
     public static final String SESSION_LOCK_PREFIX = "lock";
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -31,6 +32,7 @@ public class SessionRepositoryImpl implements SessionRepository {
         String sessionKey = getSessionKeyFormat(sessionId);
         String licenseKey = getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
+        String sequenceKey = getSequenceKeyFormat(sessionId);
         String lockKey = getLockKeyFormat(sessionValue.getLicenseId());
 
         Boolean isSave = redisTemplate.opsForValue().setIfAbsent(lockKey, sessionId, ttl);
@@ -40,6 +42,7 @@ public class SessionRepositoryImpl implements SessionRepository {
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.opsForValue().set(licenseKey, sessionId);
         redisTemplate.opsForValue().set(triggerKey, "", ttl);
+        redisTemplate.opsForValue().set(sequenceKey, "0", ttl);
         redisTemplate.delete(lockKey);
     }
 
@@ -49,6 +52,25 @@ public class SessionRepositoryImpl implements SessionRepository {
         String triggerKey = getTriggerKeyFormat(sessionId);
         redisTemplate.opsForValue().set(sessionKey, value);
         redisTemplate.expire(triggerKey, ttl);
+    }
+
+    @Override
+    public Long increaseSequence(String sessionId) {
+        String sequenceKey = getSequenceKeyFormat(sessionId);
+        return redisTemplate.opsForValue().increment(sequenceKey);
+    }
+
+    @Override
+    public Long findSequenceById(String sessionId) {
+        String sequenceKey = getSequenceKeyFormat(sessionId);
+        String value = redisTemplate.opsForValue().get(sequenceKey);
+
+        long seq = -1L;
+        try {
+            seq = Long.parseLong(value);
+        } catch (Exception ignore) {
+        }
+        return seq;
     }
 
     public Optional<SessionValue> findById(String sessionId) {
@@ -64,7 +86,8 @@ public class SessionRepositoryImpl implements SessionRepository {
 
     public boolean extendTTL(String sessionId, Duration ttl) {
         String triggerKey = getTriggerKeyFormat(sessionId);
-        Boolean expire = redisTemplate.expire(triggerKey, ttl);
+        String sequenceKey = getSequenceKeyFormat(sessionId);
+        Boolean expire = redisTemplate.expire(triggerKey, ttl) && redisTemplate.expire(sequenceKey, ttl);
         return Boolean.TRUE.equals(expire);
     }
 
@@ -72,8 +95,9 @@ public class SessionRepositoryImpl implements SessionRepository {
         SessionValue sessionValue = findById(sessionId).orElse(null);
         String sessionKey = getSessionKeyFormat(sessionId);
         String triggerKey = getTriggerKeyFormat(sessionId);
+        String sequenceKey = getSequenceKeyFormat(sessionId);
 
-        List<String> keys = new ArrayList<>(List.of(sessionKey, triggerKey));
+        List<String> keys = new ArrayList<>(List.of(sessionKey, triggerKey, sequenceKey));
         if (sessionValue != null)
             keys.add(getLicenseKeyFormat(sessionValue.getLicenseId()));
         redisTemplate.delete(keys);
@@ -88,6 +112,7 @@ public class SessionRepositoryImpl implements SessionRepository {
         if (!StringUtil.isNullOrEmpty(sessionId)) {
             keys.add(getSessionKeyFormat(sessionId));
             keys.add(getTriggerKeyFormat(sessionId));
+            keys.add(getSequenceKeyFormat(sessionId));
         }
         redisTemplate.delete(keys);
     }
@@ -116,6 +141,10 @@ public class SessionRepositoryImpl implements SessionRepository {
 
     private String getTriggerKeyFormat(String sessionId) {
         return String.format("%s:%s", SESSION_TRIGGER_PREFIX, sessionId);
+    }
+
+    private String getSequenceKeyFormat(String sessionId) {
+        return String.format("%s:%s", SESSION_SEQ_PREFIX, sessionId);
     }
 
     private String getLockKeyFormat(Long licenseId) {

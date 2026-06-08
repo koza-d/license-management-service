@@ -26,14 +26,7 @@ public class VerifyRequest {
     @Size(max = 64, message = "fileHash는 최대 64자입니다.")
     private String fileHash;
 
-    @Override
-    public String toString() {
-        return "VerifyRequest{" +
-                "publicKey='" + publicKey + '\'' +
-                ", licenseKey='" + licenseKey + '\'' +
-                ", appId='" + appId + '\'' +
-                ", clientVersion='" + clientVersion + '\'' +
-                ", fileHash='" + fileHash + '\'' +
-                '}';
-    }
+    @NotBlank(message = "클라이언트 nonce는 필수입니다.")
+    private String clientNonce; // SDK에 요청 시 저장해놓아야함 (replay 방지)
+
 }

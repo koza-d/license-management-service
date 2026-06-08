@@ -9,4 +9,6 @@ public class ReleaseRequest {
     @NotBlank(message = "sessionId는 필수입니다.")
     @Size(max = 36, message = "sessionId는 최대 36자입니다.")
     private String sessionId;
+    private Long clientSeq; 
+    private String encryptData; // sessionId, clientSeq 암호화
 }

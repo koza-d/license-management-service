@@ -11,5 +11,4 @@ public class InitResponse {
     private String clientVersion;
     private String downloadURL;
     private String sig;
-    private String ts;
 }

@@ -48,6 +48,7 @@ toss:
 sdk:
   signing:
     ed25519-private-key: ${ED25519_PRIVATE_KEY}
+    ed25519-key-id: 1
 
 logging:
   level:

@@ -26,12 +26,7 @@ import koza.licensemanagementservice.sdk.log.dto.InitFailedEvent;
 import koza.licensemanagementservice.sdk.log.dto.InitSuccessEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifyFailedEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifySuccessEvent;
-import koza.licensemanagementservice.sdk.security.AESEncryption;
-import koza.licensemanagementservice.sdk.security.ECDHExchange;
-import koza.licensemanagementservice.sdk.security.Ed25519KeyProvider;
-import koza.licensemanagementservice.sdk.security.Ed25519Signer;
-import koza.licensemanagementservice.sdk.security.HMACSignature;
-import koza.licensemanagementservice.sdk.security.SessionKeyManager;
+import koza.licensemanagementservice.sdk.security.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,9 +34,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import javax.crypto.AEADBadTagException;
+import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -93,12 +91,12 @@ public class SdkService {
 
             String downloadURL = Optional.ofNullable(latestVersion.getDownloadURL()).orElse("");
 
-            long timestamp = System.currentTimeMillis();
             String dataToSign = String.join(".",
                     appId,
+                    software.getName(),
                     latestVersion.getVersion(),
-                    downloadURL,
-                    String.valueOf(timestamp));
+                    request.getClientVersion(),
+                    downloadURL);
             String sig = Ed25519Signer.sign(dataToSign, ed25519KeyProvider.getPrivateKey());
 
             InitResponse response = InitResponse.builder()
@@ -107,7 +105,6 @@ public class SdkService {
                     .clientVersion(request.getClientVersion())
                     .downloadURL(downloadURL)
                     .sig(sig)
-                    .ts(String.valueOf(timestamp))
                     .build();
 
             eventPublisher.publishEvent(new InitSuccessEvent(software.getId(), appId, request.getClientVersion(), ipAddress, userAgent));
@@ -192,22 +189,23 @@ public class SdkService {
                     throw new BusinessException(ErrorCode.SDK_LICENSE_ACTIVE_LIMIT);
             }
 
-            String clientPublicKey = request.getPublicKey();
+            byte[] clientPublicKey = Base64.getDecoder().decode(request.getPublicKey());
 
             // 서버 키쌍 생성
             KeyPair serverKeyPair = ECDHExchange.generateServerKeyPair();
+            byte[] serverPublicKey = serverKeyPair.getPublic().getEncoded();
 
-            // 공유 비밀키 계산
+            // 공유 비밀키 계산 (서버 개인키, 클라 공개키)
             byte[] sharedSecret = ECDHExchange.computeSharedSecret(serverKeyPair.getPrivate(), clientPublicKey);
 
-            // 이후 통신에 쓰일 암호화 키 ( 매 하트비트마다 초기화) + 공유 비밀키로 암호화
-            byte[] sessionKey = SessionKeyManager.generateSessionKey();
-            String encryptedSessionKey = AESEncryption.encrypt(sessionKey, ECDHExchange.deriveEncryptKey(sharedSecret));
+            // 이후 통신에 쓰일 세션 키
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            outputStream.write(clientPublicKey);
+            outputStream.write(serverPublicKey);
+            byte[] salt = outputStream.toByteArray();
+            HKDFUtil.SessionKeys sessionKeys = HKDFUtil.deriveSessionKeys(sharedSecret, salt);
 
-            byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionKey);
-            byte[] encryptKey = SessionKeyManager.deriveEncryptKey(sessionKey);
-
-            String sessionId = sessionManager.createSession(license, ipAddress, userAgent, license.getExpiredAt(), sessionKey);
+            String sessionId = sessionManager.createSession(license, ipAddress, userAgent, license.getExpiredAt(), sessionKeys.keyC2S(), sessionKeys.keyS2C());
             license.verify();
 
 
@@ -226,20 +224,24 @@ public class SdkService {
                     .downloadURL(latestVersion.getDownloadURL())
                     .build();
 
-            String dataToJson = objectMapper.writeValueAsString(data);
-            String encryptedData = AESEncryption.encrypt(dataToJson, encryptKey);
 
-            // 서명 생성 (encryptedData + timestamp 조합)
-            long timestamp = System.currentTimeMillis();
-            String signTarget = encryptedData + "." + timestamp;
-            String sig = HMACSignature.sign(signTarget, signingKey);
+            String dataToJson = objectMapper.writeValueAsString(data);
+
+            Long serverSeq = sessionManager.getSequence(sessionId);
+            String encryptedData = AESEncryption.encrypt(serverSeq, dataToJson, sessionKeys.keyS2C());
+            String signTarget = String.join(".",
+                    Base64.getEncoder().encodeToString(serverPublicKey),
+                    request.getClientNonce(),
+                    String.valueOf(ed25519KeyProvider.getKeyId()),
+                    encryptedData);
+            String serverSign = Ed25519Signer.sign(signTarget, ed25519KeyProvider.getPrivateKey());
 
             VerifyResponse response = VerifyResponse.builder()
-                    .serverPublicKey(ECDHExchange.exportPublicKey(serverKeyPair.getPublic()))
-                    .encryptedSessionKey(encryptedSessionKey)
+                    .serverPublicKey(Base64.getEncoder().encodeToString(serverPublicKey))
+                    .clientNonce(request.getClientNonce())
+                    .keyId(ed25519KeyProvider.getKeyId())
                     .encryptedData(encryptedData)
-                    .sig(sig)
-                    .ts(String.valueOf(timestamp))
+                    .serverSign(serverSign)
                     .build();
 
             eventPublisher.publishEvent(new VerifySuccessEvent(software.getId(), request.getAppId(), license.getId(), licenseKey, ipAddress, userAgent));
@@ -256,8 +258,8 @@ public class SdkService {
                 : ErrorCode.SDK_SERVER_ERROR;
 
         if (errorCode == ErrorCode.SDK_SERVER_ERROR)
-            log.error("SDK 인증 도중 문제가 발생했습니다. | 요청객체 : {} | 라이센스 ID : {} | 요청 IP : {} | UserAgent : {} | 사유 : {} ",
-                    request.toString(), license == null ? "null" : license.getId(), ipAddress, userAgent, e.getMessage());
+            log.error("SDK 인증 도중 문제가 발생했습니다. | 요청객체 : {} | 라이센스 ID : {} | 요청 IP : {} | UserAgent : {}",
+                    request.toString(), license == null ? "null" : license.getId(), ipAddress, userAgent, e);
 
         eventPublisher.publishEvent(new VerifyFailedEvent(
                 software != null ? software.getId() : null, request.getAppId(),
@@ -272,45 +274,25 @@ public class SdkService {
         SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
 
-        byte[] currentSessionKey = sessionValue.getSessionKey();
-        byte[] signingKey = SessionKeyManager.deriveSigningKey(currentSessionKey);
-        byte[] encryptKey = SessionKeyManager.deriveEncryptKey(currentSessionKey);
+        if (sessionValue.getExpiredAt().isBefore(LocalDateTime.now()))
+            throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
 
+        byte[] keyC2S = sessionValue.getKeyC2S();
+        byte[] keyS2C = sessionValue.getKeyS2C();
+        String expected = String.join(".", sessionId, request.getClientSeq().toString());
+        verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
 
-        // 30초 이상 된 요청은 리플레이 공격으로 간주
-        long nowTs = System.currentTimeMillis();
-        Long receivedTs = request.getReceivedTs();
-        if (Math.abs(nowTs - receivedTs) > 30 * 1000)
-            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
-
-        // 서명 검증 (위, 변조된 요청 검증)
-        String signTarget = sessionId + "." + receivedTs;
-        if (!HMACSignature.verify(signTarget, request.getReceivedSig(), signingKey))
-            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
-
-        // 새 sessionKey 재발급
-        byte[] newSessionKey = SessionKeyManager.generateSessionKey();
-        byte[] newSigningKey = SessionKeyManager.deriveSigningKey(newSessionKey);
-        byte[] newEncryptKey = SessionKeyManager.deriveEncryptKey(newSessionKey);
-        String encryptedNewSessionKey = AESEncryption.encrypt(
-                newSessionKey,
-                encryptKey
-        );
-
-        sessionManager.extendSession(sessionId, newSessionKey);
+        sessionManager.extendSession(sessionId);
+        Long serverSeq = sessionManager.increaseSequence(sessionId);
 
         // 응답 데이터 구성 및 암호화/서명
         HeartbeatData data = new HeartbeatData(LocalDateTime.now(), sessionValue.getExpiredAt());
         String dataToJson = objectMapper.writeValueAsString(data);
-        String encryptedData = AESEncryption.encrypt(dataToJson, newEncryptKey);
-        long timestamp = System.currentTimeMillis();
-        String sig = HMACSignature.sign(encryptedData + "." + timestamp, newSigningKey);
+        String encryptedData = AESEncryption.encrypt(serverSeq, dataToJson, keyS2C);
 
         return HeartbeatResponse.builder()
-                .encryptedSessionKey(encryptedNewSessionKey)
+                .serverSeq(serverSeq)
                 .encryptedData(encryptedData)
-                .sig(sig)
-                .ts(String.valueOf(timestamp))
                 .build();
     }
 
@@ -319,13 +301,11 @@ public class SdkService {
         SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
 
+        if (sessionValue.getExpiredAt().isBefore(LocalDateTime.now()))
+            throw new BusinessException(ErrorCode.SDK_LICENSE_EXPIRED);
+
         String key = request.getKey();
         String value = request.getValue();
-
-        byte[] signingKey = SessionKeyManager.deriveSigningKey(sessionValue.getSessionKey());
-        String signTarget = sessionId + "." + key + "." + value;
-        if (!HMACSignature.verify(signTarget, request.getReceivedSig(), signingKey))
-            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
 
         int maxKeyLength = 50;
         int maxValueLength = 500;
@@ -343,6 +323,13 @@ public class SdkService {
         if (variables.size() >= maxVariableCount)
             throw new BusinessException(ErrorCode.SDK_VARIABLE_COUNT_MAX);
 
+        byte[] keyC2S = sessionValue.getKeyC2S();
+        String expected = String.join(".",
+                sessionId,
+                request.getClientSeq().toString(),
+                request.getKey(),
+                request.getValue());
+        verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
         variables.put(key, value);
         sessionManager.updateSession(sessionId, sessionValue);
     }
@@ -352,6 +339,11 @@ public class SdkService {
         String sessionId = request.getSessionId();
         SessionValue sessionValue = sessionManager.getSession(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SESSION_EXPIRED));
+
+        byte[] keyC2S = sessionValue.getKeyC2S();
+        String expected = String.join(".", sessionId, request.getClientSeq().toString());
+        verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
+
         processRelease(sessionId, sessionValue.getLicenseId(), ReleaseType.NORMAL);
     }
 
@@ -371,6 +363,24 @@ public class SdkService {
         if (license == null) return;
 
         sessionManager.releaseSession(sessionId, license, releaseType);
+    }
+
+    private void verifyC2SPayload(Long clientSeq, String encryptData, byte[] keyC2S, String expected, String sessionId) {
+        String decrypt;
+        try {
+            decrypt = AESEncryption.decrypt(clientSeq, encryptData, keyC2S);
+        } catch (AEADBadTagException | IllegalArgumentException e) {
+            // 정상 루트로는 발생 불가 → 변조/위조/깨진 입력 (클라 문제)
+            // - AEADBadTagException: 키, nonce 불일치 또는 encryptData(암호문) 변조
+            // - IllegalArgumentException: encryptData가 깨진 Base64(decode 단계에서 터짐)
+            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
+        } catch (Exception e) {
+            log.error("C2S 복호화 서버 오류 sessionId={}", sessionId, e);
+            throw new BusinessException(ErrorCode.SDK_SERVER_ERROR);
+        }
+
+        if (!expected.equals(decrypt))
+            throw new BusinessException(ErrorCode.SDK_INVALID_REQUEST);
     }
 
     private void validateSoftwareStatus(Software software) {

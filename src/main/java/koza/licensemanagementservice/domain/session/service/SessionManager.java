@@ -41,7 +41,7 @@ public class SessionManager {
     private final LicenseRepository licenseRepository;
 
 
-    public String createSession(License license, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] sessionKey) {
+    public String createSession(License license, String ipAddress, String userAgent, LocalDateTime expiredAt, byte[] keyC2S, byte[] keyS2C) {
         Optional<SessionValue> sessionByLicenseId = getSessionByLicenseId(license.getId());
         sessionByLicenseId.ifPresent(sessionValue -> releaseSession(sessionValue.getSessionId(), license, ReleaseType.REPLACED));
 
@@ -54,7 +54,8 @@ public class SessionManager {
                 .expiredAt(expiredAt)
                 .verifyAt(LocalDateTime.now())
                 .latestActiveAt(LocalDateTime.now())
-                .sessionKey(sessionKey)
+                .keyC2S(keyC2S)
+                .keyS2C(keyS2C)
                 .build();
         sessionRepository.save(sessionId, sessionValue, SESSION_TTL);
         return sessionId;
@@ -68,17 +69,23 @@ public class SessionManager {
         return sessionRepository.findById(sessionId);
     }
 
-    public void extendSession(String sessionId, byte[] sessionKey) {
+    public Long getSequence(String sessionId) {
+        return sessionRepository.findSequenceById(sessionId);
+    }
+
+    public Long increaseSequence(String sessionId) {
+        return sessionRepository.increaseSequence(sessionId);
+    }
+
+    public void extendSession(String sessionId) {
         boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
         if (!suc)
             throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-        else {
-            SessionValue session = sessionRepository.findById(sessionId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
-            session.setLatestActiveAt(LocalDateTime.now());
-            session.setSessionKey(sessionKey);
-            sessionRepository.update(sessionId, session, SESSION_TTL);
-        }
+
+        SessionValue session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+        session.setLatestActiveAt(LocalDateTime.now());
+        sessionRepository.update(sessionId, session, SESSION_TTL);
     }
 
     public void updateSession(String sessionId, SessionValue sessionValue) {

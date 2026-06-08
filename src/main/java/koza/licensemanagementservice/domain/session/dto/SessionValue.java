@@ -30,5 +30,8 @@ public class SessionValue {
     private Map<String, String> changedLocalVariables = new HashMap<>(); // 변경된 로컬 변수만 저장
 
     @Setter
-    private byte[] sessionKey;
+    private byte[] keyC2S;
+
+    @Setter
+    private byte[] keyS2C;
 }

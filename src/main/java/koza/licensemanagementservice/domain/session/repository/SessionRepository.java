@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface SessionRepository {
     void save(String sessionId, SessionValue sessionValue, Duration ttl);
     void update(String sessionId, SessionValue sessionValue, Duration ttl);
+    Long increaseSequence(String sessionId);
+    Long findSequenceById(String sessionId);
     Optional<SessionValue> findById(String sessionId);
     Optional<SessionValue> findSessionByLicenseId(Long licenseId);
     boolean extendTTL(String sessionId, Duration ttl);
