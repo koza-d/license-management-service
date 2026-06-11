@@ -2,9 +2,13 @@ package koza.licensemanagementservice.sdk.log.service;
 
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
 import koza.licensemanagementservice.domain.software.repository.SoftwareRepository;
+import koza.licensemanagementservice.sdk.log.dto.InitFailedEvent;
+import koza.licensemanagementservice.sdk.log.dto.InitSuccessEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifyFailedEvent;
 import koza.licensemanagementservice.sdk.log.dto.VerifySuccessEvent;
+import koza.licensemanagementservice.sdk.log.entity.SdkInitLog;
 import koza.licensemanagementservice.sdk.log.entity.SdkLog;
+import koza.licensemanagementservice.sdk.log.repository.SdkInitLogRepository;
 import koza.licensemanagementservice.sdk.log.repository.SdkLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class SdkLogListener {
     private final SdkLogRepository sdkLogRepository;
+    private final SdkInitLogRepository sdkInitLogRepository;
     private final LicenseRepository licenseRepository;
     private final SoftwareRepository softwareRepository;
 
@@ -55,6 +60,38 @@ public class SdkLogListener {
                 .userAgent(event.getUserAgent())
                 .build();
         sdkLogRepository.save(sdkLog);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleInitSuccess(InitSuccessEvent event) {
+        SdkInitLog sdkInitLog = SdkInitLog.builder()
+                .isSuccess(true)
+                .software(softwareRepository.getReferenceById(event.getSoftwareId()))
+                .appId(event.getAppId())
+                .clientVersion(event.getClientVersion())
+                .failCode(null)
+                .ipAddress(event.getIpAddress())
+                .userAgent(event.getUserAgent())
+                .build();
+        sdkInitLogRepository.save(sdkInitLog);
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleInitFailed(InitFailedEvent event) {
+        SdkInitLog sdkInitLog = SdkInitLog.builder()
+                .isSuccess(false)
+                .software(event.getSoftwareId() != null ? softwareRepository.getReferenceById(event.getSoftwareId()) : null)
+                .appId(event.getAppId())
+                .clientVersion(event.getClientVersion())
+                .failCode(event.getFailCode())
+                .ipAddress(event.getIpAddress())
+                .userAgent(event.getUserAgent())
+                .build();
+        sdkInitLogRepository.save(sdkInitLog);
     }
 
 }

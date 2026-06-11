@@ -43,7 +43,12 @@ public enum ErrorCode {
     LICENSE_NOT_FOUND(404, "LICENSE_001", "라이센스를 찾을 수 없습니다."),
     LICENSE_BANNED(403, "LICENSE_002", "라이센스가 정지된 상태입니다."),
     LICENSE_NOT_BANNED(409, "LICENSE_003", "라이센스가 밴 상태가 아닙니다."),
-
+    LICENSE_NOT_ACTIVATED(409, "LICENSE_004", "아직 활성화되지 않은 라이센스입니다."),
+    LICENSE_NOT_INACTIVATED(409, "LICENSE_005", "비활성화된 라이센스가 아닙니다."),
+    LICENSE_ISSUE_LIMIT(409, "LICENSE_006", "라이센스 발급 한도를 넘었습니다. 상위 플랜 이용이 필요합니다."),
+    LICENSE_CANNOT_EXTEND_LIMIT(409, "LICENSE_007", "라이센스 한도를 넘어서서 만료된 라이센스를 연장할 수 없습니다. 상위 플랜 이용이 필요합니다."),
+    LICENSE_EXPIRED_CANNOT_ACTIVE(409, "LICENSE_008", "만료된 라이센스를 임의로 활성상태로 변경할 수 없습니다. 연장을 통해서 활성시켜주세요."),
+    LICENSE_CANNOT_ACTIVE_LIMIT(409, "LICENSE_009", "라이센스 보유 한도를 넘어섰습니다. 상위 플랜 이용이 필요합니다."),
 
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
@@ -57,29 +62,58 @@ public enum ErrorCode {
     // FAQ 예외
     FAQ_NOT_FOUND(404, "FAQ_001", "FAQ를 찾을 수 없습니다."),
 
+    // 플랜 관련 예외
+    PLAN_NOT_FOUND(404, "PLAN_001", "로그인 중인 회원의 플랜을 찾을 수 없습니다."),
+
+    // 결제 관련 예외
+    PAYMENT_METHOD_DUPLICATE(409, "PAYMENT_001", "이미 등록된 결제수단입니다."),
+    PAYMENT_METHOD_CANNOT_DELETE_DEFAULT(400, "PAYMENT_002", "기본값으로 설정된 결제수단이라 삭제할 수 없습니다."),
+    PAYMENT_METHOD_NOT_FOUND(400, "PAYMENT_003", "등록된 결제수단을 찾을 수 없습니다."),
+    PAYMENT_METHOD_NOT_ACTIVE(400, "PAYMENT_004", "설정된 결제수단이 사용할 수 없는 상태입니다."),
+    PAYMENT_NOT_FOUND(404, "PAYMENT_005", "결제를 찾을 수 없습니다."),
+    PAYMENT_NOT_PENDING(409, "PAYMENT_006", "대기 상태의 결제만 처리할 수 있습니다."),
+    PAYMENT_NOT_SUCCESS(409, "PAYMENT_007", "성공 상태의 결제만 환불할 수 있습니다."),
+    PAYMENT_REFUND_FAILED(500, "PAYMENT_008", "환불 처리 중 오류가 발생했습니다."),
+    PAYMENT_ALREADY_RESOLVE(409, "PAYMENT_009", "이미 처리된 결제입니다."),
+    PAYMENT_REFUNDED_BELATED(400, "PAYMENT_010", "결제시점으로부터 7일이 지나 환불이 불가능합니다."),
+
+    // 구독 관련 예외
+    SUBSCRIPTION_RENEWAL_TARGET_NOT_FOUND(404, "SUBSCRIPTION_001", "갱신할 구독을 찾을 수 없습니다."),
+    SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성 중인 구독이 있습니다."),
+    SUBSCRIPTION_PAYMENT_PENDING(409, "SUBSCRIPTION_003", "결제가 처리 중입니다. 잠시 후 다시 확인해주세요. 문제가 지속되면 문의 바랍니다."),
+    SUBSCRIPTION_RENEWAL_PAYMENT_SUCCESS(409, "SUBSCRIPTION_004", "구독 갱신 결제가 이미 처리됐습니다."),
+    SUBSCRIPTION_RENEWAL_EARLY(400, "SUBSCRIPTION_005", "구독 갱신은 구독 종료 7일전부터 가능합니다."),
+    SUBSCRIPTION_NOT_FOUND(404, "SUBSCRIPTION_006", "구독을 찾을 수 없습니다."),
+    SUBSCRIPTION_NOT_ACTIVE_PAST_DUE(400, "SUBSCRIPTION_007", "구독이 활성화된 상태가 아닙니다."),
+
     // 처리하지 못한 예외
     INTERNAL_SERVER_ERROR(500, "SERVER_001", "서버 내부 오류가 발생했습니다."),
 
     // SDK 전용 예외
-    SDK_SERVER_ERROR(500, "SDK_001", "서버 내부 오류가 발생했습니다."),
+    SDK_SERVER_ERROR(500, "SDK_001", "인증 서버 내부 오류가 발생했습니다."),
     SDK_INVALID_REQUEST(400, "SDK_002", "유효하지 않은 요청입니다."),
     SDK_INVALID_SOFTWARE(404, "SDK_003", "유효하지 않은 소프트웨어입니다."),
     SDK_INVALID_LICENSE(404, "SDK_004", "유효하지 않은 라이센스입니다."),
-    SDK_INVALID_FILE_HASH(400, "SDK_005", "유효하지 않은 해시값입니다."),
+    SDK_INVALID_FILE_HASH(400, "SDK_005", "변조된 파일입니다."),
     SDK_NOT_AVAILABLE_VERSION(400, "SDK_006", "사용 불가능한 버전입니다."),
 
-    SDK_LICENSE_IN_USE(409, "SDK_101", "이미 사용 중인 라이센스입니다."),
+    SDK_LICENSE_IN_TRY_VERIFY(409, "SDK_101", "현재 인증시도 중인 라이센스입니다. 잠시 후 다시 시도하세요."),
     SDK_LICENSE_BANNED(403, "SDK_102", "사용 정지된 라이센스입니다."),
     SDK_LICENSE_EXPIRED(403, "SDK_103", "만료된 라이센스입니다."),
+    SDK_LICENSE_ACTIVE_LIMIT(409, "SDK_104", "관리자의 라이센스 보유 가능한 수를 넘어 첫 인증을 진행할 수 없습니다."),
 
     SDK_SOFTWARE_BANNED(403, "SDK_201", "사용 정지된 소프트웨어입니다."), // 정지 종료 일시, 정지 사유 반환 필요
     SDK_SOFTWARE_INACTIVE(403, "SDK_202", "비활성 상태인 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
-    SDK_SOFTWARE_SUSPENDED(403, "SDK_203", "일시중단된 소프트웨어입니다. 해당 소프트웨어 관리자에게 문의하세요."),
+
     SDK_SOFTWARE_MAINTENANCE(403, "SDK_204", "소프트웨어가 점검중입니다."), // 점검 종료 일시 반환 필요
     SDK_SOFTWARE_UNSUPPORTED(403, "SDK_205", "지원중단된 소프트웨어입니다."), // 지원중단 사유 반환 필요
 
     SDK_SESSION_EXPIRED(403, "SDK_301", "만료된 세션입니다."),
 
+    SDK_VARIABLE_NULL(400, "SDK_401", "로컬변수의 키 또는 값이 지정되지 않았습니다."),
+    SDK_VARIABLE_KEY_MAX(400, "SDK_402", "로컬변수의 키가 제한된 크기를 초과했습니다."),
+    SDK_VARIABLE_VALUE_MAX(400, "SDK_403", "로컬변수의 값이 제한된 크기를 초과했습니다."),
+    SDK_VARIABLE_COUNT_MAX(400, "SDK_404", "설정할 수 있는 로컬변수의 개수가 초과했습니다.")
     ;
 
     private final int status;

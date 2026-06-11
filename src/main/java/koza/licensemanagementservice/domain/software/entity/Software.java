@@ -34,6 +34,10 @@ public class Software extends BaseEntity {
     @OneToMany(mappedBy = "software", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SoftwareVersion> versions;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "latest_version_id")
+    private SoftwareVersion latestVersion;
+
     @Column(name = "name", length = 30, nullable = false)
     private String name;
 
@@ -43,12 +47,12 @@ public class Software extends BaseEntity {
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON) // Map 을 DB JSON 컬럼에 매핑
     @Column(name = "global_variables", columnDefinition = "json", nullable = false)
-    private Map<String, Object> globalVariables = new HashMap<>(); // 라이센스마다 똑같이 적용될 전역 변수
+    private Map<String, String> globalVariables = new HashMap<>(); // 라이센스마다 똑같이 적용될 전역 변수
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "local_variables", columnDefinition = "json", nullable = false)
-    private Map<String, Object> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
+    private Map<String, String> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
 
     @Column(name = "limit_license")
     private int limitLicense;
@@ -64,8 +68,8 @@ public class Software extends BaseEntity {
     @Column(name = "status_reason", length = 500)
     private String statusReason;
 
-    public void changeLatestVersion(String latestVersion, List<SoftwareVersion> versions) {
-        versions.forEach(v -> v.setLatest(v.getVersion().equals(latestVersion)));
+    public void changeLatestVersion(SoftwareVersion latestVersion) {
+        this.latestVersion = latestVersion;
     }
 
     public void addVersion(SoftwareVersion version) {
@@ -75,13 +79,13 @@ public class Software extends BaseEntity {
         version.setSoftware(this);
     }
 
-    public void updateGlobalVariables(Map<String, Object> globalVariables) {
+    public void updateGlobalVariables(Map<String, String> globalVariables) {
         this.globalVariables.clear();
         if (globalVariables != null)
             this.globalVariables.putAll(globalVariables);
     }
 
-    public void updateLocalVariables(Map<String, Object> localVariables) {
+    public void updateLocalVariables(Map<String, String> localVariables) {
         this.localVariables.clear();
         if (localVariables != null)
             this.localVariables.putAll(localVariables);
@@ -92,8 +96,8 @@ public class Software extends BaseEntity {
     }
 
     public Map<String, Object> toSnapshot() {
-        Map<String, Object> globalVariables = new HashMap<>(this.globalVariables);
-        Map<String, Object> localVariables = new HashMap<>(this.localVariables);
+        Map<String, String> globalVariables = new HashMap<>(this.globalVariables);
+        Map<String, String> localVariables = new HashMap<>(this.localVariables);
         return Map.of(
                 "id", id,
                 "memberId", member.getId(),

@@ -1,6 +1,7 @@
 package koza.licensemanagementservice.domain.member.entity;
 
 import jakarta.persistence.*;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.global.common.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,10 +43,9 @@ public class Member extends BaseEntity {
     @Column(name = "provider_id", length = 255)
     private String providerId; // 소셜이 부여한 고유 ID
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "grade", length = 20, nullable = false)
-    private MemberGrade grade = MemberGrade.BASIC;
+    @Column(name = "current_plan_code", length = 20, nullable = false)
+    private PlanCode currentPlanCode;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -58,6 +58,9 @@ public class Member extends BaseEntity {
     @Column(name = "withdraw_scheduled_at")
     private LocalDateTime withdrawScheduledAt;
 
+    @Column(name = "payment_key", length = 32, nullable = false)
+    private String paymentKey;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
     @Builder.Default
@@ -67,8 +70,8 @@ public class Member extends BaseEntity {
         this.profileURL = profileURL;
     }
 
-    public void changeGrade(MemberGrade grade) {
-        this.grade = grade;
+    public void changeCurrentPlanCode(PlanCode planCode) {
+        this.currentPlanCode = planCode;
     }
 
     public void changeStatus(MemberStatus status) {

@@ -3,7 +3,7 @@ package koza.licensemanagementservice.domain.software.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.request.*;
 import koza.licensemanagementservice.domain.software.dto.response.*;
 import koza.licensemanagementservice.domain.software.log.dto.response.SoftwareLogResponse;
@@ -52,7 +52,7 @@ public class SoftwareController {
     @GetMapping("/{softwareId}/license-stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
-        LicenseStatResponse stat = softwareService.getLicenseStat(user, softwareId);
+        LicenseStatsResponse stat = softwareService.getLicenseStat(user, softwareId);
         ApiResponse<?> response= ApiResponse.success(stat);
         return ResponseEntity.ok(response);
     }
@@ -117,7 +117,7 @@ public class SoftwareController {
     @PostMapping("/{softwareId}/maintenance")
     public ResponseEntity<ApiResponse<?>> maintenanceSoftware(@AuthenticationPrincipal CustomUser user,
                                                          @PathVariable("softwareId") Long id,
-                                                         @RequestBody SoftwareMaintenanceRequest request) {
+                                                         @RequestBody @Valid SoftwareMaintenanceRequest request) {
         softwareService.maintenance(user, id, request);
         ApiResponse<?> response = ApiResponse.success(null);
         return ResponseEntity.ok(response);
@@ -126,7 +126,7 @@ public class SoftwareController {
     @PostMapping("/{softwareId}/unsupported")
     public ResponseEntity<ApiResponse<?>> unsupportedSoftware(@AuthenticationPrincipal CustomUser user,
                                                          @PathVariable("softwareId") Long id,
-                                                         @RequestBody SoftwareUnsupportedRequest request) {
+                                                         @RequestBody @Valid SoftwareUnsupportedRequest request) {
         softwareService.unsupported(user, id, request);
         ApiResponse<?> response = ApiResponse.success(null);
         return ResponseEntity.ok(response);

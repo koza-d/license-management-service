@@ -9,9 +9,12 @@ import java.util.Optional;
 @Component
 public interface SessionRepository {
     void save(String sessionId, SessionValue sessionValue, Duration ttl);
+    void update(String sessionId, SessionValue sessionValue, Duration ttl);
+    Long increaseSequence(String sessionId);
+    Long findSequenceById(String sessionId);
     Optional<SessionValue> findById(String sessionId);
-    String findSessionIdByLicenseId(Long licenseId);
-    boolean hasSession(String sessionId);
+    Optional<SessionValue> findSessionByLicenseId(Long licenseId);
     boolean extendTTL(String sessionId, Duration ttl);
     void delete(String sessionId);
+    void deleteByLicenseId(Long licenseId);
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ReleaseType {
     NORMAL("정상적으로 해제"),
     TIMEOUT("타임아웃"),
+    REPLACED("새로운 세션 접속으로 인한 종료"),
     FORCE_CLOSE("관리자 강제 종료"),
     MAINTENANCE_CLOSE("서버 점검으로 인한 종료"),
     SYSTEM_ERROR("서버 오류");

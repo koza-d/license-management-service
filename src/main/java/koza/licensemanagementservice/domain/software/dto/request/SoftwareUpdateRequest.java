@@ -24,11 +24,11 @@ public class SoftwareUpdateRequest {
     @Schema(description = "소프트웨어 버전(ex. 1.0.0)", example = "1.0.0")
     private String version;
 
-    @JsonSize(max = 5000, message = "전역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+    @JsonSize
     @Schema(description = "소프트웨어 전역변수, 소속 라이센스마다 동일한 값을 가짐", example = "{}")
-    private Map<String, Object> globalVariables;
+    private Map<String, String> globalVariables;
 
-    @JsonSize(max = 5000, message = "지역변수의 크기는 최대 5000byte를 넘을 수 없습니다.")
+    @JsonSize
     @Schema(description = "소프트웨어 지역변수, value는 기본값", example = "{}")
-    private Map<String, Object> localVariables;
+    private Map<String, String> localVariables;
 }

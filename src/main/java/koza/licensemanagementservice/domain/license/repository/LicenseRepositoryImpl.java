@@ -1,22 +1,26 @@
 package koza.licensemanagementservice.domain.license.repository;
 
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import koza.licensemanagementservice.dashboard.dto.response.DashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
+import koza.licensemanagementservice.dashboard.dto.response.QDashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.QExpiringLicenseResponse;
-import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatusCount;
-import koza.licensemanagementservice.domain.license.dto.response.QAdminLicenseSummaryResponse;
-import koza.licensemanagementservice.domain.license.dto.response.QLicenseStatusCount;
-import koza.licensemanagementservice.domain.license.entity.License;
-import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchTarget;
+import koza.licensemanagementservice.domain.license.dto.response.*;
+import koza.licensemanagementservice.domain.license.entity.License;
+import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchTarget;
 import koza.licensemanagementservice.domain.session.dto.response.AdminSessionResponse;
 import koza.licensemanagementservice.domain.session.dto.condition.SessionSearchCondition;
 import koza.licensemanagementservice.domain.session.dto.response.QAdminSessionResponse;
 import koza.licensemanagementservice.domain.session.repository.SessionSearchTarget;
-import koza.licensemanagementservice.domain.software.entity.Software;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,6 +34,7 @@ import java.util.Set;
 import static koza.licensemanagementservice.domain.license.entity.QLicense.license;
 import static koza.licensemanagementservice.domain.member.entity.QMember.member;
 import static koza.licensemanagementservice.domain.software.entity.QSoftware.software;
+import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.countWhen;
 import static koza.licensemanagementservice.global.querydsl.QuerydslOrderUtil.getOrderSpecifiers;
 import static org.springframework.util.StringUtils.hasText;
 
@@ -70,76 +75,7 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public Page<License> findByMemberId(Long memberId, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
-        List<License> content = queryFactory
-                .selectFrom(license)
-                .leftJoin(license.software, software)
-                .leftJoin(software.member, member)
-                .where(
-                        license.software.member.id.eq(memberId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession),
-                        isExpired(expireWithin)
-                )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(license.count())
-                .from(license)
-                .where(
-                        license.software.member.id.eq(memberId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession),
-                        isExpired(expireWithin)
-                )
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    private static BooleanExpression isExpired(Integer expireWithin) {
-        return expireWithin != null ? license.expiredAt.before(LocalDateTime.now().plusDays(expireWithin)) : null;
-    }
-
-    @Override
-    public Page<License> findBySoftwareId(Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
-        List<License> content = queryFactory
-                .selectFrom(license)
-                .where(
-                        license.software.id.eq(softwareId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession)
-                )
-                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("id", "createAt", "expiredAt")))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(license.count())
-                .from(license)
-                .where(
-                        license.software.id.eq(softwareId),
-                        searchNameOrMemo(search),
-                        sessionFilter(hasActiveSession)
-                )
-                .fetchOne();
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    private static BooleanExpression searchNameOrMemo(String search) {
-        if (!hasText(search))
-            return null;
-
-        return license.memo.containsIgnoreCase(search)
-                .or(license.name.containsIgnoreCase(search));
-    }
-
-    @Override
-    public Page<AdminLicenseSummaryResponse> findByAllCondition(LicenseSearchCondition condition, Pageable pageable) {
+    public Page<AdminLicenseSummaryResponse> findByAllCondition(AdminLicenseSearchCondition condition, Pageable pageable) {
         List<AdminLicenseSummaryResponse> content = queryFactory
                 .select(new QAdminLicenseSummaryResponse(
                         license.id,
@@ -151,6 +87,7 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                         license.expiredAt,
                         license.hasActiveSession,
                         license.latestActiveAt,
+                        license.startDurationDays,
                         license.status.stringValue()
                 ))
                 .from(license)
@@ -177,6 +114,42 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                         statusFilter(condition.getStatus())
                 ).fetchOne();
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    @Override
+    public Page<License> searchLicensesByMemberId(Long memberId, LicenseSearchCondition condition, Pageable pageable) {
+        List<License> content = queryFactory
+                .selectFrom(license)
+                .innerJoin(license.software, software)
+                .where(
+                        software.member.id.eq(memberId),
+                        softwareFilter(condition.getSoftwareId()),
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(getOrderSpecifiers(pageable.getSort(), license, "id", Set.of("createAt", "expiredAt")))
+                .fetch();
+
+        Long total = queryFactory
+                .select(license.count())
+                .from(license)
+                .innerJoin(license.software, software)
+                .where(
+                        software.member.id.eq(memberId),
+                        softwareFilter(condition.getSoftwareId()),
+                        searchFilter(condition.getTarget(), condition.getSearch()),
+                        sessionFilter(condition.getHasActiveSession()),
+                        statusFilter(condition.getStatus())
+                )
+                .fetchOne();
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    private BooleanExpression softwareFilter(Long softwareId) {
+        return softwareId == null ? null : software.id.eq(softwareId);
     }
 
     private BooleanExpression statusFilter(LicenseStatus status) {
@@ -284,43 +257,6 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public List<LicenseStatusCount> countLicensesByStatusForMember(Long memberId) {
-        return queryFactory
-                .select(new QLicenseStatusCount(license.status, license.count()))
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId))
-                .groupBy(license.status)
-                .fetch();
-    }
-
-    @Override
-    public long countActiveSessionLicensesByMember(Long memberId) {
-        Long count = queryFactory
-                .select(license.count())
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId)
-                        .and(license.hasActiveSession.isTrue()))
-                .fetchOne();
-        return count != null ? count : 0L;
-    }
-
-    @Override
-    public long countExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, LocalDateTime threshold) {
-        Long count = queryFactory
-                .select(license.count())
-                .from(license)
-                .join(license.software, software)
-                .where(software.member.id.eq(memberId)
-                        .and(license.status.eq(LicenseStatus.ACTIVE))
-                        .and(license.expiredAt.goe(now))
-                        .and(license.expiredAt.loe(threshold)))
-                .fetchOne();
-        return count != null ? count : 0L;
-    }
-
-    @Override
     public List<ExpiringLicenseResponse> findExpiringSoonLicensesByMember(Long memberId, LocalDateTime now, int limit) {
         return queryFactory
                 .select(new QExpiringLicenseResponse(
@@ -355,6 +291,49 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public LicenseStatsResponse getLicenseStatsBySoftwareId(Long softwareId) {
+        return queryFactory
+                .select(
+                        new QLicenseStatsResponse(
+                                license.count(),
+                                countWhen(license.status.eq(LicenseStatus.EXPIRED)),
+                                countWhen(license.status.eq(LicenseStatus.INACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.ACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.BANNED)),
+                                countWhen(license.hasActiveSession.isTrue())
+                        )
+                )
+                .from(license)
+                .where(license.software.id.eq(softwareId))
+                .fetchOne();
+    }
+
+    @Override
+    public DashboardLicenseStatsResponse getLicenseStatsByMemberId(Long memberId) {
+        BooleanExpression isTemporaryBanned = license.status.eq(LicenseStatus.BANNED).and(license.statusUntil.isNotNull());
+        BooleanExpression isPermanentBanned = license.status.eq(LicenseStatus.BANNED).and(license.statusUntil.isNull());
+
+        return queryFactory
+                .select(
+                        new QDashboardLicenseStatsResponse(
+                                license.count(),
+                                countWhen(LicenseExpressions.isAllocated()),
+                                countWhen(license.status.eq(LicenseStatus.ACTIVE)),
+                                countWhen(isTemporaryBanned),
+                                countWhen(LicenseExpressions.isUnAllocated()),
+                                countWhen(license.status.eq(LicenseStatus.INACTIVE)),
+                                countWhen(license.status.eq(LicenseStatus.EXPIRED)),
+                                countWhen(isPermanentBanned),
+                                countWhen(license.hasActiveSession.isTrue())
+                        )
+                )
+                .from(license)
+                .innerJoin(license.software, software)
+                .where(software.member.id.eq(memberId))
+                .fetchOne();
+    }
+
     private BooleanExpression sessionFilter(Boolean hasActiveSession) {
         return hasActiveSession != null ? license.hasActiveSession.eq(hasActiveSession) : null;
     }
@@ -365,15 +344,35 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
 
         if (target != null && target != LicenseSearchTarget.ALL) {
             return switch (target) {
+                case LICENSE_MEMO -> license.memo.containsIgnoreCase(search);
+                case LICENSE_NAME -> license.name.containsIgnoreCase(search);
+                case LICENSE_KEY -> license.licenseKey.containsIgnoreCase(search);
+                default -> null;
+            };
+        }
+
+        return license.memo.containsIgnoreCase(search)
+                .or(license.name.containsIgnoreCase(search))
+                .or(license.licenseKey.containsIgnoreCase(search));
+    }
+
+    private BooleanExpression searchFilter(AdminLicenseSearchTarget target, String search) {
+        if (!hasText(search))
+            return null;
+
+        if (target != null && target != AdminLicenseSearchTarget.ALL) {
+            return switch (target) {
                 case SOFTWARE_OWNER_EMAIL -> member.email.containsIgnoreCase(search);
                 case SOFTWARE_NAME -> software.name.containsIgnoreCase(search);
                 case LICENSE_NAME -> license.name.containsIgnoreCase(search);
+                case LICENSE_KEY -> license.licenseKey.containsIgnoreCase(search);
                 default -> null;
             };
         }
 
         return member.email.containsIgnoreCase(search)
                 .or(software.name.containsIgnoreCase(search))
-                .or(license.name.containsIgnoreCase(search));
+                .or(license.name.containsIgnoreCase(search))
+                .or(license.licenseKey.containsIgnoreCase(search));
     }
 }

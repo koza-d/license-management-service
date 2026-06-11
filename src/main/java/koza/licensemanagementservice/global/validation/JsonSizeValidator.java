@@ -1,31 +1,47 @@
 package koza.licensemanagementservice.global.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import koza.licensemanagementservice.global.error.BusinessException;
-import koza.licensemanagementservice.global.error.ErrorCode;
 
 import java.util.Map;
 
-public class JsonSizeValidator implements ConstraintValidator<JsonSize, Map<String, Object>> {
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private int max;
+public class JsonSizeValidator implements ConstraintValidator<JsonSize, Map<String, String>> {
+    private int maxKeys;
+    private int maxKeyLength;
+    private int maxValueLength;
 
     @Override
     public void initialize(JsonSize constraintAnnotation) {
-        this.max = constraintAnnotation.max();
+        this.maxKeys = constraintAnnotation.maxKeys();
+        this.maxKeyLength = constraintAnnotation.maxKeyLength();
+        this.maxValueLength = constraintAnnotation.maxValueLength();
     }
 
     @Override
-    public boolean isValid(Map<String, Object> value, ConstraintValidatorContext context) {
-        if (value == null) return true; // null 체크는 @NotNull에 맡김
-        try {
-            String json = objectMapper.writeValueAsString(value);
-            return json.length() <= max;
-        } catch (JsonProcessingException e) {
-            throw new BusinessException(ErrorCode.METADATA_FORMAT_WRONG);
+    public boolean isValid(Map<String, String> value, ConstraintValidatorContext context) {
+        if (value == null) return true;
+
+        if (value.size() > maxKeys) {
+            setMessage(context, "변수 개수는 최대 " + maxKeys + "개까지 허용됩니다.");
+            return false;
         }
+
+        for (Map.Entry<String, String> entry : value.entrySet()) {
+            if (entry.getKey() != null && entry.getKey().length() > maxKeyLength) {
+                setMessage(context, "변수 키는 최대 " + maxKeyLength + "자까지 허용됩니다. (키: " + entry.getKey() + ")");
+                return false;
+            }
+            if (entry.getValue() != null && entry.getValue().length() > maxValueLength) {
+                setMessage(context, "변수 값은 최대 " + maxValueLength + "자까지 허용됩니다. (키: " + entry.getKey() + ")");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void setMessage(ConstraintValidatorContext context, String message) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
     }
 }

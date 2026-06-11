@@ -14,8 +14,8 @@ public class SoftwareCreateResponse {
     private String latestVersion;
     private String appId;
     private int limitLicense;
-    private Map<String, Object> globalVariables;
-    private Map<String, Object> localVariables;
+    private Map<String, String> globalVariables;
+    private Map<String, String> localVariables;
     public static SoftwareCreateResponse of(Software software, String latestVersion) {
 
         return SoftwareCreateResponse.builder()

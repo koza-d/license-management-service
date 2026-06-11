@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
-import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseStatsResponse;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareBanRequest;
 import koza.licensemanagementservice.domain.software.dto.request.SoftwareUnbanRequest;
 import koza.licensemanagementservice.domain.software.dto.response.AdminSoftwareSummaryResponse;
@@ -86,7 +86,7 @@ public class SoftwareAdminController {
     @PostMapping("/{softwareId}/unban")
     public ResponseEntity<ApiResponse<?>> unban(@AuthenticationPrincipal CustomUser user,
                                                 @PathVariable Long softwareId,
-                                                @RequestBody SoftwareUnbanRequest request) {
+                                                @RequestBody @Valid SoftwareUnbanRequest request) {
         softwareAdminService.unban(user, softwareId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -95,7 +95,7 @@ public class SoftwareAdminController {
     @GetMapping("/{softwareId}/license-stats")
     public ResponseEntity<ApiResponse<?>> getLicenseStatBySoftware(@AuthenticationPrincipal CustomUser user,
                                                                    @PathVariable("softwareId") Long softwareId) {
-        AdminLicenseStatResponse stat = softwareAdminService.getLicenseStat(user, softwareId);
+        AdminLicenseStatsResponse stat = softwareAdminService.getLicenseStat(user, softwareId);
         ApiResponse<?> response= ApiResponse.success(stat);
         return ResponseEntity.ok(response);
     }

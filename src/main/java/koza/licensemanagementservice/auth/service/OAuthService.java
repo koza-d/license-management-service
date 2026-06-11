@@ -11,6 +11,7 @@ import koza.licensemanagementservice.domain.member.log.dto.event.MemberLoginFail
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberLoginSuccessEvent;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberWithdrawCancelledEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,8 @@ public class OAuthService {
                             .profileURL(userInfo.getPicture())
                             .provider(client.getProvider().getName())
                             .providerId(userInfo.getId())
+                            .currentPlanCode(PlanCode.FREE)
+                            .paymentKey(UUID.randomUUID().toString().replace("-", ""))
                             .roles(roles)
                             .build();
                     Member save = memberRepository.save(saveMember);

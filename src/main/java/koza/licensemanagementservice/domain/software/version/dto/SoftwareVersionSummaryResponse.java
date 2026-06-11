@@ -20,12 +20,12 @@ public class SoftwareVersionSummaryResponse implements Comparable<SoftwareVersio
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
 
-    public static SoftwareVersionSummaryResponse from(SoftwareVersion version) {
+    public static SoftwareVersionSummaryResponse of(SoftwareVersion version, Long latestVersionId) {
         return SoftwareVersionSummaryResponse.builder()
                 .versionId(version.getId())
                 .version(version.getVersion())
                 .fileHash(version.getFileHash())
-                .isLatest(version.isLatest())
+                .isLatest(latestVersionId == null ? false : version.getId().equals(latestVersionId))
                 .isAvailable(version.isAvailable())
                 .downloadURL(version.getDownloadURL())
                 .memo(version.getMemo())

@@ -1,11 +1,18 @@
 package koza.licensemanagementservice.domain.license.dto.request;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
-
-import java.time.LocalDateTime;
 
 @Getter
 public class LicenseBannedRequest {
+    @Min(value = 0, message = "정지 일수는 최소 0일 이상 입력해야합니다.")
+    @Max(value = 365, message = "정지 일수는 최대 365일입니다.")
     private int days;
+
+    @NotBlank(message = "사유는 필수입니다.")
+    @Size(max = 100, message = "사유는 최대 100자입니다.")
     private String reason;
 }

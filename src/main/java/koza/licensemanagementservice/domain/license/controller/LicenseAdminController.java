@@ -3,9 +3,10 @@ package koza.licensemanagementservice.domain.license.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseExtendRequest;
-import koza.licensemanagementservice.domain.license.dto.request.LicenseBanRequest;
+import koza.licensemanagementservice.domain.license.dto.request.AdminLicenseBanRequest;
 import koza.licensemanagementservice.domain.license.dto.request.LicenseUnbanRequest;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseExtendResponse;
@@ -14,7 +15,7 @@ import koza.licensemanagementservice.domain.license.log.dto.response.LicenseExte
 import koza.licensemanagementservice.domain.license.log.dto.response.LicenseLogResponse;
 import koza.licensemanagementservice.domain.license.log.dto.condition.LicenseLogSearchCondition;
 import koza.licensemanagementservice.domain.license.log.service.LicenseLogAdminService;
-import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
+import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.service.LicenseAdminService;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,7 @@ public class LicenseAdminController {
     @Operation(summary = "전체 라이센스 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getLicenseSummaryAll(@AuthenticationPrincipal CustomUser user,
-                                                               @ModelAttribute LicenseSearchCondition condition,
+                                                               @ModelAttribute AdminLicenseSearchCondition condition,
                                                                Pageable pageable) {
         Page<AdminLicenseSummaryResponse> summaryResponses = licenseAdminService.getLicenseSummaryAll(user, condition, pageable);
         ApiResponse<?> response= ApiResponse.success(summaryResponses);
@@ -60,7 +61,7 @@ public class LicenseAdminController {
     @PostMapping("/{licenseId}/extend")
     public ResponseEntity<ApiResponse<?>> extendLicense(@AuthenticationPrincipal CustomUser user,
                                                        @PathVariable("licenseId") Long licenseId,
-                                                       @RequestBody AdminLicenseExtendRequest request) {
+                                                       @RequestBody @Valid AdminLicenseExtendRequest request) {
         AdminLicenseExtendResponse extendResponse = licenseAdminService.extend(user, licenseId, request);
         ApiResponse<?> response = ApiResponse.success(extendResponse);
         return ResponseEntity.ok(response);
@@ -70,7 +71,7 @@ public class LicenseAdminController {
     @PostMapping("/{licenseId}/ban")
     public ResponseEntity<ApiResponse<?>> ban(@AuthenticationPrincipal CustomUser user,
                                               @PathVariable("licenseId") Long licenseId,
-                                              @RequestBody LicenseBanRequest request) {
+                                              @RequestBody @Valid AdminLicenseBanRequest request) {
         licenseAdminService.ban(user, licenseId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -79,7 +80,7 @@ public class LicenseAdminController {
     @PostMapping("/{licenseId}/unban")
     public ResponseEntity<ApiResponse<?>> unban(@AuthenticationPrincipal CustomUser user,
                                                 @PathVariable("licenseId") Long licenseId,
-                                                @RequestBody LicenseUnbanRequest request) {
+                                                @RequestBody @Valid LicenseUnbanRequest request) {
         licenseAdminService.unban(user, licenseId, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

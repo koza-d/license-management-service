@@ -1,6 +1,6 @@
 package koza.licensemanagementservice.domain.software.service;
 
-import koza.licensemanagementservice.domain.license.dto.response.LicenseStatResponse;
+import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
@@ -63,10 +63,10 @@ public class SoftwareService {
         SoftwareVersion version = SoftwareVersion.builder()
                 .version(createRequest.getLatestVersion())
                 .isAvailable(true)
-                .isLatest(true)
                 .build();
 
         software.addVersion(version);
+        software.changeLatestVersion(version);
         Software save = softwareRepository.save(software);
         eventPublisher.publishEvent(new SoftwareCreatedEvent(save.getId(), user.getId(), save.toSnapshot()));
         return SoftwareCreateResponse.of(save, version.getVersion());
@@ -82,16 +82,9 @@ public class SoftwareService {
     }
 
     @Transactional(readOnly = true)
-    public LicenseStatResponse getLicenseStat(CustomUser user, Long softwareId) {
+    public LicenseStatsResponse getLicenseStat(CustomUser user, Long softwareId) {
         getSoftwareOrElse(user.getId(), softwareId);
-
-        return LicenseStatResponse.builder()
-                .total((long) licenseRepository.countBySoftwareId(softwareId))
-                .expire(licenseRepository.countBySoftwareIdAndExpiredAtBefore(softwareId, LocalDateTime.now()))
-                .active(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.ACTIVE))
-                .banned(licenseRepository.countBySoftwareIdAndStatusEquals(softwareId, LicenseStatus.BANNED))
-                .activeSessions(licenseRepository.countBySoftwareIdAndHasActiveSessionTrue(softwareId))
-                .build();
+        return licenseRepository.getLicenseStatsBySoftwareId(softwareId);
     }
 
 
@@ -133,11 +126,11 @@ public class SoftwareService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        SoftwareVersion beforeLatestVersion = versions.stream().filter(SoftwareVersion::isLatest).findFirst()
-                .orElseGet(() -> versions.get(0));
+        SoftwareVersion beforeLatestVersion = software.getLatestVersion() != null
+                ? software.getLatestVersion()
+                : versions.get(0);
 
-        // 변경 로직
-        software.changeLatestVersion(latestVersion.getVersion(), versions);
+        software.changeLatestVersion(latestVersion);
         software.updateInfo(updateRequest.getName());
         software.updateGlobalVariables(updateRequest.getGlobalVariables());
         software.updateLocalVariables(updateRequest.getLocalVariables());
@@ -188,7 +181,6 @@ public class SoftwareService {
         List<License> activeSessions = licenseRepository.findBySoftwareIdAndHasActiveSessionIsTrue(softwareId);
         for (License license : activeSessions) {
             // 접속중인 세션 강제종료
-            license.release();
             sessionManager.getSessionByLicenseId(license.getId())
                     .ifPresent(
                             session -> sessionManager.releaseSession(session.getSessionId(), license, ReleaseType.MAINTENANCE_CLOSE)

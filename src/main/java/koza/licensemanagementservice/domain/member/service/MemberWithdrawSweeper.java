@@ -4,6 +4,7 @@ import koza.licensemanagementservice.domain.member.entity.Member;
 import koza.licensemanagementservice.domain.member.entity.MemberStatus;
 import koza.licensemanagementservice.domain.member.log.dto.event.MemberWithdrawEvent;
 import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.plan.entity.PlanCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,14 @@ public class MemberWithdrawSweeper {
         for (Member member : expired) {
             Long memberId = member.getId();
             String provider = member.getProvider();
-            var grade = member.getGrade();
+            PlanCode planCode = member.getCurrentPlanCode();
             var registerAt = member.getCreateAt();
 
             member.withdraw();
             publisher.publishEvent(new MemberWithdrawEvent(
                     memberId,
                     provider,
-                    grade,
+                    planCode,
                     "유예기간 만료 자동 익명화",
                     registerAt
             ));

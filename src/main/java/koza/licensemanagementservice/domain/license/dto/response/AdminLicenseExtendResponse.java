@@ -35,6 +35,9 @@ public class AdminLicenseExtendResponse {
     }
 
     private static Long calcRemainingMs(LocalDateTime expiredAt) {
+        if (expiredAt == null)
+            return -1L;
+
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.between(now, expiredAt);
         return Math.max(0, duration.toMillis());

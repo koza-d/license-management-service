@@ -13,8 +13,8 @@ public class VerifyData {
         private LocalDateTime exp;
         private LocalDateTime serverTime;
         private Long remainMs;
-        private Map<String, Object> localVariables;
-        private Map<String, Object> globalVariables;
+        private Map<String, String> localVariables;
+        private Map<String, String> globalVariables;
         private String latestVersion;
         private String downloadURL;
 }

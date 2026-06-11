@@ -1,5 +1,6 @@
 package koza.licensemanagementservice.domain.license.service;
 
+import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.request.*;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseDetailResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseExtendResponse;
@@ -10,6 +11,10 @@ import koza.licensemanagementservice.domain.license.log.dto.event.LicenseIssuedE
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseModifiedEvent;
 import koza.licensemanagementservice.domain.license.log.dto.event.LicenseStatusChangedEvent;
 import koza.licensemanagementservice.domain.license.repository.LicenseRepository;
+import koza.licensemanagementservice.domain.member.entity.Member;
+import koza.licensemanagementservice.domain.member.repository.MemberRepository;
+import koza.licensemanagementservice.domain.plan.entity.Plan;
+import koza.licensemanagementservice.domain.plan.repository.PlanRepository;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import koza.licensemanagementservice.domain.session.service.SessionManager;
 import koza.licensemanagementservice.global.error.BusinessException;
@@ -37,6 +42,9 @@ import java.util.stream.Collectors;
 public class LicenseService {
     private final SoftwareRepository softwareRepository;
     private final LicenseRepository licenseRepository;
+    private final MemberRepository memberRepository;
+    private final PlanRepository planRepository;
+
     private final SessionManager sessionManager;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -45,20 +53,33 @@ public class LicenseService {
         // 라이센스 발급
         Long softwareId = request.getSoftwareId();
         Software software = getSoftwareOrThrow(user, softwareId);
+        Member member = software.getMember();
+
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        long totalLicenses = licenseRepository.countByMemberId(user.getId());
+        // 라이센스 발급은 플랜별 좌석한도의 5배수 까지 발급 가능 (무차별 생성 방지)
+        if (totalLicenses >= userPlan.getLimitLicense() * 5L)
+            throw new BusinessException(ErrorCode.LICENSE_ISSUE_LIMIT);
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(user.getId());
+        // 라이센스 활성/발급 한도 제한
+        if (allocatedLicenses >= userPlan.getLimitLicense())
+            throw new BusinessException(ErrorCode.LICENSE_ISSUE_LIMIT);
 
         String licenseKey = LicenseKeyGenerator.generateKey();
         while (licenseRepository.existsByLicenseKey(licenseKey))
             licenseKey = LicenseKeyGenerator.generateKey();
 
-        LocalDateTime expireAt = LocalDateTime.now().plusDays(request.getPeriodDays());
         License license = License.builder()
                 .software(software)
                 .name(request.getName())
                 .memo(request.getMemo())
                 .licenseKey(licenseKey)
-                .expiredAt(expireAt)
                 .localVariables(request.getLocalVariables())
-                .status(LicenseStatus.ACTIVE)
+                .status(LicenseStatus.INACTIVE)
+                .startDurationDays(request.getPeriodDays())
                 .build();
 
         License save = licenseRepository.saveAndFlush(license);
@@ -71,7 +92,7 @@ public class LicenseService {
         // 라이센스 상세조회
         License license = getLicenseOrThrow(user, licenseId);
 
-        Map<String, Object> finalVars = license.getMergeLocalVariables();
+        Map<String, String> finalVars = license.getMergeLocalVariables();
 
         Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(licenseId);
         LocalDateTime latestActiveAt = license.getLatestActiveAt();
@@ -83,53 +104,49 @@ public class LicenseService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LicenseSummaryResponse> getLicenseSummaryAll(CustomUser user, String search, Boolean hasActiveSession, Integer expireWithin, Pageable pageable) {
-        // 소프트웨어 별 라이센스 목록
-        return licenseRepository.findByMemberId(user.getId(), search, hasActiveSession, expireWithin, pageable)
-                .map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                });
-    }
-
-    @Transactional(readOnly = true)
-     public Page<LicenseSummaryResponse> getLicenseSummaryBySoftware(CustomUser user, Long softwareId, String search, Boolean hasActiveSession, Pageable pageable) {
-        // 소프트웨어 별 라이센스 목록
-        getSoftwareOrThrow(user, softwareId);
-        return licenseRepository.findBySoftwareId(softwareId, search, hasActiveSession, pageable)
-                .map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                });
+    public Page<LicenseSummaryResponse> searchLicenses(CustomUser user, LicenseSearchCondition condition, Pageable pageable) {
+        return licenseRepository.searchLicensesByMemberId(user.getId(), condition, pageable)
+                .map(LicenseSummaryResponse::of);
     }
 
     @Transactional
-    public List<LicenseExtendResponse> extendLicense(CustomUser user, Long softwareId, LicenseExtendRequest request) {
+    public List<LicenseExtendResponse> extendLicense(CustomUser user, LicenseExtendRequest request) {
         // 라이센스 연장
         List<License> targetLicenses = licenseRepository.findByIdInWithSoftwareWithMember(request.getIds());
-        // beforeExpiredAt, afterExpiredAt
-        Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
-                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
 
         // 존재하지 않는 라이센스를 request에 담았을 때
         if (request.getIds().size() != targetLicenses.size())
             throw new BusinessException(ErrorCode.NOT_FOUND);
 
-        targetLicenses.forEach(license -> {
+        Member member = memberRepository.findById(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        int activeDue = 0;
+        for (License license : targetLicenses) {
             // 연장하려는 라이센스의 소속 소프트웨어가 본인의 소프트웨어가 아니면 접근 불가
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
 
-            license.extendPeriod(request.getDays());
-        });
+            if (license.getStatus() == LicenseStatus.INACTIVE)
+                throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
+
+            if (license.getStatus() == LicenseStatus.EXPIRED)
+                activeDue++;
+
+        }
+        // 라이센스 활성 한도 제한 - (활성화 된 갯수 + 활성화 될 갯수)
+        if (allocatedLicenses + activeDue >= userPlan.getLimitLicense())
+            throw new BusinessException(ErrorCode.LICENSE_CANNOT_EXTEND_LIMIT);
+
+        // beforeExpiredAt, afterExpiredAt
+        Map<Long, LocalDateTime> beforeExpiredAt = targetLicenses.stream()
+                .collect(Collectors.toMap(License::getId, License::getExpiredAt));
+
+        targetLicenses.forEach(license -> license.extendPeriod(request.getDays()));
 
         Map<Long, LocalDateTime> afterExpiredAt = targetLicenses.stream()
                 .collect(Collectors.toMap(License::getId, License::getExpiredAt));
@@ -154,15 +171,7 @@ public class LicenseService {
             if (!license.getSoftware().getMember().getId().equals(user.getId()))
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
         });
-        return targetLicenses.stream().map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    LocalDateTime latestActiveAt = license.getLatestActiveAt();
-                    if (sessionOptional.isPresent())
-                        latestActiveAt = sessionOptional.get().getLatestActiveAt();
-
-                    return LicenseSummaryResponse.of(license, latestActiveAt);
-                })
-                .collect(Collectors.toList());
+        return targetLicenses.stream().map(LicenseSummaryResponse::of).toList();
     }
 
     @Transactional
@@ -195,6 +204,23 @@ public class LicenseService {
         License license = getLicenseOrThrow(user, licenseId);
         LicenseStatus beforeStatus = license.getStatus();
         LocalDateTime now = LocalDateTime.now();
+
+        if (beforeStatus == LicenseStatus.EXPIRED)
+            throw new BusinessException(ErrorCode.LICENSE_EXPIRED_CANNOT_ACTIVE);
+
+        Member member = license.getSoftware().getMember();
+
+        long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
+        Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        // 라이센스 활성 한도 제한 - 영구밴 상태인건 활성불가
+        boolean isUnlimitedBan = beforeStatus == LicenseStatus.BANNED && license.getStatusUntil() == null;
+        if (allocatedLicenses >= userPlan.getLimitLicense() && (isUnlimitedBan || beforeStatus == LicenseStatus.INACTIVE))
+            throw new BusinessException(ErrorCode.LICENSE_CANNOT_ACTIVE_LIMIT);
+
+        if (beforeStatus == LicenseStatus.INACTIVE)
+            license.startActive();
 
         license.changeStatus(LicenseStatus.ACTIVE);
         eventPublisher.publishEvent(new LicenseStatusChangedEvent(licenseId, user.getId(), beforeStatus, LicenseStatus.ACTIVE, request.getReason(), now));

@@ -2,6 +2,7 @@ package koza.licensemanagementservice.domain.software.version.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class SoftwareVersionUpdateRequest {
     @Pattern(regexp = "^[a-fA-F0-9]{64}$", message = "올바른 SHA-256 해시 형식이 아닙니다.")
     private String fileHash;
 
+    @NotNull(message = "활성화 여부는 필수입니다.")
     private Boolean available;
 
     @Size(max = 2048, message = "다운로드 URL의 최대 길이는 2048자 입니다.")

@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(error.getStatus()).body(response);
     }
 
+    // 외부 결제 에러
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ApiResponse<?>> handlePaymentException(PaymentException e) {
+        ApiResponse<?> response = ApiResponse.fail(e.getCode(), e.getMessage());
+        return ResponseEntity.status(e.getStatus()).body(response);
+    }
+
     // 처리되지 않은 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception e) {

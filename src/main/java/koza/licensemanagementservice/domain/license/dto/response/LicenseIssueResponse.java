@@ -14,7 +14,7 @@ public class LicenseIssueResponse {
     private String licenseName;
     private String memo;
     private String licenseKey;
-    private LocalDateTime expiredAt;
+    private int startDurationAt;
     private LocalDateTime createAt;
 
     public static LicenseIssueResponse from(License license) {
@@ -24,7 +24,7 @@ public class LicenseIssueResponse {
                 .licenseName(license.getName())
                 .memo(license.getMemo())
                 .licenseKey(license.getLicenseKey())
-                .expiredAt(license.getExpiredAt())
+                .startDurationAt(license.getStartDurationDays())
                 .createAt(license.getCreateAt())
                 .build();
     }

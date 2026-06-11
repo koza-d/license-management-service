@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import koza.licensemanagementservice.domain.member.dto.request.MemberWithdrawRequest;
+import koza.licensemanagementservice.domain.member.dto.response.MemberPaymentKeyResponse;
 import koza.licensemanagementservice.global.common.ApiResponse;
 import koza.licensemanagementservice.auth.dto.user.CustomUser;
 import koza.licensemanagementservice.domain.member.dto.response.MemberInfoResponse;
@@ -39,9 +40,16 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/payment-key")
+    public ResponseEntity<ApiResponse<?>> paymentKey(@AuthenticationPrincipal CustomUser user) {
+        MemberPaymentKeyResponse paymentKey = memberService.getPaymentKey(user);
+        ApiResponse<?> response = ApiResponse.success(paymentKey);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/me")
     @Operation(summary = "회원탈퇴", description = "회원 탈퇴 API, 논리적 삭제")
-    public ResponseEntity<ApiResponse<?>> withdraw(@AuthenticationPrincipal CustomUser user, @RequestBody MemberWithdrawRequest request) {
+    public ResponseEntity<ApiResponse<?>> withdraw(@AuthenticationPrincipal CustomUser user, @RequestBody @Valid MemberWithdrawRequest request) {
         memberService.withdraw(user, request);
         ApiResponse<String> response = ApiResponse.success("success");
         return ResponseEntity.ok(response);
