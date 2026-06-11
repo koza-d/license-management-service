@@ -221,7 +221,7 @@ public class SdkService {
                     .localVariables(license.getMergeLocalVariables())
                     .globalVariables(license.getSoftware().getGlobalVariables())
                     .latestVersion(latestVersion.getVersion())
-                    .downloadURL(latestVersion.getDownloadURL())
+                    .downloadURL(Optional.ofNullable(latestVersion.getDownloadURL()).orElse(""))
                     .build();
 
 
@@ -400,8 +400,10 @@ public class SdkService {
                 data.put("reason", Optional.ofNullable(software.getStatusReason()).orElse("-"));
                 throw new BusinessException(ErrorCode.SDK_SOFTWARE_MAINTENANCE, data);
             }
-            case UNSUPPORTED -> throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
-                    Map.of("reason", software.getStatusReason()));
+            case UNSUPPORTED -> {
+                throw new BusinessException(ErrorCode.SDK_SOFTWARE_UNSUPPORTED,
+                        Map.of("reason", Optional.ofNullable(software.getStatusReason()).orElse("-")));
+            }
         }
     }
 }

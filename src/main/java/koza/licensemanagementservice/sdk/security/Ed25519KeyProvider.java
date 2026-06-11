@@ -22,6 +22,5 @@ public class Ed25519KeyProvider {
     @PostConstruct
     public void init() throws Exception {
         this.privateKey = Ed25519Signer.loadPrivateKey(privateKeyBase64);
-        this.keyId = 1;
     }
 }
