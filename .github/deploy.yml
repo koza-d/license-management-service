@@ -1,0 +1,48 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # --- [1] checkout ---
+      - uses: actions/checkout@v4
+
+      # --- [2] docker build ---
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build jar
+        run: ./gradlew build
+
+      - name: Build & push image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/licensify-app:${{ github.sha }} -f deploy/Dockerfile .
+          # github.sha: 이번 커밋의 hash, 이미지마다 고유 태그
+          # → latest만 쓰면 "지금 EC2가 뭘 돌리고 있는지" 추적 불가능
+
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/licensify-app:${{ github.sha }}
+          # [3] 이미지 전달: runner → Docker Hub
+
+      # --- [4~7] SSH로 EC2에서 deploy.sh 실행 ---
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            export IMAGE_TAG=${{ github.sha }}      
+            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            # deploy.sh 안에서 이 IMAGE_TAG를 읽어서
+            # docker compose pull/up 시 어떤 태그를 쓸지 결정
+            bash deploy.sh
