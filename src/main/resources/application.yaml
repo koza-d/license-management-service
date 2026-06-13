@@ -1,9 +1,9 @@
 spring:
   application:
-    name: LicenseManagementService
+    name: Licensify
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/lms
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/licensify
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
