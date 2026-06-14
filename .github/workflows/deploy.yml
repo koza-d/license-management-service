@@ -2,7 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, test-ci]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -20,7 +21,9 @@ jobs:
           distribution: 'temurin'
 
       - name: Build jar
-        run: ./gradlew build
+        run: |
+          chmod +x gradlew
+          ./gradlew build
 
       - name: Build & push image
         run: |
