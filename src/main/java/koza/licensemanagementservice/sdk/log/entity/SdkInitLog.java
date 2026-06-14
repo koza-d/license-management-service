@@ -38,17 +38,3 @@ public class SdkInitLog extends LogBaseEntity {
     @Column(name = "user_agent", length = 500, nullable = false)
     private String userAgent;
 }
-
-/*
-CREATE TABLE `lms`.`sdk_init_log` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `is_success` TINYINT NULL,
-  `software_id` BIGINT NULL,
-  `app_id` VARCHAR(10) NOT NULL,
-  `client_version` VARCHAR(50) NULL,
-  `fail_code` VARCHAR(50) NULL,
-  `ip_address` VARCHAR(45) NOT NULL,
-  `user_agent` VARCHAR(500) NOT NULL,
-  PRIMARY KEY (`id`));
-
- */

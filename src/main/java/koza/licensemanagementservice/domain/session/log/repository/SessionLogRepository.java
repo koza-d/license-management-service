@@ -20,9 +20,9 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, Long>, S
                   ts,
                   SUM(delta) OVER (ORDER BY ts) AS concurrent
                 FROM (
-                  SELECT verify_at AS ts, +1 AS delta FROM lms.session_log
+                  SELECT verify_at AS ts, +1 AS delta FROM licensify.session_log
                   UNION ALL
-                  SELECT release_at AS ts, -1 AS delta FROM lms.session_log
+                  SELECT release_at AS ts, -1 AS delta FROM licensify.session_log
                 ) AS raw_data
                 WHERE ts BETWEEN :from AND :to
             ) AS day_data
@@ -41,9 +41,9 @@ public interface SessionLogRepository extends JpaRepository<SessionLog, Long>, S
                   ts,
                   SUM(delta) OVER (ORDER BY ts) AS concurrent
                 FROM (
-                  SELECT verify_at AS ts, +1 AS delta FROM lms.session_log
+                  SELECT verify_at AS ts, +1 AS delta FROM licensify.session_log
                   UNION ALL
-                  SELECT release_at AS ts, -1 AS delta FROM lms.session_log
+                  SELECT release_at AS ts, -1 AS delta FROM licensify.session_log
                 ) AS raw_data
                 WHERE ts BETWEEN :from AND :to
             ) AS day_data

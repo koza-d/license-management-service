@@ -27,7 +27,7 @@ public class SwaggerConfig {
     }
     private Info apiInfo() {
         return new Info()
-                .title("LMS API")
+                .title("Licensify API")
                 .description("")
                 .version("1.0.0");
     }
