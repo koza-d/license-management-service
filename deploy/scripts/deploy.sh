@@ -2,9 +2,9 @@
 
 set -e
 
-cd /home/ubuntu/app
+cd /home/ubuntu/app/deploy
 
-CURRENT=$(grep -oP 'proxy_pass http://app-\K(blue|green)' deploy/nginx.conf)
+CURRENT=$(grep -oP 'proxy_pass http://app-\K(blue|green)' nginx/nginx.conf)
 
 # 트래픽 안받는 쪽 = 업데이트 대상
 if [ "$CURRENT" = "blue" ]; then
@@ -19,12 +19,12 @@ docker compose pull "app-$TARGET"
 docker compose up -d --no-deps "app-$TARGET"
 
 echo "Waiting for app-$TARGET to be healthy..."
-until [ "$(docker inspect -f '{{.State.Health.Status}}' "app-$TARGET")" ]; do
+until [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q app-$TARGET)" 2>/dev/null)" = "healthy" ]; do
     sleep 2
 done
 echo "app-$TARGET is healthy"
 
-sed -i "s/app-$CURRENT/app-$TARGET" nginx/nginx.conf
+sed -i "s/app-$CURRENT/app-$TARGET/" nginx/nginx.conf
 
 docker compose exec nginx nginx -s reload
 echo "Traffic switched: $CURRENT -> $TARGET"
