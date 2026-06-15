@@ -37,7 +37,7 @@ docker image prune -f
 
 echo "Smoke test..."
 for i in $(seq 1 10); do
-  code=$(curl -s -o /dev/null -w '${http_code' https://api.licensify.kr/actuator/health || true)
+  code=$(curl -s -o /dev/null -w '${http_code}' https://api.licensify.kr/actuator/health || true)
   if [ "$code" = "200" ]; then
     echo "Smoke test 통과 (HTTP $code)"
     exit 0
