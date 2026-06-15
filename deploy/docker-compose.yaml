@@ -105,7 +105,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy:/etc/caddy:ro
       - caddy_data:/data            # 발급받은 인증서 영구 저장 (★ 중요)
       - caddy_config:/config
     restart: unless-stopped
