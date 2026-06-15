@@ -1,0 +1,3 @@
+api.licensify.kr {
+	reverse_proxy app-green:8080
+}

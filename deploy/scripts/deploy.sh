@@ -6,7 +6,7 @@ set -e
 # 실행: bash scripts/deploy.sh (반드시 ~/app/deploy 에서 — .env 자동 로딩 위치)
 # IMAGE_TAG 환경변수로 새 이미지 태그 전달 (GitHub Actions가 SSH로 export)
 
-NGINX_CONF="nginx/nginx.conf"
+CADDY_FILE="caddy/Caddyfile"
 HEALTH_URL="https://api.licensify.kr/actuator/health"
 
 cd /home/ubuntu/app/deploy
@@ -15,7 +15,7 @@ if [ -n "$IMAGE_TAG" ]; then
     sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" .env
 fi
 
-CURRENT=$(grep -oP 'set \$upstream app-\K(blue|green)' "${NGINX_CONF}")
+CURRENT=$(grep -oP 'reverse_proxy app-\K(blue|green)' ${CADDY_FILE})
 
 # 트래픽 안받는 쪽 = 업데이트 대상
 if [ "$CURRENT" = "blue" ]; then
@@ -44,8 +44,8 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-sed -i "s/app-$CURRENT/app-$TARGET/" "${NGINX_CONF}"
-docker compose exec -T nginx nginx -s reload
+sed -i "s/app-$CURRENT/app-$TARGET/" "${CADDY_FILE}"
+docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
 echo "Traffic switched: $CURRENT -> $TARGET"
 
 echo "Smoke test..."
@@ -63,8 +63,9 @@ done
 
 if [ "${ok}" -ne 1 ]; then
   echo "Smoke test 실패: HTTP Code 200 X, 트래픽 $CURRENT 로 롤백"
-  sed -i "s/app-$TARGET/app-$CURRENT/" "${NGINX_CONF}"
-  docker compose exec -T nginx nginx -s reload
+
+  sed -i "s/app-$TARGET/app-$CURRENT/" "${CADDY_FILE}"
+  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
   docker compose stop "app-$TARGET"
   exit 1
 fi
