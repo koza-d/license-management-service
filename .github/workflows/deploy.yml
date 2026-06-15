@@ -35,6 +35,16 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/licensify-app:${{ github.sha }}
           # [3] 이미지 전달: runner → Docker Hub 
 
+      - name: Copy deploy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/docker-compose.yaml,deploy/Dockerfile,deploy/scripts/deploy.sh"
+          target: "~/app"
+          overwrite: true
+
       # --- [4~7] SSH로 EC2에서 deploy.sh 실행 ---
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
