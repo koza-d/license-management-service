@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main, test-ci]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy/docker-compose.yaml,deploy/Dockerfile,deploy/scripts/deploy.sh,deploy/scripts/rollback.sh"
+          source: "deploy/docker-compose.yaml,deploy/Dockerfile,deploy/scripts/deploy.sh,deploy/scripts/rollback.sh,deploy/scripts/backup.sh"
           target: "~/app"
           overwrite: true
 

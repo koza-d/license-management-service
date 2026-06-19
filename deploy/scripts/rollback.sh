@@ -8,11 +8,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-NGINX_CONF="nginx/nginx.conf"
+CADDY_FILE="caddy/Caddyfile"
 HEALTH_URL="https://api.licensify.kr/actuator/health"
 
 # 현재 라이브 / 되돌릴 대상
-LIVE=$(grep -oP 'set \$upstream app-\K(blue|green)' "$NGINX_CONF")
+LIVE=$(grep -oP 'reverse_proxy app-\K(blue|green)' "$CADDY_FILE")
 if [ "$LIVE" = "blue" ]; then PREV=green; else PREV=blue; fi
 echo "현재 라이브=$LIVE  되돌릴 대상=$PREV"
 
@@ -36,8 +36,8 @@ for i in $(seq 1 30); do
 done
 
 # 트래픽 되돌리기
-sed -i "s/app-$LIVE/app-$PREV/" "$NGINX_CONF"
-docker compose exec -T nginx nginx -s reload
+sed -i "s/app-$LIVE/app-$PREV/" "$CADDY_FILE"
+docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force
 echo "트래픽 롤백: $LIVE -> $PREV"
 
 # 확인

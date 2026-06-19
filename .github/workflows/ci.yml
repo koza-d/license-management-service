@@ -3,8 +3,6 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [test-ci]   # CI 자체를 테스트해볼 때용 (선택)
 
 jobs:
   build-and-test:
