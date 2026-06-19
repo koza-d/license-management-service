@@ -51,7 +51,10 @@ public class SessionManager {
                 .licenseId(license.getId())
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
-                .expiredAt(expiredAt)
+                .expiredAt(expiredAt == null
+                        ? LocalDateTime.now().plusDays(license.getStartDurationDays())
+                        : expiredAt
+                )
                 .verifyAt(LocalDateTime.now())
                 .latestActiveAt(LocalDateTime.now())
                 .keyC2S(keyC2S)
