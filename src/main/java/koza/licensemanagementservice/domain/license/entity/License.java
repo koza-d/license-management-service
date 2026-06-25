@@ -129,6 +129,7 @@ public class License extends BaseEntity {
         if (expiredAt.isBefore(now))
             expiredAt = now;
         expiredAt = expiredAt.plusDays(extendDays);
+        status = LicenseStatus.ACTIVE;
     }
 
     public void verify() {

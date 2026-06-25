@@ -134,6 +134,10 @@ public class LicenseService {
             if (license.getStatus() == LicenseStatus.INACTIVE)
                 throw new BusinessException(ErrorCode.LICENSE_NOT_ACTIVATED);
 
+            if (license.getStatus() != LicenseStatus.EXPIRED
+                    && license.getStatus() != LicenseStatus.ACTIVE)
+                throw new BusinessException(ErrorCode.LICENSE_CANNOT_EXTEND_STATUS);
+
             if (license.getStatus() == LicenseStatus.EXPIRED)
                 activeDue++;
 

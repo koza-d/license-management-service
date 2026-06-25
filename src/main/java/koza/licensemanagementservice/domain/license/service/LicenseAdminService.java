@@ -118,6 +118,11 @@ public class LicenseAdminService {
 
         License license = licenseRepository.findById(licenseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LICENSE_NOT_FOUND));
+
+        if (license.getStatus() != LicenseStatus.EXPIRED
+                && license.getStatus() != LicenseStatus.ACTIVE)
+            throw new BusinessException(ErrorCode.LICENSE_CANNOT_EXTEND_STATUS);
+
         LocalDateTime beforeExpiredAt = license.getExpiredAt();
         license.extendPeriod(request.getDays());
 

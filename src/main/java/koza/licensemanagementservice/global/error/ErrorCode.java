@@ -49,6 +49,7 @@ public enum ErrorCode {
     LICENSE_CANNOT_EXTEND_LIMIT(409, "LICENSE_007", "라이센스 한도를 넘어서서 만료된 라이센스를 연장할 수 없습니다. 상위 플랜 이용이 필요합니다."),
     LICENSE_EXPIRED_CANNOT_ACTIVE(409, "LICENSE_008", "만료된 라이센스를 임의로 활성상태로 변경할 수 없습니다. 연장을 통해서 활성시켜주세요."),
     LICENSE_CANNOT_ACTIVE_LIMIT(409, "LICENSE_009", "라이센스 보유 한도를 넘어섰습니다. 상위 플랜 이용이 필요합니다."),
+    LICENSE_CANNOT_EXTEND_STATUS(409, "LICENSE_010", "라이센스를 연장할 수 없는 상태입니다. 만료 또는 활성 상태에서만 연장 가능합니다."),
 
     // 세션 로직 예외
     EXPIRED_SESSION(403, "SESSION_001", "만료된 세션입니다."),
