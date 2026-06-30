@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +77,7 @@ public class DashboardService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
 
         int safeLimit = clamp(limit, 1, SOFTWARE_USAGE_LIMIT_MAX);
-        LocalDateTime since = LocalDateTime.now().minusDays(days);
+        LocalDateTime since = LocalDate.now().atStartOfDay().minusDays(days);
         return softwareRepository.findSoftwareUsageByMember(user.getId(), since, safeLimit);
     }
 

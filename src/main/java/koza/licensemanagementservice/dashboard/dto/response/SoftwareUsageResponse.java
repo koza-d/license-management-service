@@ -7,17 +7,12 @@ import lombok.Getter;
 public class SoftwareUsageResponse {
     private final Long softwareId;
     private final String softwareName;
-    private final long totalMinutes;
-    private final long activeSessionCount;
-    private final long licenseCount;
+    private final long totalSeconds;
 
     @QueryProjection
-    public SoftwareUsageResponse(Long softwareId, String softwareName, Long totalMinutes,
-                                 Long activeSessionCount, Long licenseCount) {
+    public SoftwareUsageResponse(Long softwareId, String softwareName, Long totalSeconds) {
         this.softwareId = softwareId;
         this.softwareName = softwareName;
-        this.totalMinutes = totalMinutes != null ? totalMinutes : 0L;
-        this.activeSessionCount = activeSessionCount != null ? activeSessionCount : 0L;
-        this.licenseCount = licenseCount != null ? licenseCount : 0L;
+        this.totalSeconds = totalSeconds != null ? totalSeconds : 0L;
     }
 }

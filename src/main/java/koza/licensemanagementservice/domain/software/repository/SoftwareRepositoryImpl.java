@@ -308,35 +308,25 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
             Long memberId, LocalDateTime since, int limit) {
         NumberTemplate<Long> diffMinutes = Expressions.numberTemplate(
                 Long.class,
-                "TIMESTAMPDIFF(MINUTE, {0}, {1})",
+                "TIMESTAMPDIFF(SECOND, {0}, {1})",
                 sessionLog.verifyAt,
                 sessionLog.releaseAt
         );
 
         return queryFactory
-                .select(new koza.licensemanagementservice.dashboard.dto.response.QSoftwareUsageResponse(
-                        software.id,
-                        software.name,
-                        diffMinutes.sum(),
-                        ExpressionUtils.as(
-                                JPAExpressions.select(license.count())
-                                        .from(license)
-                                        .where(license.software.id.eq(software.id)
-                                                .and(license.hasActiveSession.isTrue())),
-                                "activeSessionCount"
-                        ),
-                        ExpressionUtils.as(
-                                JPAExpressions.select(license.count())
-                                        .from(license)
-                                        .where(license.software.id.eq(software.id)),
-                                "licenseCount"
+                .select(
+                        new koza.licensemanagementservice.dashboard.dto.response.QSoftwareUsageResponse(
+                            software.id,
+                            software.name,
+                            diffMinutes.sum()
                         )
-                ))
+                )
                 .from(software)
-                .join(license).on(license.software.id.eq(software.id))
-                .join(sessionLog).on(sessionLog.license.id.eq(license.id)
+                .join(license).on(license.software.eq(software))
+                .join(sessionLog).on(
+                        sessionLog.license.eq(license)
                         .and(sessionLog.verifyAt.goe(since))
-                        .and(sessionLog.releaseAt.isNotNull()))
+                )
                 .where(software.member.id.eq(memberId))
                 .groupBy(software.id, software.name)
                 .orderBy(diffMinutes.sum().desc())
