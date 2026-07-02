@@ -51,6 +51,9 @@ dependencies {
     // BouncyCastle (HKDF Util 용)
     implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
+    // 루트 .env 자동 로드
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
     // Querydsl
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
