@@ -84,6 +84,25 @@ public class SessionRepositoryImpl implements SessionRepository {
         return Optional.ofNullable(sessionValue);
     }
 
+    @Override
+    public List<SessionValue> findSessionsByLicenseIds(List<Long> licenseIds) {
+
+        List<String> licenseKeyFormats = new ArrayList<>();
+        List<String> sessionKeyFormats = new ArrayList<>();
+        licenseIds.forEach(licenseId -> licenseKeyFormats.add(getLicenseKeyFormat(licenseId)));
+
+        List<String> sessionIds = redisTemplate.opsForValue().multiGet(licenseKeyFormats);
+        sessionIds.forEach(sessionId -> sessionKeyFormats.add(getSessionKeyFormat(sessionId)));
+
+        List<SessionValue> sessionValues = new ArrayList<>();
+        redisTemplate.opsForValue().multiGet(sessionKeyFormats)
+                .forEach(json -> {
+                    if (!StringUtil.isNullOrEmpty(json))
+                        sessionValues.add(fromJson(json));
+                });
+        return sessionValues;
+    }
+
     public boolean extendTTL(String sessionId, Duration ttl) {
         String triggerKey = getTriggerKeyFormat(sessionId);
         String sequenceKey = getSequenceKeyFormat(sessionId);

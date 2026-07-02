@@ -4,6 +4,7 @@ import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -14,6 +15,7 @@ public interface SessionRepository {
     Long findSequenceById(String sessionId);
     Optional<SessionValue> findById(String sessionId);
     Optional<SessionValue> findSessionByLicenseId(Long licenseId);
+    List<SessionValue> findSessionsByLicenseIds(List<Long> ids);
     boolean extendTTL(String sessionId, Duration ttl);
     void delete(String sessionId);
     void deleteByLicenseId(Long licenseId);

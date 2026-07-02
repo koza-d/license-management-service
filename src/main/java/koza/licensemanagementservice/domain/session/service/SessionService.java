@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,17 +89,22 @@ public class SessionService {
     }
 
     private Page<SessionResponse> getSessionResponses(Pageable pageable, Page<License> licenses) {
-        List<SessionResponse> responses = licenses
-                .map(license -> {
-                    Optional<SessionValue> sessionOptional = sessionManager.getSessionByLicenseId(license.getId());
-                    if (sessionOptional.isEmpty())
-                        return null;
+        List<SessionResponse> responses = new ArrayList<>();
+        List<Long> licenseIds = licenses.map(License::getId).toList();
+        Map<Long, SessionValue> sessions = sessionManager.getSessionsByLicenseIds(licenseIds).stream()
+                .collect(Collectors.toMap(
+                        SessionValue::getLicenseId,
+                        session -> session
+                ));
 
-                    SessionValue session = sessionOptional.get();
-                    return SessionResponse.of(session, session.getSessionId(),
-                            license.getLicenseKey(), license.getName());
+        licenses.stream().forEach(license ->
+                {
+                    SessionValue sv = sessions.get(license.getId());
+                    if (sv != null)
+                        responses.add(SessionResponse.of(sv, sv.getSessionId(), license.getLicenseKey(), license.getName()));
 
-                }).filter(Objects::nonNull).toList();
+                }
+        );
         return new PageImpl<>(responses, pageable, licenses.getTotalElements());
     }
 }

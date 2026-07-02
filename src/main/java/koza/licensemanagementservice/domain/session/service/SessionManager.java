@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +67,10 @@ public class SessionManager {
 
     public Optional<SessionValue> getSessionByLicenseId(Long licenseId) {
         return sessionRepository.findSessionByLicenseId(licenseId);
+    }
+
+    public List<SessionValue> getSessionsByLicenseIds(List<Long> licenseIds) {
+        return sessionRepository.findSessionsByLicenseIds(licenseIds);
     }
 
     public Optional<SessionValue> getSession(String sessionId) {
