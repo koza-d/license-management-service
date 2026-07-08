@@ -139,7 +139,7 @@ public class SdkService {
             software = softwareRepository.findByAppId(appId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_SOFTWARE));
 
-            license = licenseRepository.findByLicenseKeyWithSoftware(licenseKey)
+            license = licenseRepository.findByLicenseKey(licenseKey)
                     .orElseThrow(() -> new BusinessException(ErrorCode.SDK_INVALID_LICENSE));
 
             // 소프트웨어에 속한 라이센스가 아닌 경우
@@ -179,7 +179,7 @@ public class SdkService {
 
             // 첫 인증인 라이센스는 플랜 한도 검증 필요
             if (license.getStatus() == LicenseStatus.INACTIVE) {
-                Member member = license.getSoftware().getMember();
+                Member member = software.getMember();
                 long allocatedLicenses = licenseRepository.countAllocatedLicenses(member.getId());
                 Plan userPlan = planRepository.findByPlanCode(member.getCurrentPlanCode())
                         .orElseThrow(() -> new BusinessException(ErrorCode.SDK_SERVER_ERROR));
@@ -219,7 +219,7 @@ public class SdkService {
                     .serverTime(LocalDateTime.now())
                     .remainMs(remainMs)
                     .localVariables(license.getMergeLocalVariables())
-                    .globalVariables(license.getSoftware().getGlobalVariables())
+                    .globalVariables(software.getGlobalVariables())
                     .latestVersion(latestVersion.getVersion())
                     .downloadURL(Optional.ofNullable(latestVersion.getDownloadURL()).orElse(""))
                     .build();

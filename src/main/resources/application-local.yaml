@@ -2,10 +2,13 @@ spring:
   jpa:
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+        show_sql: false
+        format_sql: false
+  datasource:
+    hikari:
+      maximum-pool-size: 30
 
 logging:
   level:
-    org.hibernate.SQL: info # 실행되는 SQL 출력
-    org.hibernate.orm.jdbc.bind: info # 바인딩 파라미터 값 출력
+    org.hibernate.SQL: off # 실행되는 SQL 출력
+    org.hibernate.orm.jdbc.bind: off # 바인딩 파라미터 값 출력

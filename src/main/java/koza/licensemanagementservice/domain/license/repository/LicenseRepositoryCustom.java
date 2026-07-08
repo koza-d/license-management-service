@@ -6,7 +6,6 @@ import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseRespo
 import koza.licensemanagementservice.domain.license.dto.condition.LicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.dto.response.AdminLicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.dto.response.LicenseStatsResponse;
-import koza.licensemanagementservice.domain.license.dto.response.LicenseSummaryResponse;
 import koza.licensemanagementservice.domain.license.entity.License;
 import koza.licensemanagementservice.domain.license.dto.condition.AdminLicenseSearchCondition;
 import koza.licensemanagementservice.domain.license.entity.LicenseStatus;
@@ -21,7 +20,7 @@ import java.util.Optional;
 
 public interface LicenseRepositoryCustom {
     Optional<License> findByIdWithSoftwareAndMember(Long licenseId);
-    Optional<License> findByLicenseKeyWithSoftware(String licenseKey);
+    Optional<License> findByLicenseKey(String licenseKey);
     List<License> findByIdInWithSoftwareWithMember(List<Long> ids);
     Page<AdminLicenseSummaryResponse> findByAllCondition(AdminLicenseSearchCondition condition, Pageable pageable);
 

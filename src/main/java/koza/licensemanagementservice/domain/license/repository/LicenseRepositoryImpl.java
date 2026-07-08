@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import koza.licensemanagementservice.dashboard.dto.response.DashboardLicenseStatsResponse;
 import koza.licensemanagementservice.dashboard.dto.response.ExpiringLicenseResponse;
 import koza.licensemanagementservice.dashboard.dto.response.QDashboardLicenseStatsResponse;
@@ -55,12 +56,12 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     }
 
     @Override
-    public Optional<License> findByLicenseKeyWithSoftware(String licenseKey) {
+    public Optional<License> findByLicenseKey(String licenseKey) {
         return Optional.ofNullable(
                 queryFactory
                         .selectFrom(license)
-                        .leftJoin(license.software, software).fetchJoin()
                         .where(license.licenseKey.eq(licenseKey))
+                        .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                         .fetchOne());
     }
 
