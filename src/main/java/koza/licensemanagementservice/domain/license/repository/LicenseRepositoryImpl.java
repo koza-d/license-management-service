@@ -69,8 +69,8 @@ public class LicenseRepositoryImpl implements LicenseRepositoryCustom {
     public List<License> findByIdInWithSoftwareWithMember(List<Long> ids) {
         return queryFactory
                 .selectFrom(license)
-                .leftJoin(license.software, software)
-                .leftJoin(software.member, member)
+                .leftJoin(license.software, software).fetchJoin()
+                .leftJoin(software.member, member).fetchJoin()
                 .where(license.id.in(ids))
                 .fetch();
     }

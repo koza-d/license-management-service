@@ -54,6 +54,7 @@ crash.log
 crash.*.log
 tfplan*
 
+tools/*
 
 # Docker 로컬 이미지 아카이브
 *.tar
