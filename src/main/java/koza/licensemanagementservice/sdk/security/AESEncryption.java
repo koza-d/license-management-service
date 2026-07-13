@@ -9,6 +9,14 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 public class AESEncryption {
+    private static final ThreadLocal<Cipher> GCM_CIPHER = ThreadLocal.withInitial(() -> {
+        try {
+            return Cipher.getInstance("AES/GCM/NoPadding");
+        } catch (Exception e) {
+            throw new IllegalStateException("AES/GCM/NoPadding Cipher 생성 실패", e);
+        }
+    });
+
     /**
      * 데이터 암호화
      * @param serverSeq 는 한 세션 동안에 절대 중첩되면 안되는 수 (nonce 추출용)
@@ -27,7 +35,7 @@ public class AESEncryption {
         SecretKeySpec aesKey = new SecretKeySpec(encryptKey, "AES");
         byte[] nonce = seqToNonce(serverSeq);
 
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        Cipher cipher = GCM_CIPHER.get();
         cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, nonce));
         byte[] encrypted = cipher.doFinal(data);
         return Base64.getEncoder().encodeToString(encrypted);
@@ -41,7 +49,7 @@ public class AESEncryption {
         byte[] nonce = seqToNonce(clientSeq);
 
         SecretKeySpec aesKey = new SecretKeySpec(encryptKey, "AES");
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        Cipher cipher = GCM_CIPHER.get();
         cipher.init(Cipher.DECRYPT_MODE, aesKey, new GCMParameterSpec(128, nonce));
 
         return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);

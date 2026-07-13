@@ -282,7 +282,7 @@ public class SdkService {
         String expected = String.join(".", sessionId, request.getClientSeq().toString());
         verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
 
-        sessionManager.extendSession(sessionId);
+        sessionManager.extendSession(sessionValue);
         Long serverSeq = sessionManager.increaseSequence(sessionId);
 
         // 응답 데이터 구성 및 암호화/서명

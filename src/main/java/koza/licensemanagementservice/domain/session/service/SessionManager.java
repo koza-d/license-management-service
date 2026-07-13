@@ -85,15 +85,9 @@ public class SessionManager {
         return sessionRepository.increaseSequence(sessionId);
     }
 
-    public void extendSession(String sessionId) {
-        boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
-        if (!suc)
-            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-
-        SessionValue session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+    public void extendSession(SessionValue session) {
         session.setLatestActiveAt(LocalDateTime.now());
-        sessionRepository.update(sessionId, session, SESSION_TTL);
+        sessionRepository.update(session.getSessionId(), session, SESSION_TTL);
     }
 
     public void updateSession(String sessionId, SessionValue sessionValue) {
