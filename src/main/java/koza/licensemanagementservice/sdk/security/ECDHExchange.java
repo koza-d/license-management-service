@@ -17,7 +17,7 @@ public class ECDHExchange {
 
     /**
      * 공유비밀키 계산
-     * 서버 개인키 + SDK 공개키(Base64) -> 공유비밀키(64bytes)
+     * 서버 개인키 + SDK 공개키(Base64) -> 공유비밀키(32bytes)
      */
     public static byte[] computeSharedSecret(PrivateKey serverPrivateKey,
                                              byte[] clientKeyBytes) throws Exception {

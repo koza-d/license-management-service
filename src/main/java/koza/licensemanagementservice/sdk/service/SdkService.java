@@ -282,8 +282,7 @@ public class SdkService {
         String expected = String.join(".", sessionId, request.getClientSeq().toString());
         verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
 
-        sessionManager.extendSession(sessionValue);
-        Long serverSeq = sessionManager.increaseSequence(sessionId);
+        Long serverSeq = sessionManager.extendSession(sessionValue);
 
         // 응답 데이터 구성 및 암호화/서명
         HeartbeatData data = new HeartbeatData(LocalDateTime.now(), sessionValue.getExpiredAt());

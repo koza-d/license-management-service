@@ -81,13 +81,10 @@ public class SessionManager {
         return sessionRepository.findSequenceById(sessionId);
     }
 
-    public Long increaseSequence(String sessionId) {
-        return sessionRepository.increaseSequence(sessionId);
-    }
-
-    public void extendSession(SessionValue session) {
+    public Long extendSession(SessionValue session) {
         session.setLatestActiveAt(LocalDateTime.now());
         sessionRepository.update(session.getSessionId(), session, SESSION_TTL);
+        return sessionRepository.increaseSequence(session.getSessionId());
     }
 
     public void updateSession(String sessionId, SessionValue sessionValue) {
