@@ -13,7 +13,6 @@ public class SoftwareCreateResponse {
     private String name;
     private String latestVersion;
     private String appId;
-    private int limitLicense;
     private Map<String, String> globalVariables;
     private Map<String, String> localVariables;
     public static SoftwareCreateResponse of(Software software, String latestVersion) {
@@ -23,7 +22,6 @@ public class SoftwareCreateResponse {
                 .name(software.getName())
                 .latestVersion(latestVersion)
                 .appId(software.getAppId())
-                .limitLicense(software.getLimitLicense())
                 .globalVariables(software.getGlobalVariables())
                 .localVariables(software.getLocalVariables())
                 .build();

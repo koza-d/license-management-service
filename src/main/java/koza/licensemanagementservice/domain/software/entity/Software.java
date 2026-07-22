@@ -54,9 +54,6 @@ public class Software extends BaseEntity {
     @Column(name = "local_variables", columnDefinition = "json", nullable = false)
     private Map<String, String> localVariables = new HashMap<>(); // 라이센스 별로 따로 설정가능한 변수
 
-    @Column(name = "limit_license")
-    private int limitLicense;
-
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
@@ -105,8 +102,7 @@ public class Software extends BaseEntity {
                 "name", name,
                 "appId", appId,
                 "globalVariables", globalVariables,
-                "localVariables", localVariables,
-                "limitLicense", limitLicense
+                "localVariables", localVariables
         );
     }
 
