@@ -98,7 +98,7 @@ public class SessionManager {
             return;
         }
         license.release(session.getChangedLocalVariables());
-        sessionRepository.delete(session.getSessionId());
+        sessionRepository.delete(session.getSessionId(), license.getId());
         LocalDateTime releaseAt = LocalDateTime.now();
         LocalDateTime latestActiveAt = session.getLatestActiveAt();
         boolean isOld = latestActiveAt != null && Duration.between(latestActiveAt, LocalDateTime.now()).toMillis() >= GHOST_ACTIVE_THRESHOLD;
