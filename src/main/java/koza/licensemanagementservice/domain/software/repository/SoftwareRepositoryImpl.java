@@ -47,7 +47,6 @@ public class SoftwareRepositoryImpl implements SoftwareRepositoryCustom {
                                 software.status,
                                 software.appId,
                                 licenseCount(),
-                                software.limitLicense,
                                 software.globalVariables,
                                 software.localVariables,
                                 software.createAt

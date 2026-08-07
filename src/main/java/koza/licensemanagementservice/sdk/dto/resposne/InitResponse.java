@@ -10,5 +10,6 @@ public class InitResponse {
     private String latestVersion;
     private String clientVersion;
     private String downloadURL;
+    private int keyId;
     private String sig;
 }

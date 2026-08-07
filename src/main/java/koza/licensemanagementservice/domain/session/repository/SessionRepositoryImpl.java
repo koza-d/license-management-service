@@ -7,7 +7,9 @@ import koza.licensemanagementservice.global.error.BusinessException;
 import koza.licensemanagementservice.global.error.ErrorCode;
 import koza.licensemanagementservice.domain.session.dto.SessionValue;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -22,10 +24,15 @@ public class SessionRepositoryImpl implements SessionRepository {
     public static final String SESSION_LICENSE_PREFIX = "license";
     public static final String SESSION_TRIGGER_PREFIX = "trigger";
     public static final String SESSION_SEQ_PREFIX = "seq";
-    public static final String SESSION_LOCK_PREFIX = "lock";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+
+    private static final RedisScript<Long> SAVE_SCRIPT = RedisScript.of(
+            new ClassPathResource("scripts/session_save.lua"), Long.class);
+
+    private static final RedisScript<Void> DELETE_SCRIPT = RedisScript.of(
+            new ClassPathResource("scripts/session_delete.lua"));
 
     public void save(String sessionId, SessionValue sessionValue, Duration ttl) {
         String value = toJson(sessionValue);
@@ -33,24 +40,33 @@ public class SessionRepositoryImpl implements SessionRepository {
         String licenseKey = getLicenseKeyFormat(sessionValue.getLicenseId());
         String triggerKey = getTriggerKeyFormat(sessionId);
         String sequenceKey = getSequenceKeyFormat(sessionId);
-        String lockKey = getLockKeyFormat(sessionValue.getLicenseId());
 
-        Boolean isSave = redisTemplate.opsForValue().setIfAbsent(lockKey, sessionId, ttl);
-        if (!Boolean.TRUE.equals(isSave))
+        // 성공 시 1, 실패시 0 반환
+        Long result = redisTemplate.execute(SAVE_SCRIPT,
+                List.of(
+                        sessionKey,
+                        licenseKey, // SETNX 명령어로 저장
+                        triggerKey,
+                        sequenceKey
+                ),
+                value, sessionId, String.valueOf(ttl.toMillis())
+        );
+
+        // license:{licenseId} 키가 이미 있을 때 반환
+        // 현재는 verify 요청 시 DB 단에서 같은 라이센스의 요청은 낙관적 락으로 직렬로 실행 되기때문에
+        // 일어날 가능성 없음
+        if (result == 0)
             throw new BusinessException(ErrorCode.SDK_LICENSE_IN_TRY_VERIFY);
-
-        redisTemplate.opsForValue().set(sessionKey, value);
-        redisTemplate.opsForValue().set(licenseKey, sessionId);
-        redisTemplate.opsForValue().set(triggerKey, "", ttl);
-        redisTemplate.opsForValue().set(sequenceKey, "0", ttl);
-        redisTemplate.delete(lockKey);
     }
 
     public void update(String sessionId, SessionValue sessionValue, Duration ttl) {
         String value = toJson(sessionValue);
         String sessionKey = getSessionKeyFormat(sessionId);
         String triggerKey = getTriggerKeyFormat(sessionId);
-        redisTemplate.opsForValue().set(sessionKey, value);
+        Boolean isUpdate = redisTemplate.opsForValue().setIfPresent(sessionKey, value);
+        if (!isUpdate) // 없는 세션을 덮어씌워서 실제 만료시킨 세션이 부활하는 것 방지
+            throw new BusinessException(ErrorCode.SDK_SESSION_EXPIRED);
+
         redisTemplate.expire(triggerKey, ttl);
     }
 
@@ -103,23 +119,20 @@ public class SessionRepositoryImpl implements SessionRepository {
         return sessionValues;
     }
 
-    public boolean extendTTL(String sessionId, Duration ttl) {
-        String triggerKey = getTriggerKeyFormat(sessionId);
-        String sequenceKey = getSequenceKeyFormat(sessionId);
-        Boolean expire = redisTemplate.expire(triggerKey, ttl) && redisTemplate.expire(sequenceKey, ttl);
-        return Boolean.TRUE.equals(expire);
-    }
-
-    public void delete(String sessionId) {
-        SessionValue sessionValue = findById(sessionId).orElse(null);
+    public void delete(String sessionId, Long licenseId) {
         String sessionKey = getSessionKeyFormat(sessionId);
+        String licenseKey = getLicenseKeyFormat(licenseId);
         String triggerKey = getTriggerKeyFormat(sessionId);
         String sequenceKey = getSequenceKeyFormat(sessionId);
 
-        List<String> keys = new ArrayList<>(List.of(sessionKey, triggerKey, sequenceKey));
-        if (sessionValue != null)
-            keys.add(getLicenseKeyFormat(sessionValue.getLicenseId()));
-        redisTemplate.delete(keys);
+        redisTemplate.execute(DELETE_SCRIPT,
+                List.of(
+                        sessionKey,
+                        licenseKey,
+                        triggerKey,
+                        sequenceKey
+                ),
+                sessionId);
     }
 
     @Override
@@ -164,10 +177,6 @@ public class SessionRepositoryImpl implements SessionRepository {
 
     private String getSequenceKeyFormat(String sessionId) {
         return String.format("%s:%s", SESSION_SEQ_PREFIX, sessionId);
-    }
-
-    private String getLockKeyFormat(Long licenseId) {
-        return String.format("%s:%s", SESSION_LOCK_PREFIX, licenseId);
     }
 
     private String toJson(Object obj) {

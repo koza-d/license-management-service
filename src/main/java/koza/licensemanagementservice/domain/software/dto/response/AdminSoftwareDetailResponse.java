@@ -19,13 +19,12 @@ public class AdminSoftwareDetailResponse {
     private SoftwareStatus softwareStatus;
     private String appId;
     private int licenseCount; // 보유 라이센스 수
-    private int limitLicense; // 보유 제한 라이센스 수
     private Map<String, String> globalVariables;
     private Map<String, String> localVariables;
     private LocalDateTime createAt;
 
     @QueryProjection
-    public AdminSoftwareDetailResponse(Long id, String ownerEmail, String ownerNickname, String softwareName, String latestVersion, SoftwareStatus softwareStatus, String appId, int licenseCount, int limitLicense, Map<String, String> globalVariables, Map<String, String> localVariables, LocalDateTime createAt) {
+    public AdminSoftwareDetailResponse(Long id, String ownerEmail, String ownerNickname, String softwareName, String latestVersion, SoftwareStatus softwareStatus, String appId, int licenseCount, Map<String, String> globalVariables, Map<String, String> localVariables, LocalDateTime createAt) {
         this.id = id;
         this.ownerEmail = ownerEmail;
         this.ownerNickname = ownerNickname;
@@ -34,7 +33,6 @@ public class AdminSoftwareDetailResponse {
         this.softwareStatus = softwareStatus;
         this.appId = appId;
         this.licenseCount = licenseCount;
-        this.limitLicense = limitLicense;
         this.globalVariables = globalVariables;
         this.localVariables = localVariables;
         this.createAt = createAt;

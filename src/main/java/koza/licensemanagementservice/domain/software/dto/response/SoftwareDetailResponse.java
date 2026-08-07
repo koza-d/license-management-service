@@ -20,8 +20,6 @@ public class SoftwareDetailResponse {
     private LocalDateTime statusUntil;
     private String statusReason;
     private int licenseCount;
-    private int limitLicense;
-    private int remainLicense;
     private Map<String, String> globalVariables;
     private Map<String, String> localVariables;
     private LocalDateTime createAt;
@@ -38,8 +36,6 @@ public class SoftwareDetailResponse {
                 .statusUntil(software.getStatusUntil())
                 .statusReason(software.getStatusReason())
                 .licenseCount(licenseCount)
-                .limitLicense(software.getLimitLicense())
-                .remainLicense(software.getLimitLicense() - licenseCount)
                 .globalVariables(software.getGlobalVariables())
                 .localVariables(software.getLocalVariables())
                 .createAt(software.getCreateAt())

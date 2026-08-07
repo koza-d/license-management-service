@@ -81,19 +81,10 @@ public class SessionManager {
         return sessionRepository.findSequenceById(sessionId);
     }
 
-    public Long increaseSequence(String sessionId) {
-        return sessionRepository.increaseSequence(sessionId);
-    }
-
-    public void extendSession(String sessionId) {
-        boolean suc = sessionRepository.extendTTL(sessionId, SESSION_TTL);
-        if (!suc)
-            throw new BusinessException(ErrorCode.EXPIRED_SESSION);
-
-        SessionValue session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXPIRED_SESSION));
+    public Long extendSession(SessionValue session) {
         session.setLatestActiveAt(LocalDateTime.now());
-        sessionRepository.update(sessionId, session, SESSION_TTL);
+        sessionRepository.update(session.getSessionId(), session, SESSION_TTL);
+        return sessionRepository.increaseSequence(session.getSessionId());
     }
 
     public void updateSession(String sessionId, SessionValue sessionValue) {
@@ -107,7 +98,7 @@ public class SessionManager {
             return;
         }
         license.release(session.getChangedLocalVariables());
-        sessionRepository.delete(session.getSessionId());
+        sessionRepository.delete(session.getSessionId(), license.getId());
         LocalDateTime releaseAt = LocalDateTime.now();
         LocalDateTime latestActiveAt = session.getLatestActiveAt();
         boolean isOld = latestActiveAt != null && Duration.between(latestActiveAt, LocalDateTime.now()).toMillis() >= GHOST_ACTIVE_THRESHOLD;

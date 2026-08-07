@@ -96,7 +96,8 @@ public class SdkService {
                     software.getName(),
                     latestVersion.getVersion(),
                     request.getClientVersion(),
-                    downloadURL);
+                    downloadURL,
+                    String.valueOf(ed25519KeyProvider.getKeyId()));
             String sig = Ed25519Signer.sign(dataToSign, ed25519KeyProvider.getPrivateKey());
 
             InitResponse response = InitResponse.builder()
@@ -105,6 +106,7 @@ public class SdkService {
                     .clientVersion(request.getClientVersion())
                     .downloadURL(downloadURL)
                     .sig(sig)
+                    .keyId(ed25519KeyProvider.getKeyId())
                     .build();
 
             eventPublisher.publishEvent(new InitSuccessEvent(software.getId(), appId, request.getClientVersion(), ipAddress, userAgent));
@@ -282,8 +284,7 @@ public class SdkService {
         String expected = String.join(".", sessionId, request.getClientSeq().toString());
         verifyC2SPayload(request.getClientSeq(), request.getEncryptData(), keyC2S, expected, sessionId);
 
-        sessionManager.extendSession(sessionId);
-        Long serverSeq = sessionManager.increaseSequence(sessionId);
+        Long serverSeq = sessionManager.extendSession(sessionValue);
 
         // 응답 데이터 구성 및 암호화/서명
         HeartbeatData data = new HeartbeatData(LocalDateTime.now(), sessionValue.getExpiredAt());
