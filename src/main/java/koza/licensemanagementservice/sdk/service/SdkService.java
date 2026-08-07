@@ -96,7 +96,8 @@ public class SdkService {
                     software.getName(),
                     latestVersion.getVersion(),
                     request.getClientVersion(),
-                    downloadURL);
+                    downloadURL,
+                    String.valueOf(ed25519KeyProvider.getKeyId()));
             String sig = Ed25519Signer.sign(dataToSign, ed25519KeyProvider.getPrivateKey());
 
             InitResponse response = InitResponse.builder()
@@ -105,6 +106,7 @@ public class SdkService {
                     .clientVersion(request.getClientVersion())
                     .downloadURL(downloadURL)
                     .sig(sig)
+                    .keyId(ed25519KeyProvider.getKeyId())
                     .build();
 
             eventPublisher.publishEvent(new InitSuccessEvent(software.getId(), appId, request.getClientVersion(), ipAddress, userAgent));
