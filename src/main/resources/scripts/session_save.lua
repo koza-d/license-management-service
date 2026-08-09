@@ -10,5 +10,5 @@ end
 
 redis.call('SET', KEYS[1], ARGV[1])
 redis.call('SET', KEYS[3], '', 'PX', ARGV[3])
-redis.call('SET', KEYS[4], '0', 'PX', ARGV[3])
+redis.call('SET', KEYS[4], '0')
 return 1
